@@ -5,12 +5,31 @@ on:
     branches: [main, develop]
     paths:
       - 'Mobile/TeknoSOS.iOS/**'
+      - '.github/workflows/ios-build.yml'
   workflow_dispatch:
+
+env:
+  IOS_PROJECT_DIR: Mobile/TeknoSOS.iOS
+  IOS_SCHEME: TeknoSOS
+  IOS_BUNDLE_ID: app.teknosos.mobile
 
 jobs:
   build:
     name: Build iOS App
     runs-on: macos-latest
+
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      PROVISIONING_PROFILE_SPECIFIER: ${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}
+      APPLE_CODE_SIGN_IDENTITY: ${{ secrets.APPLE_CODE_SIGN_IDENTITY }}
+      IOS_EXPORT_METHOD: ${{ secrets.IOS_EXPORT_METHOD }}
+
+    outputs:
+      signed_build_ready: ${{ steps.signing-check.outputs.ready }}
 
     steps:
       - name: Checkout repository
@@ -22,20 +41,32 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
+      - name: Detect signing configuration
+        id: signing-check
+        shell: bash
+        run: |
+          if [[ -n "$APPLE_TEAM_ID" && -n "$BUILD_CERTIFICATE_BASE64" && -n "$P12_PASSWORD" && -n "$BUILD_PROVISION_PROFILE_BASE64" && -n "$KEYCHAIN_PASSWORD" && -n "$PROVISIONING_PROFILE_SPECIFIER" && -n "$APPLE_CODE_SIGN_IDENTITY" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Signed IPA build enabled."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Apple signing secrets are incomplete. Building unsigned IPA only."
+          fi
+
       - name: Generate Xcode project from spec
-        working-directory: Mobile/TeknoSOS.iOS
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
         run: xcodegen generate --spec project.yml
 
       - name: Verify scheme exists
-        working-directory: Mobile/TeknoSOS.iOS
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
         run: xcodebuild -project TeknoSOS.xcodeproj -list
 
       - name: Build for iOS Simulator (compile check)
-        working-directory: Mobile/TeknoSOS.iOS
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
         run: |
           xcodebuild \
             -project TeknoSOS.xcodeproj \
-            -scheme TeknoSOS \
+            -scheme $IOS_SCHEME \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
@@ -44,13 +75,68 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
+      - name: Install Apple certificate and provisioning profile
+        if: steps.signing-check.outputs.ready == 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
+        shell: bash
+        run: |
+          CERT_PATH="$RUNNER_TEMP/build_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 -D -o "$CERT_PATH"
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 -D -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+
+      - name: Create export options plist
+        if: steps.signing-check.outputs.ready == 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
+        shell: bash
+        run: |
+          EXPORT_METHOD="${IOS_EXPORT_METHOD:-ad-hoc}"
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>$EXPORT_METHOD</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>$APPLE_TEAM_ID</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$IOS_BUNDLE_ID</key>
+              <string>$PROVISIONING_PROFILE_SPECIFIER</string>
+            </dict>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+            <key>destination</key>
+            <string>export</string>
+          </dict>
+          </plist>
+          EOF
+
       - name: Build unsigned .app for device
-        working-directory: Mobile/TeknoSOS.iOS
+        if: steps.signing-check.outputs.ready != 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
         run: |
           mkdir -p build/Debug-iphoneos
           xcodebuild \
             -project TeknoSOS.xcodeproj \
-            -scheme TeknoSOS \
+            -scheme $IOS_SCHEME \
             -sdk iphoneos \
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
@@ -59,19 +145,58 @@ jobs:
             CONFIGURATION_BUILD_DIR="$(pwd)/build/Debug-iphoneos" \
             build
 
+      - name: Archive signed build for device
+        if: steps.signing-check.outputs.ready == 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
+        shell: bash
+        run: |
+          xcodebuild \
+            -project TeknoSOS.xcodeproj \
+            -scheme $IOS_SCHEME \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$(pwd)/build/TeknoSOS.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$APPLE_CODE_SIGN_IDENTITY" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
+            archive
+
+      - name: Export signed IPA
+        if: steps.signing-check.outputs.ready == 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
+        shell: bash
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$(pwd)/build/TeknoSOS.xcarchive" \
+            -exportPath "$(pwd)/build/export" \
+            -exportOptionsPlist ExportOptions.plist
+          ls -lh build/export
+
       - name: Package as unsigned IPA
-        working-directory: Mobile/TeknoSOS.iOS
+        if: steps.signing-check.outputs.ready != 'true'
+        working-directory: ${{ env.IOS_PROJECT_DIR }}
         run: |
           mkdir -p Payload
-          cp -r build/Debug-iphoneos/TeknoSOS.app Payload/
+          cp -r build/Debug-iphoneos/$IOS_SCHEME.app Payload/
           zip -r TeknoSOS-v1.0-unsigned.ipa Payload/
           rm -rf Payload
           echo "=== IPA ready ==="
           ls -lh TeknoSOS-v1.0-unsigned.ipa
 
-      - name: Upload IPA as artifact
+      - name: Upload signed IPA as artifact
+        if: steps.signing-check.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: TeknoSOS-iOS-v1.0
+          name: TeknoSOS-iOS-signed-ipa
+          path: Mobile/TeknoSOS.iOS/build/export/*.ipa
+          retention-days: 14
+
+      - name: Upload unsigned IPA as artifact
+        if: steps.signing-check.outputs.ready != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeknoSOS-iOS-v1.0-unsigned
           path: Mobile/TeknoSOS.iOS/TeknoSOS-v1.0-unsigned.ipa
           retention-days: 14

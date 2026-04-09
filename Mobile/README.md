@@ -132,6 +132,8 @@ Both apps connect to the same backend API:
 xcodebuild -scheme TeknoSOS -configuration Release archive
 ```
 
+Per signed IPA ne iPhone me Apple Developer, shih `docs/IOS-APPLE-DEVELOPER-SETUP.md`.
+
 ### Android
 ```bash
 ./gradlew assembleRelease
