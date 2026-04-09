@@ -112,7 +112,7 @@ actor APIService {
         
         var request = URLRequest(url: components.url!)
         request.httpMethod = "GET"
-        request = addHeaders(to: request)
+        request = await addHeaders(to: request)
         
         return try await execute(request)
     }
@@ -121,7 +121,7 @@ actor APIService {
         var request = URLRequest(url: URL(string: baseURL + path)!)
         request.httpMethod = "POST"
         request.httpBody = try encoder.encode(body)
-        request = addHeaders(to: request)
+        request = await addHeaders(to: request)
         
         return try await execute(request)
     }
@@ -130,7 +130,7 @@ actor APIService {
         var request = URLRequest(url: URL(string: baseURL + path)!)
         request.httpMethod = "PUT"
         request.httpBody = try encoder.encode(body)
-        request = addHeaders(to: request)
+        request = await addHeaders(to: request)
         
         return try await execute(request)
     }
@@ -138,25 +138,26 @@ actor APIService {
     private func delete<T: Decodable>(_ path: String) async throws -> T {
         var request = URLRequest(url: URL(string: baseURL + path)!)
         request.httpMethod = "DELETE"
-        request = addHeaders(to: request)
+        request = await addHeaders(to: request)
         
         return try await execute(request)
     }
     
     // MARK: - Helpers
-    private func addHeaders(to request: URLRequest) -> URLRequest {
+    private func addHeaders(to request: URLRequest) async -> URLRequest {
         var request = request
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("TeknoSOS-iOS/1.0", forHTTPHeaderField: "User-Agent")
-        
-        // Add auth token if available
-        Task { @MainActor in
-            if let token = AuthenticationManager.shared.accessToken {
-                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            }
+
+        let token = await MainActor.run {
+            AuthenticationManager.shared.accessToken
         }
-        
+
+        if let token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
         return request
     }
     
