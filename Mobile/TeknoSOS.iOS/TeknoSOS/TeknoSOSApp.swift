@@ -47,24 +47,3 @@ struct TeknoSOSApp: App {
         UITabBar.appearance().scrollEdgeAppearance = tabAppearance
     }
 }
-
-// MARK: - App State
-class AppState: ObservableObject {
-    @Published var isLoading = false
-    @Published var selectedTab: Tab = .home
-    @Published var showingError = false
-    @Published var errorMessage = ""
-    
-    enum Tab {
-        case home
-        case defects
-        case technicians
-        case chat
-        case profile
-    }
-    
-    func showError(_ message: String) {
-        errorMessage = message
-        showingError = true
-    }
-}
