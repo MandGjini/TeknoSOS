@@ -1,0 +1,163 @@
+@page
+@model AboutModel
+@{
+    ViewData["Title"] = await CMS.GetContentAsync("about", "hero_title");
+    
+    // Get custom CSS for full page content
+    var customCss = "";
+    if (Model.HasCustomContent && !string.IsNullOrEmpty(Model.FullPageContent?.Metadata))
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(Model.FullPageContent.Metadata);
+            if (doc.RootElement.TryGetProperty("css", out var cssProp))
+            {
+                customCss = cssProp.GetString() ?? "";
+            }
+        }
+        catch { }
+    }
+}
+
+@* Check if custom content from Page Editor exists *@
+@if (Model.HasCustomContent)
+{
+    @if (!string.IsNullOrWhiteSpace(customCss))
+    {
+        <style>@Html.Raw(customCss)</style>
+    }
+    @* Render custom HTML content from Page Editor *@
+    @Html.Raw(Model.FullPageContent!.Content)
+}
+else
+{
+    @* Default content when no custom page is set *@
+    
+<!-- Hero Section — 2026 Style -->
+<section class="hero-2026" style="padding: 3.5rem 0;">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container text-center">
+        <div class="hero-badge mb-3 fade-up"><i class="bi bi-building"></i> Rreth Nesh</div>
+        <h1 class="fade-up" style="font-size: 2.5rem;">@await CMS.GetContentAsync("about", "hero_title")</h1>
+        <p class="hero-subtitle mx-auto fade-up" style="max-width: 600px;">@await CMS.GetContentAsync("about", "hero_subtitle")</p>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -2rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    <!-- Mission & Vision Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6 fade-up">
+            <div class="card h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px; background: var(--ts-primary-light);">
+                            <i class="bi bi-bullseye" style="font-size: 1.5rem; color: var(--ts-primary);"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0" style="color: var(--ts-text);">@await CMS.GetContentAsync("about", "mission_title")</h3>
+                    </div>
+                    <p style="color: var(--ts-text-secondary); line-height: 1.8; margin: 0;">@await CMS.GetContentAsync("about", "mission_text")</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 fade-up">
+            <div class="card h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px; background: var(--ts-success-light);">
+                            <i class="bi bi-eye" style="font-size: 1.5rem; color: var(--ts-success);"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0" style="color: var(--ts-text);">@await CMS.GetContentAsync("about", "vision_title")</h3>
+                    </div>
+                    <p style="color: var(--ts-text-secondary); line-height: 1.8; margin: 0;">@await CMS.GetContentAsync("about", "vision_text")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Values Section -->
+    <section class="section-2026" style="background: var(--ts-bg-secondary); border-radius: var(--ts-radius-xl); padding: 3rem;">
+        <div class="section-header text-center fade-up mb-4">
+            <div class="section-badge"><i class="bi bi-heart"></i> Vlerat Tona</div>
+            <h2 style="color: var(--ts-text);">@await CMS.GetContentAsync("about", "values_title")</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var value in Model.Values.OrderBy(v => v.SortOrder))
+            {
+                <div class="col-md-6 col-lg-3 fade-up">
+                    <div class="card h-100 text-center" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border); background: var(--ts-surface);">
+                        <div class="card-body p-4">
+                            @if (!string.IsNullOrEmpty(value.IconClass))
+                            {
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: var(--ts-primary-light);">
+                                    <i class="bi @value.IconClass" style="font-size: 1.5rem; color: var(--ts-primary);"></i>
+                                </div>
+                            }
+                            <h5 class="fw-bold mb-2" style="color: var(--ts-text);">@value.Title</h5>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.9rem; margin: 0;">@value.Content</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="text-center my-5 fade-up">
+        <div class="section-badge mb-3"><i class="bi bi-people"></i> Ekipi</div>
+        <h2 class="fw-bold mb-3" style="color: var(--ts-text);">@await CMS.GetContentAsync("about", "team_title")</h2>
+        <p style="color: var(--ts-text-secondary); max-width: 700px; margin: 0 auto; line-height: 1.8;">@await CMS.GetContentAsync("about", "team_text")</p>
+    </section>
+
+    <!-- Stats Section -->
+    @if (Model.Stats.Any())
+    {
+        <section class="cta-2026 mb-5 fade-up" style="border-radius: var(--ts-radius-xl);">
+            <div class="row g-4 text-center">
+                @foreach (var stat in Model.Stats.OrderBy(s => s.SortOrder))
+                {
+                    <div class="col-md-6 col-lg-3">
+                        @if (!string.IsNullOrEmpty(stat.IconClass))
+                        {
+                            <i class="bi @stat.IconClass mb-2" style="font-size: 2rem; color: var(--ts-accent);"></i>
+                        }
+                        <div style="font-size: 2.5rem; font-weight: 800; color: white;">@stat.Content</div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">@stat.Title</div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- Partners Section -->
+    <section class="text-center fade-up">
+        <div class="section-badge mb-3"><i class="bi bi-handshake"></i> Partnerët</div>
+        <h2 class="fw-bold mb-3" style="color: var(--ts-text);">@await CMS.GetContentAsync("about", "partners_title")</h2>
+        <p style="color: var(--ts-text-secondary); max-width: 700px; margin: 0 auto; line-height: 1.8;">@await CMS.GetContentAsync("about", "partners_text")</p>
+    </section>
+    
+    <!-- Explore More Section -->
+    <section class="cta-2026 mt-5 fade-up" style="border-radius: var(--ts-radius-xl);">
+        <div class="text-center">
+            <h3 class="fw-bold mb-3" style="color: white;">Zbuloni më shumë rreth platformës</h3>
+            <p style="color: rgba(255,255,255,0.7); max-width: 500px; margin: 0 auto 1.5rem auto;">
+                Eksploroni shërbimet tona, teknikët dhe bizneset e verifikuara
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a asp-page="/HowItWorks" class="btn btn-light btn-pill px-4">
+                    <i class="bi bi-play-circle me-2"></i> Si Funksionon
+                </a>
+                <a asp-page="/Technicians" class="btn btn-outline-light btn-pill px-4">
+                    <i class="bi bi-people me-2"></i> Teknikët
+                </a>
+                <a asp-page="/Businesses" class="btn btn-outline-light btn-pill px-4">
+                    <i class="bi bi-shop me-2"></i> Bizneset
+                </a>
+                <a asp-page="/BusinessMap" class="btn btn-outline-light btn-pill px-4">
+                    <i class="bi bi-globe me-2"></i> Harta
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+} @* End of else block for default content *@

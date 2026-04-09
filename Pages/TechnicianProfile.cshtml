@@ -1,0 +1,690 @@
+@page "{id}"
+@model TeknoSOS.WebApp.Pages.TechnicianProfileModel
+@using System.Security.Claims
+@{
+    ViewData["Title"] = Model.Technician.GetFullName() + " - Profili i Teknikut";
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var canManagePortfolio = User.Identity?.IsAuthenticated == true && (User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.Technician.Id || User.IsInRole("Admin"));
+
+    string CapitalizeInitial(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length == 1 ? trimmed.ToUpper() : char.ToUpper(trimmed[0]) + trimmed[1..];
+    }
+
+    var displayFirstName = CapitalizeInitial(Model.Technician.FirstName);
+    var displayLastName = CapitalizeInitial(Model.Technician.LastName);
+    var technicianDisplayName = !string.IsNullOrWhiteSpace(displayFirstName) || !string.IsNullOrWhiteSpace(displayLastName)
+        ? $"{displayFirstName} {displayLastName}".Trim()
+        : Model.Technician.GetFullName();
+}
+
+<!-- Profile Cover / Header — LinkedIn Style -->
+<section class="profile-cover">
+    <div class="container">
+        <div class="row align-items-end g-4">
+            <div class="col-auto">
+                <div class="profile-avatar-lg">
+                    @if (!string.IsNullOrEmpty(Model.Technician.ProfileImageUrl))
+                    {
+                        <img src="@Model.Technician.ProfileImageUrl" alt="@Model.Technician.GetFullName()" />
+                    }
+                    else
+                    {
+                        var fn = Model.Technician.FirstName ?? string.Empty;
+                        var ln = Model.Technician.LastName ?? string.Empty;
+                        var initials = (fn.Length > 0 ? fn[0].ToString() : "") + (ln.Length > 0 ? ln[0].ToString() : "");
+                        @(string.IsNullOrEmpty(initials) ? "?" : initials)
+                    }
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="profile-name">
+                    @technicianDisplayName
+                </h1>
+                @if (!string.IsNullOrEmpty(Model.Technician.DisplayUsername))
+                {
+                    <div class="mb-2">
+                        <span class="text-muted fs-6">@@@Model.Technician.DisplayUsername</span>
+                    </div>
+                }
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    @if (Model.Technician.IsProfileVerified)
+                    {
+                        <span class="profile-badge-verified"><i class="bi bi-patch-check-fill"></i> I Verifikuar</span>
+                    }
+                    @if (Model.Technician.IsAvailableForWork)
+                    {
+                        <span class="profile-badge-available"><i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Disponueshëm</span>
+                    }
+                    else
+                    {
+                        <span class="profile-badge-available" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.3);color:#fcd34d;">
+                            <i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> I zënë momentalisht
+                        </span>
+                    }
+                </div>
+                <div class="profile-meta d-flex flex-wrap gap-3">
+                    @if (!string.IsNullOrEmpty(Model.Technician.CompanyName))
+                    {
+                        <span><i class="bi bi-building me-1"></i> @Model.Technician.CompanyName</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Technician.City))
+                    {
+                        <span><i class="bi bi-geo-alt me-1"></i> @Model.Technician.City</span>
+                    }
+                    @if (Model.Technician.YearsOfExperience.HasValue)
+                    {
+                        <span><i class="bi bi-clock-history me-1"></i> @Model.Technician.YearsOfExperience vjet përvojë</span>
+                    }
+                </div>
+            </div>
+            <div class="col-auto text-end d-none d-md-block">
+                <div class="profile-rating-lg">
+                    <div>
+                        <div class="rating-value">@(Model.Technician.AverageRating?.ToString("F1") ?? "N/A")</div>
+                        <div class="rating-stars">
+                            @{ var avgRating = (int)Math.Round(Model.Technician.AverageRating ?? 0); }
+                            @for (int i = 0; i < avgRating; i++) { <i class="bi bi-star-fill"></i> }
+                            @for (int i = avgRating; i < 5; i++) { <i class="bi bi-star"></i> }
+                        </div>
+                        <div class="rating-count">@Model.Technician.TotalReviews vlerësime</div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <form method="post" asp-page-handler="StartChat" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Technician.Id" />
+                        <button type="submit" class="btn btn-primary btn-sm">Fillo bisedën</button>
+                    </form>
+                    @if (User.Identity?.IsAuthenticated == true && User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.Technician.Id)
+                    {
+                        <a href="/Account/Profile" class="btn btn-outline-secondary btn-sm ms-2">Edito profilin</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -2rem; position: relative; z-index: 5;">
+    <div class="row g-4">
+        <!-- Left Column — Main Content -->
+        <div class="col-lg-8">
+            @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+            {
+                <div class="alert alert-success shadow-sm"><i class="bi bi-check-circle me-2"></i>@Model.SuccessMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger shadow-sm"><i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage</div>
+            }
+
+            <!-- About Me -->
+            @if (!string.IsNullOrEmpty(Model.Technician.Bio))
+            {
+                <div class="profile-section fade-up">
+                    <div class="profile-section-header">
+                        <i class="bi bi-person-lines-fill"></i> Rreth Meje
+                    </div>
+                    <div class="profile-section-body">
+                        <p style="color: var(--ts-text-secondary); line-height: 1.8; margin: 0;">@Model.Technician.Bio</p>
+                    </div>
+                </div>
+            }
+
+            <!-- Technical Skills / Specialties -->
+            @if (Model.Specialties.Any())
+            {
+                <div class="profile-section fade-up">
+                    <div class="profile-section-header">
+                        <i class="bi bi-tools"></i> Specialitetet & Aftësitë
+                    </div>
+                    <div class="profile-section-body">
+                        @foreach (var spec in Model.Specialties)
+                        {
+                            <div class="skill-bar">
+                                <div class="skill-name">
+                                    <span style="color: var(--ts-text);">
+                                        @spec.Category
+                                        @if (spec.IsVerified) { <i class="bi bi-patch-check-fill" style="color: var(--ts-success); font-size:0.75rem;"></i> }
+                                    </span>
+                                    <span class="skill-level">
+                                        @spec.YearsOfExperience vjet
+                                        @if (spec.HourlyRate > 0) { <span style="color: var(--ts-primary); font-weight:600;">· @(spec.HourlyRate.Value.ToString("F0")) ALL/orë</span> }
+                                    </span>
+                                </div>
+                                @{
+                                    var pct = Math.Min((spec.YearsOfExperience ?? 1) * 10, 100);
+                                }
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: @pct%"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Portfolio Gallery -->
+            @if (Model.PortfolioItems.Any() || canManagePortfolio)
+            {
+                <div class="profile-section fade-up" id="portfolio">
+                    <div class="profile-section-header">
+                        <i class="bi bi-collection"></i> Portfolio
+                    </div>
+                    <div class="profile-section-body">
+                        @if (canManagePortfolio)
+                        {
+                            <div class="card border-0 mb-4" style="background: var(--ts-bg-secondary);">
+                                <div class="card-body p-4">
+                                    <h5 class="mb-3">Shto punë të përfunduar</h5>
+                                    <form method="post" enctype="multipart/form-data" asp-page-handler="UploadPortfolio">
+                                        <input type="hidden" name="id" value="@Model.Technician.Id" />
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Titulli i punës *</label>
+                                                <input type="text" name="title" class="form-control" placeholder="p.sh. Riparimi i instalimit elektrik" required />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Kategoria</label>
+                                                <input type="text" name="category" class="form-control" placeholder="p.sh. Electrical" />
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">Përshkrimi</label>
+                                                <textarea name="description" class="form-control" rows="3" placeholder="Shkruaj çfarë pune u krye dhe rezultatin përfundimtar."></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Lokacioni</label>
+                                                <input type="text" name="location" class="form-control" placeholder="p.sh. Prishtinë" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Data e përfundimit</label>
+                                                <input type="date" name="completedDate" class="form-control" />
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">Përshtypja e klientit</label>
+                                                <textarea name="clientTestimonial" class="form-control" rows="2" placeholder="p.sh. Punë e pastër dhe shumë profesionale."></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Foto para punës</label>
+                                                <input type="file" name="beforeImage" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Foto pas punës</label>
+                                                <input type="file" name="afterImage" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">Foto shtesë</label>
+                                                <input type="file" name="additionalImages" class="form-control" multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                <small class="text-muted">Ngarko deri në 6 foto shtesë. Kërkohet të paktën një foto.</small>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" name="isFeatured" id="portfolioFeatured" value="true" />
+                                                    <label class="form-check-label" for="portfolioFeatured">Shfaqe si punë të veçuar</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-upload me-2"></i>Shto në portfolio
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!Model.PortfolioItems.Any())
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-images" style="font-size:2.5rem; color: var(--ts-text-muted);"></i>
+                                <p class="mt-3 mb-0 text-muted">Ende nuk ka punë të ngarkuara në portfolio.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row g-3">
+                                @foreach (var item in Model.PortfolioItems)
+                                {
+                                    var additionalImages = Model.GetAdditionalImages(item);
+                                    var coverImage = !string.IsNullOrEmpty(item.AfterImageUrl)
+                                        ? item.AfterImageUrl
+                                        : !string.IsNullOrEmpty(item.BeforeImageUrl)
+                                            ? item.BeforeImageUrl
+                                            : additionalImages.FirstOrDefault();
+                                    <div class="col-md-6">
+                                        <div class="portfolio-item" style="border: 1px solid var(--ts-border); border-radius: var(--ts-radius);">
+                                            @if (!string.IsNullOrEmpty(coverImage))
+                                            {
+                                                <img src="@coverImage" alt="@item.Title" />
+                                            }
+                                            else
+                                            {
+                                                <div class="d-flex align-items-center justify-content-center" style="height:200px; background: var(--ts-bg-tertiary);">
+                                                    <i class="bi bi-image" style="font-size:2rem; color: var(--ts-text-muted);"></i>
+                                                </div>
+                                            }
+                                            <div class="portfolio-overlay">
+                                                <strong style="font-size: 0.9rem;">@item.Title</strong>
+                                                @if (item.IsFeatured)
+                                                {
+                                                    <span class="chip chip-warning ms-2" style="font-size:0.65rem;">Featured</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(item.Category))
+                                                {
+                                                    <span class="chip chip-primary ms-2" style="font-size:0.65rem;">@item.Category</span>
+                                                }
+                                            </div>
+                                            <div class="p-3">
+                                                <h6 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--ts-text);">@item.Title</h6>
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    <p style="font-size: 0.82rem; color: var(--ts-text-muted); margin-bottom: 0.5rem;">@(item.Description.Length > 140 ? item.Description.Substring(0, 140) + "..." : item.Description)</p>
+                                                }
+                                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                    @if (item.CompletedDate.HasValue)
+                                                    {
+                                                        <small style="color: var(--ts-text-muted);"><i class="bi bi-calendar3 me-1"></i> @item.CompletedDate.Value.ToString("MMM yyyy")</small>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(item.Location))
+                                                    {
+                                                        <small style="color: var(--ts-text-muted);"><i class="bi bi-geo-alt me-1"></i> @item.Location</small>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(item.BeforeImageUrl) || !string.IsNullOrEmpty(item.AfterImageUrl))
+                                                {
+                                                    <div class="row g-2 mt-2">
+                                                        @if (!string.IsNullOrEmpty(item.BeforeImageUrl))
+                                                        {
+                                                            <div class="col-6">
+                                                                <a href="@item.BeforeImageUrl" target="_blank" class="text-decoration-none">
+                                                                    <div class="rounded overflow-hidden border" style="height:92px;">
+                                                                        <img src="@item.BeforeImageUrl" alt="Para - @item.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                                                    </div>
+                                                                    <small class="text-muted d-block mt-1">Para</small>
+                                                                </a>
+                                                            </div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(item.AfterImageUrl))
+                                                        {
+                                                            <div class="col-6">
+                                                                <a href="@item.AfterImageUrl" target="_blank" class="text-decoration-none">
+                                                                    <div class="rounded overflow-hidden border" style="height:92px;">
+                                                                        <img src="@item.AfterImageUrl" alt="Pas - @item.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                                                    </div>
+                                                                    <small class="text-muted d-block mt-1">Pas</small>
+                                                                </a>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                                @if (additionalImages.Any())
+                                                {
+                                                    <div class="d-flex flex-wrap gap-2 mt-3">
+                                                        @foreach (var image in additionalImages)
+                                                        {
+                                                            <a href="@image" target="_blank" class="text-decoration-none">
+                                                                <img src="@image" alt="Foto shtesë - @item.Title" class="rounded border" style="width:72px;height:72px;object-fit:cover;" />
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(item.ClientTestimonial))
+                                                {
+                                                    <div class="mt-2 p-2 rounded" style="background: var(--ts-bg-secondary); font-size: 0.8rem; color: var(--ts-text-secondary); font-style: italic;">
+                                                        "@item.ClientTestimonial"
+                                                    </div>
+                                                }
+
+                                                @if (canManagePortfolio)
+                                                {
+                                                    var collapseId = $"portfolio-edit-{item.Id}";
+                                                    <div class="mt-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                                                            <i class="bi bi-pencil-square me-1"></i>Edito projektin
+                                                        </button>
+                                                    </div>
+                                                    <div class="collapse mt-3" id="@collapseId">
+                                                        <div class="border rounded p-3" style="background: var(--ts-bg-secondary);">
+                                                            <form method="post" enctype="multipart/form-data" asp-page-handler="UpdatePortfolio">
+                                                                <input type="hidden" name="id" value="@Model.Technician.Id" />
+                                                                <input type="hidden" name="portfolioId" value="@item.Id" />
+                                                                <div class="row g-2">
+                                                                    <div class="col-12">
+                                                                        <label class="form-label small fw-semibold mb-1">Titulli *</label>
+                                                                        <input type="text" name="title" class="form-control form-control-sm" value="@item.Title" required />
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <label class="form-label small fw-semibold mb-1">Kategoria</label>
+                                                                        <input type="text" name="category" class="form-control form-control-sm" value="@item.Category" />
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <label class="form-label small fw-semibold mb-1">Lokacioni</label>
+                                                                        <input type="text" name="location" class="form-control form-control-sm" value="@item.Location" />
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <label class="form-label small fw-semibold mb-1">Përshkrimi</label>
+                                                                        <textarea name="description" class="form-control form-control-sm" rows="2">@item.Description</textarea>
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <label class="form-label small fw-semibold mb-1">Përshtypja e klientit</label>
+                                                                        <textarea name="clientTestimonial" class="form-control form-control-sm" rows="2">@item.ClientTestimonial</textarea>
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <label class="form-label small fw-semibold mb-1">Data e përfundimit</label>
+                                                                        <input type="date" name="completedDate" class="form-control form-control-sm" value="@(item.CompletedDate?.ToString("yyyy-MM-dd"))" />
+                                                                    </div>
+                                                                    <div class="col-6 d-flex align-items-end">
+                                                                        <div class="form-check form-switch">
+                                                                            <input class="form-check-input" type="checkbox" name="isFeatured" value="true" @(item.IsFeatured ? "checked" : string.Empty) />
+                                                                            <label class="form-check-label small">Featured</label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <small class="text-muted d-block mb-1">Ngarko foto të reja vetëm nëse dëshiron t'i zëvendësosh ekzistueset.</small>
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <label class="form-label small fw-semibold mb-1">Foto para (opsionale)</label>
+                                                                        <input type="file" name="beforeImage" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <label class="form-label small fw-semibold mb-1">Foto pas (opsionale)</label>
+                                                                        <input type="file" name="afterImage" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <label class="form-label small fw-semibold mb-1">Foto shtesë (opsionale)</label>
+                                                                        <input type="file" name="additionalImages" class="form-control form-control-sm" multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mt-3">
+                                                                    <button type="submit" class="btn btn-sm btn-primary">Ruaj ndryshimet</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Reviews -->
+            @if (Model.Reviews.Any())
+            {
+                <div class="profile-section fade-up">
+                    <div class="profile-section-header">
+                        <i class="bi bi-chat-quote"></i> Vlerësimet <span class="chip chip-primary ms-2">@Model.Reviews.Count</span>
+                    </div>
+                    <div class="profile-section-body">
+                        <!-- Rating Breakdown -->
+                        <div class="mb-4 p-3 rounded" style="background:var(--ts-bg-secondary);">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                @{
+                                    var reviewAvgRating = Model.Technician.AverageRating ?? 0m;
+                                    var reviewAvgInt = (int)Math.Round((double)reviewAvgRating);
+                                }
+                                <div class="text-center">
+                                    <div style="font-size:2rem;font-weight:800;color:var(--ts-primary);">@reviewAvgRating.ToString("F1")</div>
+                                    <div class="text-warning mb-1">
+                                        @for (int i = 0; i < reviewAvgInt; i++) { <i class="bi bi-star-fill"></i> }
+                                        @for (int i = reviewAvgInt; i < 5; i++) { <i class="bi bi-star"></i> }
+                                    </div>
+                                    <small style="color:var(--ts-text-muted);">@Model.Reviews.Count vlerësime</small>
+                                </div>
+                                <div class="flex-grow-1">
+                                    @for (int star = 5; star >= 1; star--)
+                                    {
+                                        var count = Model.Reviews.Count(r => r.Rating == star);
+                                        var pct = Model.Reviews.Count > 0 ? (count * 100.0 / Model.Reviews.Count) : 0;
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span style="font-size:0.72rem;min-width:20px;color:var(--ts-text-muted);">@star<i class="bi bi-star-fill ms-1" style="font-size:0.6rem;"></i></span>
+                                            <div class="progress flex-grow-1" style="height:6px;">
+                                                <div class="progress-bar" style="width:@pct%;background:var(--ts-warning);"></div>
+                                            </div>
+                                            <span style="font-size:0.72rem;min-width:20px;color:var(--ts-text-muted);">@count</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Review List -->
+                        @foreach (var review in Model.Reviews)
+                        {
+                            <div class="d-flex gap-3 pb-3 mb-3" style="border-bottom: 1px solid var(--ts-border-light);">
+                                <div class="testimonial-avatar" style="width:40px;height:40px;min-width:40px;font-size:0.8rem;">
+                                    @(review.Reviewer?.GetFullName()?.Length > 0 ? review.Reviewer.GetFullName()[0].ToString() : "?")
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <strong style="font-size: 0.88rem; color: var(--ts-text);">
+                                            @if (review.Reviewer != null)
+                                            {
+                                                <a href="/UserProfile/@(review.Reviewer.DisplayUsername ?? review.Reviewer.Id)" class="text-decoration-none" style="color: inherit;">
+                                                    @review.Reviewer.GetFullName()
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                @review.Reviewer?.GetFullName()
+                                            }
+                                        </strong>
+                                        <span class="text-warning" style="font-size: 0.8rem;">
+                                            @for (int i = 0; i < review.Rating; i++) { <i class="bi bi-star-fill"></i> }
+                                            @for (int i = review.Rating; i < 5; i++) { <i class="bi bi-star"></i> }
+                                        </span>
+                                    </div>
+                                    <p style="color: var(--ts-text-secondary); font-size: 0.88rem; margin: 0.25rem 0;">@review.Comment</p>
+                                    <small style="color: var(--ts-text-muted);">@review.CreatedDate.ToString("dd/MM/yyyy")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right Column — Sidebar -->
+        <div class="col-lg-4">
+            <!-- Pricing Card -->
+            @if (Model.Pricing != null)
+            {
+                <div class="profile-section fade-up">
+                    <div class="profile-section-header">
+                        <i class="bi bi-cash-coin"></i> Çmimet
+                    </div>
+                    <div class="profile-section-body text-center py-4">
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--ts-primary);">
+                            @Model.Pricing.AvgHourlyRate ALL<span style="font-size:1rem;font-weight:400;color:var(--ts-text-muted);">/orë</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: var(--ts-text-secondary); margin-top: 0.25rem;">
+                            Çmimi mesatar
+                        </div>
+                        <div class="d-flex justify-content-center gap-3 mt-3 pt-3" style="border-top: 1px solid var(--ts-border-light);">
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--ts-success);">@Model.Pricing.MinHourlyRate ALL</div>
+                                <div style="font-size: 0.7rem; color: var(--ts-text-muted);">Minimum</div>
+                            </div>
+                            <div style="width:1px; background:var(--ts-border-light);"></div>
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--ts-warning);">@Model.Pricing.MaxHourlyRate ALL</div>
+                                <div style="font-size: 0.7rem; color: var(--ts-text-muted);">Maksimum</div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.72rem; color:var(--ts-text-muted); margin-top:1rem;">
+                            <i class="bi bi-info-circle me-1"></i>Bazuar në @Model.Pricing.SpecialtiesWithPricing specialitete
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Stats Card -->
+            <div class="profile-section fade-up">
+                <div class="profile-section-header">
+                    <i class="bi bi-graph-up"></i> Statistika
+                </div>
+                <div class="profile-section-body">
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: var(--ts-primary-light);">
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--ts-primary);">@Model.Stats.CompletedJobs</div>
+                                <div style="font-size: 0.72rem; color: var(--ts-text-muted); font-weight: 500;">Punë të përfunduara</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: var(--ts-warning-light);">
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--ts-warning);">@Model.Stats.ActiveJobs</div>
+                                <div style="font-size: 0.72rem; color: var(--ts-text-muted); font-weight: 500;">Punë aktive</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: var(--ts-success-light);">
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--ts-success);">@Model.Stats.ResponseRate%</div>
+                                <div style="font-size: 0.72rem; color: var(--ts-text-muted); font-weight: 500;">Shkallë përgjigje</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: var(--ts-info-light);">
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--ts-info);">@Model.Technician.TotalReviews</div>
+                                <div style="font-size: 0.72rem; color: var(--ts-text-muted); font-weight: 500;">Vlerësime</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificates -->
+            @if (Model.Certificates.Any())
+            {
+                <div class="profile-section fade-up">
+                    <div class="profile-section-header">
+                        <i class="bi bi-award"></i> Certifikata <span class="chip chip-warning ms-2">@Model.Certificates.Count</span>
+                    </div>
+                    <div class="profile-section-body p-0">
+                        @foreach (var cert in Model.Certificates)
+                        {
+                            <div class="d-flex align-items-start gap-3 p-3" style="border-bottom: 1px solid var(--ts-border-light);">
+                                @if (!string.IsNullOrEmpty(cert.DocumentUrl))
+                                {
+                                    <a href="@cert.DocumentUrl" target="_blank" data-bs-toggle="tooltip" title="Kliko për të parë certifikatën">
+                                        <div style="width:60px;height:60px;min-width:60px;border-radius:var(--ts-radius-sm);background:var(--ts-bg-tertiary);display:flex;align-items:center;justify-content:center;overflow:hidden;border:2px solid var(--ts-border);">
+                                            <img src="@cert.DocumentUrl" alt="@cert.Title" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'bi bi-file-earmark-pdf\' style=\'font-size:1.5rem;color:var(--ts-danger);\'></i>';" />
+                                        </div>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div style="width:60px;height:60px;min-width:60px;border-radius:var(--ts-radius-sm);background:var(--ts-warning-light);display:flex;align-items:center;justify-content:center;">
+                                        <i class="bi bi-award" style="color:var(--ts-warning);font-size:1.5rem;"></i>
+                                    </div>
+                                }
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                        <strong style="font-size: 0.9rem; color: var(--ts-text);">@cert.Title</strong>
+                                        <div class="d-flex gap-1">
+                                            @if (cert.IsVerified)
+                                            {
+                                                <span class="chip chip-success" style="font-size:0.65rem;"><i class="bi bi-check-circle me-1"></i>Verifikuar</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(cert.DocumentUrl))
+                                            {
+                                                <a href="@cert.DocumentUrl" target="_blank" class="chip chip-primary" style="font-size:0.65rem;text-decoration:none;">
+                                                    <i class="bi bi-eye me-1"></i>Shiko
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(cert.IssuedBy))
+                                    {
+                                        <div style="font-size: 0.82rem; color: var(--ts-text-secondary);">
+                                            <i class="bi bi-building me-1"></i>@cert.IssuedBy
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(cert.CertificateNumber))
+                                    {
+                                        <div style="font-size: 0.75rem; color: var(--ts-text-muted);">
+                                            <i class="bi bi-hash me-1"></i>Nr: @cert.CertificateNumber
+                                        </div>
+                                    }
+                                    <div style="font-size: 0.75rem; color: var(--ts-text-muted); margin-top: 0.25rem;">
+                                        @if (cert.IssueDate.HasValue) 
+                                        { 
+                                            <span><i class="bi bi-calendar-check me-1"></i>@cert.IssueDate.Value.ToString("dd MMM yyyy")</span> 
+                                        }
+                                        @if (cert.ExpiryDate.HasValue) 
+                                        { 
+                                            <span class="ms-2"><i class="bi bi-calendar-x me-1"></i>Skadon: @cert.ExpiryDate.Value.ToString("dd MMM yyyy")</span>
+                                            @if (cert.ExpiryDate < DateTime.UtcNow) 
+                                            { 
+                                                <span class="chip chip-danger ms-1" style="font-size:0.6rem;">SKADUAR</span> 
+                                            }
+                                            else if (cert.ExpiryDate < DateTime.UtcNow.AddMonths(3))
+                                            {
+                                                <span class="chip chip-warning ms-1" style="font-size:0.6rem;">PO SKADON SË SHPEJTI</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Contact Info -->
+            <div class="profile-section fade-up">
+                <div class="profile-section-header">
+                    <i class="bi bi-info-circle"></i> Informacion
+                </div>
+                <div class="profile-section-body">
+                    <div class="d-flex flex-column gap-3">
+                        @if (!string.IsNullOrEmpty(Model.Technician.WorkingHours))
+                        {
+                            <div class="d-flex gap-2 align-items-center" style="font-size: 0.88rem;">
+                                <i class="bi bi-clock" style="color: var(--ts-primary); width:20px;"></i>
+                                <span style="color: var(--ts-text-secondary);">@Model.Technician.WorkingHours</span>
+                            </div>
+                        }
+                        @if (Model.Technician.ServiceRadiusKm.HasValue)
+                        {
+                            <div class="d-flex gap-2 align-items-center" style="font-size: 0.88rem;">
+                                <i class="bi bi-geo" style="color: var(--ts-primary); width:20px;"></i>
+                                <span style="color: var(--ts-text-secondary);">Rrezja: @Model.Technician.ServiceRadiusKm km</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Technician.SpokenLanguages))
+                        {
+                            <div class="d-flex gap-2 align-items-center" style="font-size: 0.88rem;">
+                                <i class="bi bi-translate" style="color: var(--ts-primary); width:20px;"></i>
+                                <span style="color: var(--ts-text-secondary);">@Model.Technician.SpokenLanguages</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Technician.LicenseNumber))
+                        {
+                            <div class="d-flex gap-2 align-items-center" style="font-size: 0.88rem;">
+                                <i class="bi bi-card-text" style="color: var(--ts-primary); width:20px;"></i>
+                                <span style="color: var(--ts-text-secondary);">Licencë: @Model.Technician.LicenseNumber</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back button -->
+            <a asp-page="/Technicians" class="btn btn-outline-primary btn-pill w-100 mt-2">
+                <i class="bi bi-arrow-left me-1"></i> Kthehu te Lista
+            </a>
+        </div>
+    </div>
+</div>

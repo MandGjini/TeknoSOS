@@ -1,0 +1,105 @@
+@page
+@model TeknoSOS.WebApp.Pages.ContactModel
+@{
+    ViewData["Title"] = await CMS.GetContentAsync("contact", "hero_title");
+}
+
+<!-- Hero Section — 2026 Style -->
+<section class="hero-2026" style="padding: 3.5rem 0;">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container text-center">
+        <div class="hero-badge mb-3 fade-up"><i class="bi bi-envelope"></i> Kontaktoni</div>
+        <h1 class="fade-up" style="font-size: 2.5rem;">@await CMS.GetContentAsync("contact", "hero_title")</h1>
+        <p class="hero-subtitle mx-auto fade-up" style="max-width: 600px;">@await CMS.GetContentAsync("contact", "hero_subtitle")</p>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -2rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    
+    @if (Model.SuccessMessage != null)
+    {
+        <div class="alert fade-up" style="background: var(--ts-success-light); border: 1px solid var(--ts-success); color: var(--ts-success); border-radius: var(--ts-radius);">
+            <i class="bi bi-check-circle me-2"></i> @Model.SuccessMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(50%) sepia(100%) saturate(300%) hue-rotate(100deg);"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Contact Form -->
+        <div class="col-lg-7 fade-up">
+            <div class="card" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-1" style="color: var(--ts-text);">Na Shkruani</h4>
+                        <p style="color: var(--ts-text-secondary); font-size: 0.9rem;">Plotësoni formularin dhe do t'ju përgjigjemi sa më shpejt.</p>
+                    </div>
+                    <form method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Input.Name" class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.88rem;">@await CMS.GetContentAsync("contact", "form_name")</label>
+                                <input asp-for="Input.Name" class="form-control" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border); padding: 0.75rem 1rem;" required />
+                                <span asp-validation-for="Input.Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Input.Email" class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.88rem;">@await CMS.GetContentAsync("contact", "form_email")</label>
+                                <input asp-for="Input.Email" class="form-control" type="email" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border); padding: 0.75rem 1rem;" required />
+                                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Input.Subject" class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.88rem;">@await CMS.GetContentAsync("contact", "form_subject")</label>
+                                <input asp-for="Input.Subject" class="form-control" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border); padding: 0.75rem 1rem;" required />
+                                <span asp-validation-for="Input.Subject" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Input.Message" class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.88rem;">@await CMS.GetContentAsync("contact", "form_message")</label>
+                                <textarea asp-for="Input.Message" class="form-control" rows="5" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border); padding: 0.75rem 1rem;" required></textarea>
+                                <span asp-validation-for="Input.Message" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg btn-pill w-100" style="padding: 0.85rem 2rem;">
+                                    <i class="bi bi-send me-2"></i> @await CMS.GetContentAsync("contact", "form_submit")
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="col-lg-5">
+            @foreach (var item in Model.InfoItems)
+            {
+                <div class="card mb-3 fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start gap-3">
+                            @if (!string.IsNullOrEmpty(item.IconClass))
+                            {
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: var(--ts-primary-light);">
+                                    <i class="bi @item.IconClass" style="font-size: 1.2rem; color: var(--ts-primary);"></i>
+                                </div>
+                            }
+                            <div>
+                                <h6 class="fw-bold mb-2" style="color: var(--ts-text);">@item.Title</h6>
+                                <p style="color: var(--ts-text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6;">@Html.Raw(item.Content)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Quick Links -->
+            <div class="card fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border); background: var(--ts-bg-secondary);">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3" style="color: var(--ts-text);"><i class="bi bi-link-45deg me-2"></i>Lidhje të Shpejta</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-page="/HowItWorks" class="chip chip-primary" style="text-decoration: none;">Si Funksionon</a>
+                        <a asp-page="/About" class="chip" style="text-decoration: none; background: var(--ts-bg-tertiary); color: var(--ts-text-secondary);">Rreth Nesh</a>
+                        <a asp-page="/Technicians" class="chip" style="text-decoration: none; background: var(--ts-bg-tertiary); color: var(--ts-text-secondary);">Teknikët</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

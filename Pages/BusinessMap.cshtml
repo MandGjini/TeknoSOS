@@ -1,0 +1,552 @@
+@page
+@model TeknoSOS.WebApp.Pages.BusinessMapModel
+@{
+    ViewData["Title"] = "Harta e Platformës - TeknoSOS";
+}
+
+<style>
+    #platformMap {
+        height: calc(100vh - 200px);
+        min-height: 500px;
+        border-radius: var(--ts-radius);
+        box-shadow: var(--ts-shadow);
+    }
+    
+    .map-legend {
+        background: var(--ts-surface);
+        border-radius: var(--ts-radius);
+        padding: 1rem;
+        box-shadow: var(--ts-shadow-sm);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .legend-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .legend-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    
+    .filter-bar {
+        background: var(--ts-surface);
+        border-radius: var(--ts-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--ts-shadow-sm);
+    }
+    
+    .map-stats {
+        display: flex;
+        gap: 1.5rem;
+    }
+    
+    .stat-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--ts-surface-hover);
+        border-radius: 50px;
+        font-size: 0.875rem;
+    }
+    
+    /* Custom popup styles */
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--ts-radius) !important;
+        box-shadow: var(--ts-shadow) !important;
+    }
+    
+    .map-popup {
+        min-width: 200px;
+    }
+    
+    .map-popup h6 {
+        margin-bottom: 0.5rem;
+        color: var(--ts-text);
+    }
+    
+    .map-popup .badge {
+        font-size: 0.7rem;
+    }
+    
+    .ecosystem-info {
+        background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: var(--ts-radius);
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Sidebar -->
+            <div class="ecosystem-info">
+                <h5 class="mb-2"><i class="bi bi-shield-lock"></i> Ekosistemi TeknoSOS</h5>
+                <p class="small mb-0">
+                    Gjeni teknikë, biznese dhe shërbime në hartë. Të gjitha ndërveprimet bëhen brenda platformës.
+                </p>
+            </div>
+            
+            <!-- Legend -->
+            <div class="map-legend mb-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-map"></i> Legjenda</h6>
+                
+                <div class="legend-section mb-3">
+                    <small class="text-muted fw-semibold">TEKNIKË</small>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #10b981;"></div>
+                        <span>Disponibël</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #f59e0b;"></div>
+                        <span>I zënë</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #6b7280;"></div>
+                        <span>Offline</span>
+                    </div>
+                </div>
+                
+                <div class="legend-section mb-3">
+                    <small class="text-muted fw-semibold">BIZNESE</small>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #3b82f6;"></div>
+                        <span>Furnizues</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #8b5cf6;"></div>
+                        <span>Shërbime</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #06b6d4;"></div>
+                        <span>Furnizues & Shërbime</span>
+                    </div>
+                </div>
+                
+                <div class="legend-section">
+                    <small class="text-muted fw-semibold">DEFEKTE</small>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #ef4444;"></div>
+                        <span>Kërkesë aktive</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="map-legend">
+                <h6 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Filtro</h6>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Shfaq në hartë:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="showTechnicians" checked onchange="toggleLayer('technicians')">
+                        <label class="form-check-label" for="showTechnicians">
+                            <i class="bi bi-person-badge text-success"></i> Teknikët
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="showBusinesses" checked onchange="toggleLayer('businesses')">
+                        <label class="form-check-label" for="showBusinesses">
+                            <i class="bi bi-shop text-primary"></i> Bizneset
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="showDefects" checked onchange="toggleLayer('defects')">
+                        <label class="form-check-label" for="showDefects">
+                            <i class="bi bi-tools text-danger"></i> Defektet
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Kategoria:</label>
+                    <select id="categoryFilter" class="form-select form-select-sm" onchange="filterByCategory()">
+                        <option value="">Të gjitha</option>
+                        <optgroup label="Teknikë">
+                            <option value="Electrical">Elektrike</option>
+                            <option value="Plumbing">Hidraulike</option>
+                            <option value="HVAC">Ngrohje/Ftohje</option>
+                            <option value="Appliances">Elektroshtepiake</option>
+                        </optgroup>
+                        <optgroup label="Biznese">
+                            <option value="ElectricalSupplies">Materiale Elektrike</option>
+                            <option value="PlumbingSupplies">Materiale Hidraulike</option>
+                            <option value="ConstructionMaterials">Materiale Ndërtimi</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Qyteti:</label>
+                    <select id="cityFilter" class="form-select form-select-sm" onchange="filterByCity()">
+                        <option value="">Të gjitha</option>
+                        <option value="Tiranë">Tiranë</option>
+                        <option value="Durrës">Durrës</option>
+                        <option value="Vlorë">Vlorë</option>
+                        <option value="Shkodër">Shkodër</option>
+                        <option value="Elbasan">Elbasan</option>
+                        <option value="Korçë">Korçë</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-sm btn-outline-secondary w-100" onclick="resetFilters()">
+                    <i class="bi bi-x-circle"></i> Pastro Filtrat
+                </button>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <!-- Stats Bar -->
+            <div class="filter-bar d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="map-stats">
+                    <div class="stat-badge">
+                        <i class="bi bi-person-badge text-success"></i>
+                        <span id="technicianCount">0</span> Teknikë
+                    </div>
+                    <div class="stat-badge">
+                        <i class="bi bi-shop text-primary"></i>
+                        <span id="businessCount">0</span> Biznese
+                    </div>
+                    <div class="stat-badge">
+                        <i class="bi bi-tools text-danger"></i>
+                        <span id="defectCount">0</span> Defekte
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="locateMe()">
+                        <i class="bi bi-crosshair"></i> Vendndodhja Ime
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="refreshMap()">
+                        <i class="bi bi-arrow-clockwise"></i> Rifresko
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Map -->
+            <div id="platformMap"></div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        // Initialize map centered on Albania
+        const map = L.map('platformMap').setView([41.3275, 19.8187], 8);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Layer groups
+        const techniciansLayer = L.layerGroup().addTo(map);
+        const businessesLayer = L.layerGroup().addTo(map);
+        const defectsLayer = L.layerGroup().addTo(map);
+        
+        // Data storage
+        let allTechnicians = [];
+        let allBusinesses = [];
+        let allDefects = [];
+
+        // Custom icons
+        function createTechnicianIcon(isAvailable, isVerified) {
+            const color = isAvailable ? '#10b981' : '#f59e0b';
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: ${color};
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    border: 2px solid white;
+                ">
+                    <i class="bi bi-person-badge" style="transform: rotate(45deg); color: white; font-size: 14px;"></i>
+                </div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+        }
+
+        function createBusinessIcon(type) {
+            const colors = {
+                'Supplier': '#3b82f6',
+                'ServiceProvider': '#8b5cf6',
+                'Both': '#06b6d4'
+            };
+            const color = colors[type] || '#6b7280';
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: ${color};
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    border: 2px solid white;
+                ">
+                    <i class="bi bi-shop" style="transform: rotate(45deg); color: white; font-size: 14px;"></i>
+                </div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+        }
+
+        function createDefectIcon() {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: #ef4444;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    border: 2px solid white;
+                ">
+                    <i class="bi bi-tools" style="transform: rotate(45deg); color: white; font-size: 14px;"></i>
+                </div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+        }
+
+        // Load data
+        async function loadMapData() {
+            try {
+                // Load technicians
+                const techResponse = await fetch('/api/technicians/locations');
+                if (techResponse.ok) {
+                    allTechnicians = await techResponse.json();
+                    renderTechnicians();
+                }
+
+                // Load businesses
+                const bizResponse = await fetch('/api/businesses/locations');
+                if (bizResponse.ok) {
+                    allBusinesses = await bizResponse.json();
+                    renderBusinesses();
+                }
+
+                // Load defects (only active ones)
+                const defResponse = await fetch('/api/defects/locations');
+                if (defResponse.ok) {
+                    allDefects = await defResponse.json();
+                    renderDefects();
+                }
+
+                updateCounts();
+            } catch (error) {
+                console.error('Error loading map data:', error);
+            }
+        }
+
+        function renderTechnicians(filter = null) {
+            techniciansLayer.clearLayers();
+            let filtered = allTechnicians;
+            
+            if (filter?.category) {
+                filtered = filtered.filter(t => t.specialties?.includes(filter.category));
+            }
+            if (filter?.city) {
+                filtered = filtered.filter(t => t.city === filter.city);
+            }
+
+            filtered.forEach(tech => {
+                if (tech.latitude && tech.longitude) {
+                    const marker = L.marker([tech.latitude, tech.longitude], {
+                        icon: createTechnicianIcon(tech.isAvailable, tech.isVerified)
+                    });
+                    
+                    marker.bindPopup(`
+                        <div class="map-popup">
+                            <h6><i class="bi bi-person-badge text-success"></i> ${tech.fullName}</h6>
+                            <p class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> ${tech.city || 'Pa vendndodhje'}
+                            </p>
+                            ${tech.isVerified ? '<span class="badge bg-success me-1"><i class="bi bi-patch-check"></i> I verifikuar</span>' : ''}
+                            ${tech.isAvailable ? '<span class="badge bg-primary">Disponibël</span>' : '<span class="badge bg-warning">I zënë</span>'}
+                            ${tech.averageRating > 0 ? `<div class="mt-2 text-warning"><i class="bi bi-star-fill"></i> ${tech.averageRating.toFixed(1)}</div>` : ''}
+                            <div class="mt-2">
+                                <a href="/Technicians" class="btn btn-sm btn-primary">Shiko Profilin</a>
+                            </div>
+                        </div>
+                    `);
+                    
+                    techniciansLayer.addLayer(marker);
+                }
+            });
+        }
+
+        function renderBusinesses(filter = null) {
+            businessesLayer.clearLayers();
+            let filtered = allBusinesses;
+            
+            if (filter?.category) {
+                filtered = filtered.filter(b => b.category === filter.category);
+            }
+            if (filter?.city) {
+                filtered = filtered.filter(b => b.city === filter.city);
+            }
+
+            filtered.forEach(biz => {
+                if (biz.latitude && biz.longitude) {
+                    const marker = L.marker([biz.latitude, biz.longitude], {
+                        icon: createBusinessIcon(biz.type)
+                    });
+                    
+                    marker.bindPopup(`
+                        <div class="map-popup">
+                            <h6><i class="bi bi-shop text-primary"></i> ${biz.name}</h6>
+                            <p class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> ${biz.city || 'Pa vendndodhje'}
+                            </p>
+                            <span class="badge bg-primary">${biz.categoryText}</span>
+                            ${biz.isVerified ? '<span class="badge bg-success ms-1"><i class="bi bi-patch-check"></i></span>' : ''}
+                            ${biz.averageRating > 0 ? `<div class="mt-2 text-warning"><i class="bi bi-star-fill"></i> ${biz.averageRating.toFixed(1)}</div>` : ''}
+                            <div class="mt-2">
+                                <a href="/BusinessDetails/${biz.id}" class="btn btn-sm btn-primary">Shiko Biznesin</a>
+                            </div>
+                        </div>
+                    `);
+                    
+                    businessesLayer.addLayer(marker);
+                }
+            });
+        }
+
+        function renderDefects(filter = null) {
+            defectsLayer.clearLayers();
+            let filtered = allDefects;
+            
+            if (filter?.category) {
+                filtered = filtered.filter(d => d.category === filter.category);
+            }
+            if (filter?.city) {
+                filtered = filtered.filter(d => d.location?.includes(filter.city));
+            }
+
+            filtered.forEach(defect => {
+                if (defect.latitude && defect.longitude) {
+                    const marker = L.marker([defect.latitude, defect.longitude], {
+                        icon: createDefectIcon()
+                    });
+                    
+                    marker.bindPopup(`
+                        <div class="map-popup">
+                            <h6><i class="bi bi-tools text-danger"></i> ${defect.title}</h6>
+                            <p class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> ${defect.location || 'Pa adresë'}
+                            </p>
+                            <span class="badge bg-secondary">${defect.category}</span>
+                            <span class="badge bg-info">${defect.status}</span>
+                            <div class="mt-2">
+                                <a href="/DefectDetails/${defect.id}" class="btn btn-sm btn-outline-danger">Shiko Detajet</a>
+                            </div>
+                        </div>
+                    `);
+                    
+                    defectsLayer.addLayer(marker);
+                }
+            });
+        }
+
+        function updateCounts() {
+            document.getElementById('technicianCount').textContent = allTechnicians.length;
+            document.getElementById('businessCount').textContent = allBusinesses.length;
+            document.getElementById('defectCount').textContent = allDefects.length;
+        }
+
+        function toggleLayer(layer) {
+            const checkbox = document.getElementById('show' + layer.charAt(0).toUpperCase() + layer.slice(1));
+            const layerGroup = layer === 'technicians' ? techniciansLayer : 
+                              layer === 'businesses' ? businessesLayer : defectsLayer;
+            
+            if (checkbox.checked) {
+                map.addLayer(layerGroup);
+            } else {
+                map.removeLayer(layerGroup);
+            }
+        }
+
+        function filterByCategory() {
+            const category = document.getElementById('categoryFilter').value;
+            const city = document.getElementById('cityFilter').value;
+            const filter = { category, city };
+            
+            renderTechnicians(filter);
+            renderBusinesses(filter);
+            renderDefects(filter);
+        }
+
+        function filterByCity() {
+            filterByCategory(); // Same logic
+        }
+
+        function resetFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            renderTechnicians();
+            renderBusinesses();
+            renderDefects();
+        }
+
+        function locateMe() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+                    L.marker([pos.coords.latitude, pos.coords.longitude], {
+                        icon: L.divIcon({
+                            className: 'my-location',
+                            html: '<div style="background: #3b82f6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(59,130,246,0.5);"></div>',
+                            iconSize: [16, 16]
+                        })
+                    }).addTo(map).bindPopup('Vendndodhja juaj').openPopup();
+                });
+            }
+        }
+
+        function refreshMap() {
+            loadMapData();
+        }
+
+        // Initialize
+        loadMapData();
+        
+        // Auto-refresh every 60 seconds
+        setInterval(loadMapData, 60000);
+    </script>
+}

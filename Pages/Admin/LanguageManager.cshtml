@@ -1,0 +1,130 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.LanguageManagerModel
+@{
+    ViewData["Title"] = "Menaxhimi i Gjuheve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0"><i class="bi bi-translate text-primary"></i> Menaxhimi i Gjuheve</h3>
+        <p class="text-muted mb-0">Monitoro dhe menaxho perkthimet e platformen</p>
+    </div>
+    <span class="badge bg-info fs-6">@Model.TotalContentBlocks blloqe totale</span>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Language Status Cards -->
+<div class="row g-3 mb-4">
+    @foreach (var lang in Model.LanguageStats)
+    {
+        <div class="col-md-4 col-lg">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="mb-1">@lang.LanguageCode.ToUpper()</h4>
+                    <small class="text-muted d-block mb-2">@lang.LanguageName</small>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar @(lang.CompletionPercent >= 100 ? "bg-success" : lang.CompletionPercent >= 50 ? "bg-warning" : "bg-danger")"
+                             style="width: @lang.CompletionPercent%"></div>
+                    </div>
+                    <strong>@lang.CompletionPercent%</strong>
+                    <small class="text-muted d-block">@lang.ContentCount / @(lang.ContentCount + lang.MissingCount) blloqe</small>
+                    @if (lang.MissingCount > 0)
+                    {
+                        <span class="badge bg-warning text-dark mt-1">@lang.MissingCount mungojne</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success mt-1">Komplet</span>
+                    }
+                </div>
+                <div class="card-footer bg-transparent py-2">
+                    <div class="d-flex gap-1">
+                        <a asp-page="/Admin/LanguageManager" asp-route-CheckLanguage="@lang.LanguageCode" class="btn btn-outline-primary btn-sm flex-fill">
+                            <i class="bi bi-search"></i> Kontrollo
+                        </a>
+                        @if (lang.MissingCount > 0)
+                        {
+                            <form method="post" asp-page-handler="AutoTranslate" class="flex-fill">
+                                <input type="hidden" name="language" value="@lang.LanguageCode" />
+                                <button type="submit" class="btn btn-outline-success btn-sm w-100" onclick="return confirm('Kopjo permbajtjen shqip si baze per perkthim?')">
+                                    <i class="bi bi-plus"></i> Gjenero
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Missing Translations Detail -->
+@if (!string.IsNullOrEmpty(Model.CheckLanguage) && Model.MissingTranslations.Any())
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="mb-0">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+                Perkthime qe mungojne per <strong>@Model.CheckLanguage.ToUpper()</strong>
+                <span class="badge bg-warning text-dark">@Model.MissingTranslations.Count</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Faqja</th>
+                            <th>Seksioni</th>
+                            <th>Veprim</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var key in Model.MissingTranslations)
+                        {
+                            var parts = key.Split(':');
+                            <tr>
+                                <td><code>@parts[0]</code></td>
+                                <td><code>@(parts.Length > 1 ? parts[1] : "-")</code></td>
+                                <td>
+                                    <a asp-page="/Admin/ContentManager" asp-route-pageFilter="@parts[0]" class="btn btn-outline-primary btn-sm py-0">
+                                        <i class="bi bi-pencil"></i> Edito
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(Model.CheckLanguage) && !Model.MissingTranslations.Any())
+{
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i> Te gjitha perkthimet jane te plota per <strong>@Model.CheckLanguage.ToUpper()</strong>!
+    </div>
+}
+
+<!-- Quick Links -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h6 class="mb-0"><i class="bi bi-link-45deg"></i> Vegla te Shpejta</h6>
+    </div>
+    <div class="card-body">
+        <a asp-page="/Admin/ContentManager" class="btn btn-outline-primary me-2">
+            <i class="bi bi-file-text"></i> Content Manager
+        </a>
+        <a asp-page="/Admin/Settings" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-gear"></i> Cilesimet e Gjuheve
+        </a>
+    </div>
+</div>

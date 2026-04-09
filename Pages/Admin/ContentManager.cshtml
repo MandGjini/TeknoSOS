@@ -1,0 +1,277 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.ContentManagerModel
+@{
+    ViewData["Title"] = "Menaxhimi i Permbajtjes";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-file-text text-primary"></i> Menaxhimi i Përmbajtjes (CMS)</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> Shto Përmbajtje të Re
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMsg))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Faqja</label>
+                <select name="selectedPage" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Zgjidh faqen --</option>
+                    @foreach (var pg in Model.AvailablePages)
+                    {
+                        <option value="@pg" selected="@(Model.SelectedPage == pg)">@pg</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Gjuha</label>
+                <select name="selectedLang" class="form-select" onchange="this.form.submit()">
+                    <option value="sq" selected="@(Model.SelectedLang == "sq")">AL - Shqip</option>
+                    <option value="en" selected="@(Model.SelectedLang == "en")">EN - English</option>
+                    <option value="it" selected="@(Model.SelectedLang == "it")">IT - Italiano</option>
+                    <option value="de" selected="@(Model.SelectedLang == "de")">DE - Deutsch</option>
+                    <option value="fr" selected="@(Model.SelectedLang == "fr")">FR - Francais</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtro
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SelectedPage))
+{
+    @if (Model.ContentItems.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-grid-3x3-gap"></i> @Model.SelectedPage
+                    <span class="badge bg-secondary ms-2">@Model.ContentItems.Count blloqe</span>
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:40px">Nr</th>
+                            <th>Seksioni</th>
+                                        <th>Titulli</th>
+                            <th style="width:80px">Tipi</th>
+                            <th style="width:60px">Rendi</th>
+                            <th style="width:70px">Aktiv</th>
+                            <th style="width:180px">Veprime</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ContentItems.OrderBy(c => c.SortOrder))
+                        {
+                            <tr>
+                                <td class="text-muted">@item.Id</td>
+                                <td>
+                                    <code class="small">@item.SectionKey</code>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.IconClass))
+                                    {
+                                        <i class="bi @item.IconClass me-1"></i>
+                                    }
+                                    @(item.Title?.Length > 60 ? item.Title[..60] + "..." : item.Title)
+                                </td>
+                                <td><span class="badge bg-info text-dark">@item.ContentType</span></td>
+                                <td class="text-center">@item.SortOrder</td>
+                                <td class="text-center">
+                                    @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">Po</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Jo</span>
+                                        }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" title="Modifiko"
+                                            data-bs-toggle="modal" data-bs-target="#editModal"
+                                            onclick="fillForm(@item.Id, '@item.PageKey', '@item.SectionKey', '@item.Language', '@System.Net.WebUtility.HtmlEncode(item.Title ?? "")', '@System.Net.WebUtility.HtmlEncode(item.Content ?? "")', '@item.ImageUrl', '@item.IconClass', @item.SortOrder, @(item.IsActive ? "true" : "false"), '@item.ContentType', '@System.Net.WebUtility.HtmlEncode(item.Metadata ?? "")')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="post" asp-page-handler="Duplicate" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnPage" value="@Model.SelectedPage" />
+                                        <input type="hidden" name="returnLang" value="@Model.SelectedLang" />
+                                        <input type="hidden" name="targetLang" value="@(Model.SelectedLang == "sq" ? "en" : "sq")" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary me-1" title="Kopjo ne @(Model.SelectedLang == "sq" ? "EN" : "SQ")">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" class="d-inline"
+                                          onsubmit="return confirm('Jeni i sigurt qe doni ta fshini?')">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnPage" value="@Model.SelectedPage" />
+                                        <input type="hidden" name="returnLang" value="@Model.SelectedLang" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Fshi">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+            <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Nuk ka përmbajtje për faqen <strong>@Model.SelectedPage</strong> në gjuhën <strong>@Model.SelectedLang</strong>.
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-light border">
+        <i class="bi bi-arrow-up-circle"></i> Zgjidhni një faqe nga filtrat më lart për të menaxhuar përmbajtjen.
+    </div>
+}
+
+<!-- Edit/Add Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Save">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"><i class="bi bi-pencil-square"></i> Modifiko Përmbajtjen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="EditId" id="frmId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Faqja (PageKey)</label>
+                            <input name="EditPageKey" id="frmPageKey" class="form-control" required
+                                   value="@(Model.SelectedPage ?? "")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Seksioni (SectionKey)</label>
+                            <input name="EditSectionKey" id="frmSectionKey" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Gjuha</label>
+                            <select name="EditLanguage" id="frmLanguage" class="form-select">
+                                <option value="sq">AL - Shqip</option>
+                                <option value="en">EN - English</option>
+                                <option value="it">IT - Italiano</option>
+                                <option value="de">DE - Deutsch</option>
+                                <option value="fr">FR - Francais</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Titulli</label>
+                            <input name="EditTitle" id="frmTitle" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Përmbajtja</label>
+                            <textarea name="EditContent" id="frmContent" class="form-control" rows="6"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">URL e Imazhit</label>
+                            <input name="EditImageUrl" id="frmImageUrl" class="form-control" placeholder="/images/..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Klasa e Ikones (Bootstrap Icons)</label>
+                            <input name="EditIconClass" id="frmIconClass" class="form-control" placeholder="bi-star" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Rendi (SortOrder)</label>
+                            <input name="EditSortOrder" id="frmSortOrder" type="number" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Tipi</label>
+                            <select name="EditContentType" id="frmContentType" class="form-select">
+                                <option value="text">text</option>
+                                <option value="html">html</option>
+                                <option value="faq">faq</option>
+                                <option value="testimonial">testimonial</option>
+                                <option value="feature">feature</option>
+                                <option value="step">step</option>
+                                <option value="stat">stat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" name="EditIsActive" id="frmIsActive" value="true" checked />
+                                <label class="form-check-label fw-semibold" for="frmIsActive">Aktiv</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Metadata (JSON)</label>
+                            <input name="EditMetadata" id="frmMetadata" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function resetForm() {
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-lg"></i> Shto Permbajtje te Re';
+        document.getElementById('frmId').value = 0;
+        document.getElementById('frmPageKey').value = '@(Model.SelectedPage ?? "")';
+        document.getElementById('frmSectionKey').value = '';
+        document.getElementById('frmLanguage').value = '@(Model.SelectedLang ?? "sq")';
+        document.getElementById('frmTitle').value = '';
+        document.getElementById('frmContent').value = '';
+        document.getElementById('frmImageUrl').value = '';
+        document.getElementById('frmIconClass').value = '';
+        document.getElementById('frmSortOrder').value = 0;
+        document.getElementById('frmIsActive').checked = true;
+        document.getElementById('frmContentType').value = 'text';
+        document.getElementById('frmMetadata').value = '';
+    }
+
+    function fillForm(id, pageKey, sectionKey, lang, title, content, imageUrl, iconClass, sortOrder, isActive, contentType, metadata) {
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Modifiko Permbajtjen #' + id;
+        document.getElementById('frmId').value = id;
+        document.getElementById('frmPageKey').value = pageKey;
+        document.getElementById('frmSectionKey').value = sectionKey;
+        document.getElementById('frmLanguage').value = lang;
+        document.getElementById('frmTitle').value = decodeEntities(title);
+        document.getElementById('frmContent').value = decodeEntities(content);
+        document.getElementById('frmImageUrl').value = imageUrl || '';
+        document.getElementById('frmIconClass').value = iconClass || '';
+        document.getElementById('frmSortOrder').value = sortOrder;
+        document.getElementById('frmIsActive').checked = isActive;
+        document.getElementById('frmContentType').value = contentType || 'text';
+        document.getElementById('frmMetadata').value = decodeEntities(metadata);
+    }
+
+    function decodeEntities(str) {
+        var txt = document.createElement('textarea');
+        txt.innerHTML = str;
+        return txt.value;
+    }
+</script>
+}

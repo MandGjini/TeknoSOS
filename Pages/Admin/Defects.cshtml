@@ -1,0 +1,141 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.DefectsModel
+@{
+    ViewData["Title"] = "Menaxhimi i Defekteve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-tools text-primary"></i> Menaxhimi i Defekteve</h2>
+    <span class="badge bg-primary fs-6">@Model.AllDefects.Count defekte</span>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Statusi</label>
+                <select asp-for="StatusFilter" class="form-select form-select-sm">
+                    <option value="">Të gjitha</option>
+                    <option value="Created">Krijuar</option>
+                    <option value="Matched">Përshtatur</option>
+                    <option value="InProgress">Në Progres</option>
+                    <option value="Completed">Përfunduar</option>
+                    <option value="Cancelled">Anuluar</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Kategoria</label>
+                <select asp-for="CategoryFilter" class="form-select form-select-sm">
+                    <option value="">Të gjitha</option>
+                    <option value="Plumbing">Hidraulikë</option>
+                    <option value="Electrical">Elektrike</option>
+                    <option value="HVAC">Ngrohje/Ftohje</option>
+                    <option value="Carpentry">Zdrukthtëtar</option>
+                    <option value="Appliance">Pajisje</option>
+                    <option value="General">Përgjithshme</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Kërko</label>
+                <input asp-for="SearchQuery" class="form-control form-select-sm" placeholder="Titulli, përshkrimi..." />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-search"></i> Filtro</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Titulli</th>
+                    <th>Kategoria</th>
+                    <th>Statusi</th>
+                    <th>Prioriteti</th>
+                    <th>Klienti</th>
+                    <th>Data</th>
+                    <th class="text-end">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.AllDefects)
+                {
+                    <tr>
+                        <td class="fw-bold">@d.Id</td>
+                        <td>
+                            <a asp-page="/DefectDetails" asp-route-id="@d.Id" class="text-decoration-none">
+                                @d.Title.Substring(0, Math.Min(d.Title.Length, 40))
+                            </a>
+                        </td>
+                        <td><span class="badge bg-secondary">@d.Category</span></td>
+                        <td>
+                            <span class="badge @GetBadge(d.Status)">@d.Status</span>
+                        </td>
+                        <td>
+                            @if (d.Priority == ServiceRequestPriority.Emergency || d.Priority == ServiceRequestPriority.High)
+                            {
+                                <span class="badge bg-danger">Urgjent</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark">Normal</span>
+                            }
+                        </td>
+                        <td class="small">@d.Citizen?.GetFullName()</td>
+                        <td class="small">@d.CreatedDate.ToString("dd/MM/yy")</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-page="/DefectDetails" asp-route-id="@d.Id" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <form method="post" asp-page-handler="UpdateStatus" class="d-inline">
+                                    <input type="hidden" name="defectId" value="@d.Id" />
+                                    <select name="newStatus" onchange="this.form.submit()" class="form-select form-select-sm d-inline" style="width: auto;">
+                                        <option value="">Status...</option>
+                                        <option value="Created">Krijuar</option>
+                                        <option value="Matched">Përshtatur</option>
+                                        <option value="InProgress">Në Progres</option>
+                                        <option value="Completed">Përfunduar</option>
+                                        <option value="Cancelled">Anuluar</option>
+                                        <option value="Rejected">Refuzuar</option>
+                                    </select>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Fshi defektin #@d.Id?')">
+                                    <input type="hidden" name="defectId" value="@d.Id" />
+                                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    string GetBadge(ServiceRequestStatus s) => s switch
+    {
+        ServiceRequestStatus.Created => "bg-info",
+        ServiceRequestStatus.Matched => "bg-primary",
+        ServiceRequestStatus.InProgress => "bg-warning text-dark",
+        ServiceRequestStatus.Completed => "bg-success",
+        ServiceRequestStatus.Cancelled => "bg-secondary",
+        ServiceRequestStatus.Rejected => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

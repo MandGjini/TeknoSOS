@@ -1,0 +1,100 @@
+@using TeknoSOS.WebApp.Services
+@inject IBannerService BannerService
+@{
+    var position = ViewData["Position"]?.ToString() ?? "header";
+    var pageKey = ViewData["PageKey"]?.ToString() ?? "*";
+    var cssClass = ViewData["CssClass"]?.ToString() ?? "";
+    
+    try
+    {
+        var banners = await BannerService.GetActiveBannersAsync(position, pageKey);
+        
+        if (banners.Any())
+        {
+            <div class="ts-banners ts-banners-@position @cssClass">
+                @foreach (var banner in banners)
+                {
+                    <div class="ts-banner" 
+                         data-banner-id="@banner.Id" 
+                         data-position="@banner.Position"
+                         style="@(string.IsNullOrEmpty(banner.BackgroundColor) ? "" : $"background-color: {banner.BackgroundColor};")"
+                         onclick="if(this.dataset.link) { trackBannerClick(@banner.Id); }">
+                        
+                        @if (banner.ShowCloseButton)
+                        {
+                            <button type="button" class="ts-banner-close" onclick="closeBanner(this.closest('.ts-banner')); event.stopPropagation();" aria-label="Close">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(banner.LinkUrl))
+                        {
+                            <a href="@banner.LinkUrl" 
+                               target="@banner.LinkTarget" 
+                               class="ts-banner-link"
+                               onclick="trackBannerClick(@banner.Id)"
+                               rel="@(banner.LinkTarget == "_blank" ? "noopener noreferrer" : "")">
+                                @if (!string.IsNullOrEmpty(banner.ImageUrl))
+                                {
+                                    <picture>
+                                        @if (!string.IsNullOrEmpty(banner.MobileImageUrl))
+                                        {
+                                            <source media="(max-width: 768px)" srcset="@banner.MobileImageUrl">
+                                        }
+                                        <img src="@banner.ImageUrl" 
+                                             alt="@(string.IsNullOrEmpty(banner.AltText) ? banner.Name : banner.AltText)" 
+                                             class="ts-banner-img"
+                                             loading="lazy" />
+                                    </picture>
+                                }
+                                @if (!string.IsNullOrEmpty(banner.HtmlContent))
+                                {
+                                    <div class="ts-banner-content">
+                                        @Html.Raw(banner.HtmlContent)
+                                    </div>
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(banner.ImageUrl))
+                            {
+                                <picture>
+                                    @if (!string.IsNullOrEmpty(banner.MobileImageUrl))
+                                    {
+                                        <source media="(max-width: 768px)" srcset="@banner.MobileImageUrl">
+                                    }
+                                    <img src="@banner.ImageUrl" 
+                                         alt="@(string.IsNullOrEmpty(banner.AltText) ? banner.Name : banner.AltText)" 
+                                         class="ts-banner-img"
+                                         loading="lazy" />
+                                </picture>
+                            }
+                            @if (!string.IsNullOrEmpty(banner.HtmlContent))
+                            {
+                                <div class="ts-banner-content">
+                                    @Html.Raw(banner.HtmlContent)
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                    <script>
+                        // Track view for banner @banner.Id
+                        (function() {
+                            const viewed = sessionStorage.getItem('ts-banner-viewed-@banner.Id');
+                            if (!viewed) {
+                                fetch('/api/banners/@banner.Id/view', { method: 'POST' }).catch(() => {});
+                                sessionStorage.setItem('ts-banner-viewed-@banner.Id', '1');
+                            }
+                        })();
+                    </script>
+                }
+            </div>
+        }
+    }
+    catch
+    {
+        // Silently fail if banners cannot be loaded
+    }
+}

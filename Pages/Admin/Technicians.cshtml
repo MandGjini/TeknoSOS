@@ -1,0 +1,150 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.TechniciansModel
+@{
+    ViewData["Title"] = "Menaxhimi i Teknikeve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0"><i class="bi bi-person-badge text-primary"></i> Menaxhimi i Teknikeve</h3>
+        <p class="text-muted mb-0">Verifiko, menaxho dhe monitoro tekniket e platformes</p>
+    </div>
+    <span class="badge bg-primary fs-6">@Model.Technicians.Count teknik</span>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control form-control-sm" placeholder="Kerko sipas emrit, emailit, qytetit..." />
+            </div>
+            <div class="col-md-3">
+                <select name="StatusFilter" class="form-select form-select-sm">
+                    <option value="">Te gjitha</option>
+                    <option value="verified" selected="@(Model.StatusFilter == "verified")">Te verifikuar</option>
+                    <option value="unverified" selected="@(Model.StatusFilter == "unverified")">Pa verifikuar</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Jo aktive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Filtro</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Technicians Table -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Teknik</th>
+                    <th>Specialitete</th>
+                    <th class="text-center">Rating</th>
+                    <th class="text-center">Pune</th>
+                    <th class="text-center">Certifikata</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tech in Model.Technicians)
+                {
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>@tech.FullName</strong>
+                                @if (tech.IsProfileVerified)
+                                {
+                                    <i class="bi bi-patch-check-fill text-primary ms-1" title="I verifikuar"></i>
+                                }
+                            </div>
+                            <small class="text-muted">@tech.Email</small>
+                            @if (!string.IsNullOrEmpty(tech.City))
+                            {
+                                <br /><small class="text-muted"><i class="bi bi-geo-alt"></i> @tech.City</small>
+                            }
+                            @if (!string.IsNullOrEmpty(tech.CompanyName))
+                            {
+                                <br /><small class="text-muted"><i class="bi bi-building"></i> @tech.CompanyName</small>
+                            }
+                        </td>
+                        <td>
+                            @foreach (var spec in tech.Specialties.Take(3))
+                            {
+                                <span class="badge bg-info text-dark me-1">@spec</span>
+                            }
+                            @if (tech.Specialties.Count > 3)
+                            {
+                                <span class="badge bg-secondary">+@(tech.Specialties.Count - 3)</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (tech.AverageRating.HasValue)
+                            {
+                                <span class="text-warning"><i class="bi bi-star-fill"></i></span>
+                                <strong>@tech.AverageRating.Value.ToString("F1")</strong>
+                                <br /><small class="text-muted">(@tech.TotalReviews)</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <strong>@tech.CompletedJobs</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">@tech.CertificateCount</span>
+                            <br /><small class="text-muted">@tech.PortfolioCount portfolio</small>
+                        </td>
+                        <td class="text-center">
+                            @if (tech.IsActive && tech.IsAvailable)
+                            {
+                                <span class="badge bg-success">Aktiv</span>
+                            }
+                            else if (tech.IsActive)
+                            {
+                                <span class="badge bg-warning text-dark">I zene</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Jo aktiv</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                <a href="/Admin/EditTechnicianProfile/@tech.Id" class="btn btn-outline-primary btn-sm" title="Edito Profilin">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                @if (!tech.IsProfileVerified)
+                                {
+                                    <form method="post" asp-page-handler="Verify" class="d-inline">
+                                        <input type="hidden" name="userId" value="@tech.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm" title="Verifiko"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                }
+                                <form method="post" asp-page-handler="ToggleActive" class="d-inline">
+                                    <input type="hidden" name="userId" value="@tech.Id" />
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm" title="Aktivizo/Deaktivizo">
+                                        <i class="bi bi-toggle-@(tech.IsActive ? "on" : "off")"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Technicians.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-person-badge" style="font-size: 3rem;"></i>
+            <p class="mt-2">Nuk ka teknik te regjistruar</p>
+        </div>
+    }
+</div>

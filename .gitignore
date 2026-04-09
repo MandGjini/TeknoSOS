@@ -1,0 +1,177 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio files
+*.suo
+*.user
+*.sln.docstates
+*.userprefs
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# NuGet Packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+# NuGet v3's project.json files produces more ignorable files
+*.nuget.props
+*.nuget.targets
+
+# Entity Framework
+Migrations/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# User secrets
+appsettings.secrets.json
+secrets.json
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+# Android SDK / build artifacts
+Mobile/android-sdk/
+Mobile/jdk/
+Mobile/cmdline-tools-extract/
+Mobile/cmdline-tools.zip
+Mobile/temurin17.zip
+Mobile/*.bin
+Mobile/TeknoSOS.Android/.gradle/
+Mobile/TeknoSOS.Android/build/
+Mobile/TeknoSOS.Android/app/build/
+Mobile/TeknoSOS.Android/local.properties
+Mobile/TeknoSOS.Android/buildlog.txt
+Mobile/TeknoSOS.Android/build-output.log
+*.apk
+*.aab
+
+# iOS build artifacts
+Mobile/TeknoSOS.iOS/build/
+Mobile/TeknoSOS.iOS/*.ipa
+
+
+Mobile/TeknoSOS.Android/tools/
+Mobile/TeknoSOS.Android/.gradle/
+
+
+# Android Gradle binaries (too large for GitHub)
+Mobile/TeknoSOS.Android/tools/
+Mobile/TeknoSOS.Android/.gradle/
+Mobile/TeknoSOS.Android/build/
+Mobile/TeknoSOS.Android/app/build/
+Mobile/TeknoSOS.Android/local.properties
+Mobile/TeknoSOS.Android/build-output.log
+Mobile/TeknoSOS.Android/buildlog.txt
+Mobile/android-sdk/
+Mobile/jdk/
+Mobile/cmdline-tools-extract/
+Mobile/cmdline-tools.zip
+Mobile/temurin17.zip
+Mobile/*.bin
+*.apk
+*.aab
+
+# iOS build output
+Mobile/TeknoSOS.iOS/build/
+Mobile/TeknoSOS.iOS/*.ipa
+
+publish/
+
+*.zip
+*.tar.gz

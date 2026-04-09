@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TeknoSOS</string>
+    
+    <!-- General -->
+    <string name="loading">Duke ngarkuar...</string>
+    <string name="error">Gabim</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Anulo</string>
+    <string name="save">Ruaj</string>
+    <string name="delete">Fshi</string>
+    <string name="edit">Edito</string>
+    <string name="search">Kërko</string>
+    <string name="retry">Provo përsëri</string>
+    
+    <!-- Auth -->
+    <string name="login">Hyr</string>
+    <string name="register">Regjistrohu</string>
+    <string name="logout">Dil</string>
+    <string name="email">Email</string>
+    <string name="password">Fjalëkalimi</string>
+    <string name="confirm_password">Konfirmo fjalëkalimin</string>
+    <string name="first_name">Emri</string>
+    <string name="last_name">Mbiemri</string>
+    <string name="phone">Numri i telefonit</string>
+    <string name="forgot_password">Harrove fjalëkalimin?</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Kryefaqja</string>
+    <string name="nav_defects">Defektet</string>
+    <string name="nav_technicians">Teknikë</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_profile">Profili</string>
+    
+    <!-- Defects -->
+    <string name="report_defect">Raporto Defekt</string>
+    <string name="my_defects">Defektet e Mia</string>
+    <string name="defect_title">Titulli</string>
+    <string name="defect_description">Përshkrimi</string>
+    <string name="defect_category">Kategoria</string>
+    <string name="defect_priority">Prioriteti</string>
+    <string name="defect_location">Vendndodhja</string>
+    <string name="defect_photos">Fotot</string>
+    
+    <!-- Categories -->
+    <string name="category_electrical">Elektrike</string>
+    <string name="category_plumbing">Hidraulike</string>
+    <string name="category_hvac">Ngrohje/Ftohje</string>
+    <string name="category_carpentry">Zdrukthëtari</string>
+    <string name="category_it">IT/Kompjuter</string>
+    <string name="category_devices">Pajisje</string>
+    <string name="category_general">Të përgjithshme</string>
+    <string name="category_ev_charger">Karikues EV</string>
+    <string name="category_security">Siguri</string>
+    
+    <!-- Status -->
+    <string name="status_created">Krijuar</string>
+    <string name="status_matched">Përputhur</string>
+    <string name="status_in_progress">Në Progres</string>
+    <string name="status_completed">Përfunduar</string>
+    <string name="status_cancelled">Anuluar</string>
+    
+    <!-- Priority -->
+    <string name="priority_normal">Normal</string>
+    <string name="priority_high">I Lartë</string>
+    <string name="priority_emergency">Urgjent</string>
+    
+    <!-- Technicians -->
+    <string name="find_technicians">Gjej Teknikë</string>
+    <string name="available">I disponueshëm</string>
+    <string name="not_available">I padisponueshëm</string>
+    <string name="verified">I verifikuar</string>
+    <string name="rating">Vlerësimi</string>
+    <string name="reviews">Komente</string>
+    
+    <!-- Profile -->
+    <string name="edit_profile">Edito Profilin</string>
+    <string name="settings">Cilësimet</string>
+    <string name="notifications">Njoftimet</string>
+    <string name="language">Gjuha</string>
+    <string name="privacy">Privatësia</string>
+    <string name="help">Ndihmë</string>
+    <string name="about">Rreth</string>
+    
+    <!-- Permissions -->
+    <string name="permission_location_title">Leje për Vendndodhje</string>
+    <string name="permission_location_message">Na duhet vendndodhja juaj për të gjetur teknikë pranë jush.</string>
+    <string name="permission_camera_title">Leje për Kamera</string>
+    <string name="permission_camera_message">Na duhet kamera për të fotografuar defektet.</string>
+    
+    <!-- Errors -->
+    <string name="error_network">Gabim në lidhje. Kontrolloni internetin.</string>
+    <string name="error_server">Gabim në server. Provoni përsëri.</string>
+    <string name="error_invalid_credentials">Email ose fjalëkalim i gabuar.</string>
+    <string name="error_session_expired">Sesioni ka skaduar. Hyni përsëri.</string>
+</resources>

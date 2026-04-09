@@ -1,0 +1,180 @@
+@page
+@model HowItWorksModel
+@{
+    ViewData["Title"] = await CMS.GetContentAsync("howitworks", "hero_title");
+}
+
+<!-- Hero Section — 2026 Style -->
+<section class="hero-2026" style="padding: 3.5rem 0;">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container text-center">
+        <div class="hero-badge mb-3 fade-up"><i class="bi bi-question-circle"></i> Si Funksionon</div>
+        <h1 class="fade-up" style="font-size: 2.5rem;">@await CMS.GetContentAsync("howitworks", "hero_title")</h1>
+        <p class="hero-subtitle mx-auto fade-up" style="max-width: 600px;">@await CMS.GetContentAsync("howitworks", "hero_subtitle")</p>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -2rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    
+    <!-- Citizen Steps -->
+    <section class="mb-5">
+        <div class="section-header text-center fade-up mb-4">
+            <div class="section-badge" style="background: var(--ts-primary-light); color: var(--ts-primary);"><i class="bi bi-people"></i> Për Qytetarët</div>
+            <h2 style="color: var(--ts-text);">@await CMS.GetContentAsync("howitworks", "citizen_title")</h2>
+            <p class="section-desc mx-auto" style="color: var(--ts-text-secondary);">@await CMS.GetContentAsync("howitworks", "citizen_subtitle")</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            @{ var citizenIndex = 0; }
+            @foreach (var step in Model.CitizenSteps)
+            {
+                citizenIndex++;
+                <div class="col-lg col-md-4 col-sm-6 fade-up">
+                    <div class="card h-100 text-center position-relative" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                        <div class="card-body p-4">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--ts-primary), var(--ts-accent)); color: white;">
+                                <span class="fw-bold">@citizenIndex</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(step.IconClass))
+                            {
+                                <div class="mb-2">
+                                    <i class="bi @step.IconClass" style="font-size: 1.8rem; color: var(--ts-primary);"></i>
+                                </div>
+                            }
+                            <h6 class="fw-bold mb-2" style="color: var(--ts-text);">@step.Title</h6>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.88rem; margin: 0;">@step.Content</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="text-center my-5 fade-up">
+        <div style="width: 80px; height: 4px; background: linear-gradient(90deg, var(--ts-primary), var(--ts-accent)); border-radius: 2px; margin: 0 auto;"></div>
+    </div>
+
+    <!-- Professional Steps -->
+    <section class="mb-5">
+        <div class="section-header text-center fade-up mb-4">
+            <div class="section-badge" style="background: var(--ts-success-light); color: var(--ts-success);"><i class="bi bi-wrench"></i> Për Profesionistët</div>
+            <h2 style="color: var(--ts-text);">@await CMS.GetContentAsync("howitworks", "professional_title")</h2>
+            <p class="section-desc mx-auto" style="color: var(--ts-text-secondary);">@await CMS.GetContentAsync("howitworks", "professional_subtitle")</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            @{ var proIndex = 0; }
+            @foreach (var step in Model.ProfessionalSteps)
+            {
+                proIndex++;
+                <div class="col-lg col-md-4 col-sm-6 fade-up">
+                    <div class="card h-100 text-center position-relative" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                        <div class="card-body p-4">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 48px; height: 48px; background: var(--ts-success); color: white;">
+                                <span class="fw-bold">@proIndex</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(step.IconClass))
+                            {
+                                <div class="mb-2">
+                                    <i class="bi @step.IconClass" style="font-size: 1.8rem; color: var(--ts-success);"></i>
+                                </div>
+                            }
+                            <h6 class="fw-bold mb-2" style="color: var(--ts-text);">@step.Title</h6>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.88rem; margin: 0;">@step.Content</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="text-center my-5 fade-up">
+        <div style="width: 80px; height: 4px; background: linear-gradient(90deg, var(--ts-warning), var(--ts-accent)); border-radius: 2px; margin: 0 auto;"></div>
+    </div>
+
+    <!-- Tips Section -->
+    <section class="section-2026" style="background: var(--ts-bg-secondary); border-radius: var(--ts-radius-xl); padding: 3rem;">
+        <div class="section-header text-center fade-up mb-4">
+            <div class="section-badge" style="background: var(--ts-warning-light); color: var(--ts-warning);"><i class="bi bi-lightbulb"></i> Këshilla</div>
+            <h2 style="color: var(--ts-text);">@await CMS.GetContentAsync("howitworks", "tips_title")</h2>
+            <p class="section-desc mx-auto" style="color: var(--ts-text-secondary);">@await CMS.GetContentAsync("howitworks", "tips_subtitle")</p>
+        </div>
+        <div class="row g-4">
+            @foreach (var tip in Model.Tips.OrderBy(t => t.SortOrder))
+            {
+                <div class="col-md-6 col-lg-3 fade-up">
+                    <div class="card h-100 text-center" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border); background: var(--ts-surface);">
+                        <div class="card-body p-4">
+                            @if (!string.IsNullOrEmpty(tip.IconClass))
+                            {
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px; background: var(--ts-warning-light);">
+                                    <i class="bi @tip.IconClass" style="font-size: 1.3rem; color: var(--ts-warning);"></i>
+                                </div>
+                            }
+                            <h6 class="fw-bold mb-2" style="color: var(--ts-text);">@tip.Title</h6>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.88rem; margin: 0;">@tip.Content</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-2026 mt-5 fade-up" style="border-radius: var(--ts-radius-xl);">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-center text-lg-start">
+                <h3 class="fw-bold text-white mb-2">Gati për të filluar?</h3>
+                <p style="color: rgba(255,255,255,0.7); margin: 0;">Regjistrohuni falas dhe filloni të përdorni platformën sot!</p>
+            </div>
+            <div class="col-lg-4 text-center text-lg-end mt-3 mt-lg-0">
+                <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-light btn-lg btn-pill">
+                    <i class="bi bi-person-plus me-2"></i> Regjistrohu Tani
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Quick Navigation -->
+    <section class="mt-5 fade-up">
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3">
+                <a asp-page="/Technicians" class="card text-decoration-none h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-people-fill mb-2" style="font-size: 2rem; color: var(--ts-success);"></i>
+                        <h6 class="fw-bold mb-1" style="color: var(--ts-text);">Shiko Teknikët</h6>
+                        <small style="color: var(--ts-text-secondary);">Gjej profesionistë pranë teje</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a asp-page="/TechniciansMap" class="card text-decoration-none h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-geo-alt-fill mb-2" style="font-size: 2rem; color: var(--ts-primary);"></i>
+                        <h6 class="fw-bold mb-1" style="color: var(--ts-text);">Harta Teknikëve</h6>
+                        <small style="color: var(--ts-text-secondary);">Shiko vendndodhjen në hartë</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a asp-page="/Businesses" class="card text-decoration-none h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-shop mb-2" style="font-size: 2rem; color: #8b5cf6;"></i>
+                        <h6 class="fw-bold mb-1" style="color: var(--ts-text);">Bizneset</h6>
+                        <small style="color: var(--ts-text-secondary);">Furnitorë dhe shërbime</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a asp-page="/FAQ" class="card text-decoration-none h-100" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-question-circle mb-2" style="font-size: 2rem; color: var(--ts-warning);"></i>
+                        <h6 class="fw-bold mb-1" style="color: var(--ts-text);">FAQ</h6>
+                        <small style="color: var(--ts-text-secondary);">Pyetje të shpeshta</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+</div>

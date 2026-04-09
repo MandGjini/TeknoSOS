@@ -1,0 +1,34 @@
+@page
+@model TeknoSOS.WebApp.Pages.Messages.OpenMessageModel
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<h2>Dërgo mesazh te Admin/Profesional</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Kujdes (role)</label>
+        <select asp-for="RecipientRole" class="form-select">
+            <option value="Admin">Administrator</option>
+            <option value="Professional">Menaxher / Profesional</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Subjekti</label>
+        <input asp-for="Subject" class="form-control" />
+        <span asp-validation-for="Subject" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mesazhi</label>
+        <textarea asp-for="Content" class="form-control" rows="6"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Dërgo</button>
+</form>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}

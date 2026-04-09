@@ -1,0 +1,282 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.PartnersModel
+@{
+    ViewData["Title"] = "Menaxhimi i Partnerëve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-building text-primary"></i> Menaxhimi i Partnerëve</h2>
+        <p class="text-muted mb-0 small">Krijo dhe menaxho partnerët e platformës</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#partnerModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> Shto Partner të Ri
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-primary">@Model.Partners.Count</h3>
+            <small class="text-muted">Gjithsej Partnerë</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-success">@Model.Partners.Count(p => p.IsActive)</h3>
+            <small class="text-muted">Aktivë</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-secondary">@Model.Partners.Count(p => !p.IsActive)</h3>
+            <small class="text-muted">Joaktivë</small>
+        </div>
+    </div>
+</div>
+
+<!-- Partners Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-list-ul"></i> Lista e Partnerëve</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:60px;">Logo</th>
+                    <th>Emri</th>
+                    <th>Website</th>
+                    <th>Përshkrimi</th>
+                    <th class="text-center">Statusi</th>
+                    <th class="text-center">Radhitja</th>
+                    <th class="text-end">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Partners.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-building text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-2 mb-0">Nuk ka partnerë të krijuar.</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var partner in Model.Partners)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(partner.LogoUrl))
+                            {
+                                <img src="@partner.LogoUrl" alt="@partner.Name" style="width:50px;height:50px;object-fit:contain;border-radius:8px;background:#f8f9fa;padding:4px;" />
+                            }
+                            else
+                            {
+                                <div style="width:50px;height:50px;border-radius:8px;background:#f8f9fa;display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-building text-muted"></i>
+                                </div>
+                            }
+                        </td>
+                        <td><strong class="small">@partner.Name</strong></td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(partner.WebsiteUrl))
+                            {
+                                <a href="@partner.WebsiteUrl" target="_blank" class="small text-muted">
+                                    <i class="bi bi-link-45deg"></i> @(partner.WebsiteUrl.Length > 30 ? partner.WebsiteUrl.Substring(0, 30) + "..." : partner.WebsiteUrl)
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td><small class="text-muted">@(partner.Description?.Length > 40 ? partner.Description.Substring(0, 40) + "..." : partner.Description ?? "—")</small></td>
+                        <td class="text-center">
+                            <span class="badge bg-@(partner.IsActive ? "success" : "secondary")">@(partner.IsActive ? "Aktiv" : "Joaktiv")</span>
+                        </td>
+                        <td class="text-center"><span class="badge bg-light text-dark">@partner.DisplayOrder</span></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="editPartner(@partner.Id)" title="Modifiko">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-page-handler="ToggleActive" asp-route-id="@partner.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-@(partner.IsActive ? "warning" : "success")" title="@(partner.IsActive ? "Çaktivizo" : "Aktivizo")">
+                                        <i class="bi bi-@(partner.IsActive ? "pause" : "play")"></i>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@partner.Id" class="d-inline" onsubmit="return confirm('A jeni të sigurt që dëshironi të fshini këtë partner?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Fshi">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Partner Modal -->
+<div class="modal fade" id="partnerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"><i class="bi bi-building"></i> Shto Partner të Ri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="partnerForm">
+                <input type="hidden" name="EditId" id="editId" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Emri i Partnerit <span class="text-danger">*</span></label>
+                            <input type="text" name="Name" id="name" class="form-control" required placeholder="P.sh.: TechCorp Albania" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Radhitja</label>
+                            <input type="number" name="DisplayOrder" id="displayOrder" class="form-control" value="0" min="0" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Logo (URL ose ngarko)</label>
+                            <div class="input-group">
+                                <input type="text" name="LogoUrl" id="logoUrl" class="form-control" placeholder="https://... ose /uploads/partners/..." />
+                                <label class="btn btn-outline-primary mb-0" for="partnerLogoUpload">
+                                    <i class="bi bi-upload"></i> Ngarko
+                                </label>
+                            </div>
+                            <input type="file" id="partnerLogoUpload" class="d-none" accept="image/*" onchange="uploadLogo(this)" />
+                            <div id="logoPreview" class="mt-2" style="display:none;">
+                                <img id="previewImg" src="" alt="Paraqitje" style="max-height:80px;border-radius:8px;" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Website URL</label>
+                            <input type="url" name="WebsiteUrl" id="websiteUrl" class="form-control" placeholder="https://www.partner.com" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Përshkrimi (opsional)</label>
+                            <textarea name="Description" id="description" class="form-control" rows="2" placeholder="Përshkrim i shkurtër i partnerit..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsActive" id="isActive" value="true" checked />
+                                <label class="form-check-label" for="isActive">Aktiv</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> <span id="submitText">Krijo Partnerin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const partnersData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Partners.Select(p => new {
+        p.Id, p.Name, p.LogoUrl, p.WebsiteUrl, p.Description, p.DisplayOrder, p.IsActive
+    })));
+
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('logoUrl').value = '';
+        document.getElementById('websiteUrl').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('displayOrder').value = '0';
+        document.getElementById('isActive').checked = true;
+        document.getElementById('logoPreview').style.display = 'none';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-building"></i> Shto Partner të Ri';
+        document.getElementById('submitText').textContent = 'Krijo Partnerin';
+        document.getElementById('partnerForm').action = '?handler=Create';
+    }
+
+    function editPartner(id) {
+        const partner = partnersData.find(p => p.id === id);
+        if (!partner) return;
+
+        document.getElementById('editId').value = partner.id;
+        document.getElementById('name').value = partner.name || '';
+        document.getElementById('logoUrl').value = partner.logoUrl || '';
+        document.getElementById('websiteUrl').value = partner.websiteUrl || '';
+        document.getElementById('description').value = partner.description || '';
+        document.getElementById('displayOrder').value = partner.displayOrder || 0;
+        document.getElementById('isActive').checked = partner.isActive;
+
+        if (partner.logoUrl) {
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('previewImg').src = partner.logoUrl;
+        } else {
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil"></i> Modifiko Partnerin';
+        document.getElementById('submitText').textContent = 'Ruaj Ndryshimet';
+        document.getElementById('partnerForm').action = '?handler=Update';
+
+        new bootstrap.Modal(document.getElementById('partnerModal')).show();
+    }
+
+    document.getElementById('logoUrl').addEventListener('change', function() {
+        if (this.value) {
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('previewImg').src = this.value;
+        } else {
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+    });
+
+    async function uploadLogo(input) {
+        if (!input.files || !input.files[0]) return;
+        const formData = new FormData();
+        formData.append('partnerLogo', input.files[0]);
+        try {
+            const response = await fetch('?handler=UploadLogo', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('logoUrl').value = result.url;
+                document.getElementById('logoPreview').style.display = 'block';
+                document.getElementById('previewImg').src = result.url;
+            } else {
+                alert(result.message || 'Gabim gjatë ngarkimit.');
+            }
+        } catch (e) {
+            alert('Gabim gjatë ngarkimit të logos.');
+        }
+        input.value = '';
+    }
+</script>
+}

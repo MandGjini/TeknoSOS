@@ -1,0 +1,85 @@
+@page "{id}"
+@model TeknoSOS.WebApp.Pages.Admin.EditTechnicianProfileModel
+@{
+    ViewData["Title"] = "Edito Profilin e Teknikut";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2 class="fw-bold mb-4"><i class="bi bi-person-badge"></i> Edito Profilin e Teknikut</h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Input.Id" />
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Emri</label>
+            <input asp-for="Input.FirstName" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Mbiemri</label>
+            <input asp-for="Input.LastName" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input asp-for="Input.Email" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Qyteti</label>
+            <input asp-for="Input.City" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Kompania</label>
+            <input asp-for="Input.CompanyName" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Username</label>
+            <input asp-for="Input.DisplayUsername" class="form-control" />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Bio</label>
+            <textarea asp-for="Input.Bio" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Vite Eksperience</label>
+            <input asp-for="Input.YearsOfExperience" type="number" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Specialitete (ndarë me presje)</label>
+            <input asp-for="Input.Specialties" class="form-control" placeholder="Elektrik, HVAC, ..." />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Statusi</label>
+            <select asp-for="Input.IsActive" class="form-select">
+                <option value="true">Aktiv</option>
+                <option value="false">Jo aktiv</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Foto Profili</label>
+            <input asp-for="Input.ProfileImage" type="file" class="form-control" />
+            @if (!string.IsNullOrEmpty(Model.Input.ProfileImageUrl))
+            {
+                <img src="@Model.Input.ProfileImageUrl" alt="Foto Profili" class="img-thumbnail mt-2" style="max-width:120px;" />
+            }
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Certifikata (ndarë me ;)</label>
+            <input asp-for="Input.Certificates" class="form-control" placeholder="Certifikatë 1; Certifikatë 2; ..." />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Portfolio (ndarë me ;)</label>
+            <input asp-for="Input.Portfolio" class="form-control" placeholder="Projekt 1; Projekt 2; ..." />
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Ruaj Ndryshimet</button>
+        </div>
+    </div>
+</form>

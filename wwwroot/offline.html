@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TeknoSOS - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .offline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .retry-btn:active {
+            transform: translateY(0);
+        }
+        .tips {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .tips h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .tips ul {
+            list-style: none;
+            font-size: 13px;
+            color: #999;
+        }
+        .tips li {
+            margin: 5px 0;
+        }
+        .tips li::before {
+            content: "• ";
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>Jeni Offline</h1>
+        <p>Nuk ka lidhje interneti. Kontrolloni lidhjen tuaj dhe provoni përsëri.</p>
+        <button class="retry-btn" onclick="window.location.reload()">
+            🔄 Provo Përsëri
+        </button>
+        <div class="tips">
+            <h3>Sugjerime:</h3>
+            <ul>
+                <li>Kontrolloni WiFi ose të dhënat celulare</li>
+                <li>Aktivizoni modalitetin avion dhe çaktivizojeni</li>
+                <li>Lëvizni në një vend me sinjal më të mirë</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        // Auto-retry every 5 seconds
+        setInterval(() => {
+            fetch('/api/health', { method: 'HEAD' })
+                .then(() => window.location.reload())
+                .catch(() => {});
+        }, 5000);
+    </script>
+</body>
+</html>

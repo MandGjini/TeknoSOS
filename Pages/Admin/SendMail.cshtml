@@ -1,0 +1,37 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.SendMailModel
+@{
+    ViewData["Title"] = "Dërgo Email";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2 class="fw-bold mb-4"><i class="bi bi-envelope text-primary"></i> Dërgo Email</h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Email i Marrësit</label>
+        <input type="email" name="RecipientEmail" class="form-control" value="@Model.RecipientEmail" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Subjekti</label>
+        <input type="text" name="Subject" class="form-control" value="@Model.Subject" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Përmbajtja</label>
+        <textarea name="Body" class="form-control" rows="6" required>@Model.Body</textarea>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="IsBodyHtml" id="IsBodyHtml" @(Model.IsBodyHtml ? "checked" : "") />
+        <label class="form-check-label" for="IsBodyHtml">Dërgo si HTML</label>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Dërgo Email</button>
+</form>

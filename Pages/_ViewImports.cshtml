@@ -1,0 +1,21 @@
+@section Scripts {
+<script>
+// Remove overlays that block clicks on mobile (iOS fix)
+document.addEventListener('DOMContentLoaded', function () {
+	if (window.innerWidth <= 600) {
+		document.querySelectorAll('[style*="pointer-events: none"], .overlay, .modal-backdrop').forEach(function(el) {
+			el.style.pointerEvents = 'auto';
+			el.style.display = 'none';
+		});
+	}
+});
+</script>
+}
+@using TeknoSOS.WebApp
+@using TeknoSOS.WebApp.Domain.Entities
+@using TeknoSOS.WebApp.Domain.Enums
+@using TeknoSOS.WebApp.Services
+@namespace TeknoSOS.WebApp.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject ILocalizationService L
+@inject ISiteContentService CMS

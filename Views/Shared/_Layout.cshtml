@@ -1,0 +1,967 @@
+﻿@using TeknoSOS.WebApp.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@inject TeknoSOS.WebApp.Services.ISiteSettingsService SiteSettings
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var currentUser = User?.Identity?.IsAuthenticated ?? false
+        ? await UserManager.GetUserAsync(User)
+        : null;
+    var currentUserDisplayName = !string.IsNullOrWhiteSpace(currentUser?.FirstName) || !string.IsNullOrWhiteSpace(currentUser?.LastName)
+        ? currentUser?.GetFullName()
+        : !string.IsNullOrWhiteSpace(currentUser?.DisplayUsername)
+            ? currentUser.DisplayUsername
+            : currentUser?.GetFullName();
+    if (string.IsNullOrWhiteSpace(currentUserDisplayName))
+    {
+        currentUserDisplayName = User?.Identity?.Name ?? "Llogaria";
+    }
+    var currentUserAvatar = !string.IsNullOrWhiteSpace(currentUser?.ProfileImageUrl)
+        ? currentUser.ProfileImageUrl
+        : "/images/default-avatar.png";
+    var currentUserNameParts = currentUserDisplayName
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var brandingSettings = await SiteSettings.GetGroupAsync("branding");
+    string BrandVal(string key, string def = "") => brandingSettings.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? v : def;
+    var analyticsSettings = await SiteSettings.GetGroupAsync("analytics");
+    string AnaVal(string key, string def = "") => analyticsSettings.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? v : def;
+    var trackingEnabled = AnaVal("EnableTracking", "true") == "true";
+    var ga4Id = AnaVal("GA4MeasurementId");
+    var gtmId = AnaVal("GTMContainerId");
+    var seoSettings = await SiteSettings.GetGroupAsync("seo");
+    string SeoVal(string key, string def = "") => seoSettings.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? v : def;
+    var siteBaseUrl = SeoVal("SiteBaseUrl", "https://teknosos.app").TrimEnd('/');
+    var adsenseSettings = await SiteSettings.GetGroupAsync("adsense");
+    string AdsVal(string key, string def = "") => adsenseSettings.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? v : def;
+    var adsenseEnabled = AdsVal("Enabled", "false") == "true";
+    var adsenseClientId = AdsVal("ClientId");
+    var showSubscriptionGlobalNotice = false;
+    var subscriptionGlobalNoticeText = string.Empty;
+
+    if (currentUser?.Role == TeknoSOS.WebApp.Domain.Enums.UserRole.Professional)
+    {
+        var subscriptionEndDate = currentUser.SubscriptionEndDate ?? currentUser.RegistrationDate.AddDays(90);
+        var daysRemaining = (int)Math.Ceiling((subscriptionEndDate - DateTime.UtcNow).TotalDays);
+
+        if (daysRemaining <= 3)
+        {
+            showSubscriptionGlobalNotice = true;
+            subscriptionGlobalNoticeText = daysRemaining <= 0
+                ? "Abonimi juaj ka skaduar. Shërbimi është ndërprerë automatikisht deri në pagesën e rinovimit."
+                : $"Abonimi juaj skadon pas {daysRemaining} ditësh. Ju lutem kryeji pagesën në një nga format e pagesës, pasi shërbimi do të ndërpritet automatikisht.";
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="@L.CurrentLanguage" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    @if (ViewData["Description"] != null)
+    {
+        <meta name="description" content="@ViewData["Description"]" />
+    }
+    else
+    {
+        <meta name="description" content="TeknoSOS - Platforma #1 në Shqipëri për zgjidhjen e defekteve elektrike, hidraulike dhe teknike. Elektricistë të licencuar, riparime urgjente 24/7." />
+    }
+    <meta name="author" content="@BrandVal("SiteName", "TeknoSOS")" />
+    @if (ViewData["Keywords"] != null)
+    {
+        <meta name="keywords" content="@ViewData["Keywords"]" />
+    }
+    else
+    {
+        <meta name="keywords" content="teknosos, defekt elektrik, elektricist Tiranë, riparime elektrike, instalime, hidraulik, teknik, shërbime, Shqipëri, Albania" />
+    }
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="canonical" href="@siteBaseUrl@Context.Request.Path" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@siteBaseUrl@Context.Request.Path" />
+    <meta property="og:title" content="@ViewData["Title"] - @BrandVal("SiteName", "TeknoSOS")" />
+    <meta property="og:description" content="@(ViewData["Description"] ?? "TeknoSOS - Platforma #1 në Shqipëri për zgjidhjen e defekteve. Elektricistë dhe teknikë të licencuar.")" />
+    <meta property="og:image" content="@siteBaseUrl/images/og-image.jpg" />
+    <meta property="og:locale" content="sq_AL" />
+    <meta property="og:site_name" content="TeknoSOS" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@ViewData["Title"] - TeknoSOS" />
+    <meta name="twitter:description" content="@(ViewData["Description"] ?? "Platforma #1 në Shqipëri për zgjidhjen e defekteve elektrike dhe teknike.")" />
+    <meta name="twitter:image" content="@siteBaseUrl/images/og-image.jpg" />
+    
+    <!-- Geo Tags for Local SEO -->
+    <meta name="geo.region" content="AL" />
+    <meta name="geo.placename" content="Tiranë, Shqipëri" />
+    <meta name="geo.position" content="41.3275;19.8187" />
+    <meta name="ICBM" content="41.3275, 19.8187" />
+    
+    <title>@ViewData["Title"] - @BrandVal("SiteName", "TeknoSOS")</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="~/css/site.css" as="style" asp-append-version="true">
+    
+    <!-- Google Fonts — Inter with display=swap for fast text rendering -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <!-- Favicon (dynamic from admin settings) -->
+    <link rel="icon" href="@BrandVal("FaviconUrl", "/favicon.ico")" />
+    <link rel="apple-touch-icon" href="@BrandVal("FaviconUrl", "/favicon.ico")" />
+
+    <!-- Google Tag Manager (dynamic from admin) -->
+    @if (trackingEnabled && !string.IsNullOrEmpty(gtmId))
+    {
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','@gtmId');</script>
+    }
+    <!-- End Google Tag Manager -->
+
+    <!-- Google Analytics (dynamic from admin) -->
+    @if (trackingEnabled && !string.IsNullOrEmpty(ga4Id))
+    {
+    <script async src="https://www.googletagmanager.com/gtag/js?id=@ga4Id"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '@ga4Id');
+    </script>
+    }
+    <!-- End Google Analytics -->
+
+    @if (adsenseEnabled && !string.IsNullOrWhiteSpace(adsenseClientId))
+    {
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=@adsenseClientId" crossorigin="anonymous"></script>
+    }
+
+    <!-- Dark mode forcibly disabled for public site -->
+    <script>
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('ts-theme', 'light');
+    </script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Google Tag Manager (noscript) -->
+    @if (trackingEnabled && !string.IsNullOrEmpty(gtmId))
+    {
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=@gtmId"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    }
+    <!-- End Google Tag Manager (noscript) -->
+
+    <!-- Skip to main content for accessibility -->
+    <a class="visually-hidden-focusable btn btn-primary position-absolute top-0 start-0 m-2" href="#main-content">Skip to main content</a>
+    
+    <!-- Navigation — Frosted Glass Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" asp-page="/Index">
+                <img src="@BrandVal("LogoUrl", "/images/logo.png")" alt="@BrandVal("SiteName", "TeknoSOS") Logo" class="brand-logo" style="width:36px;height:36px;" />
+                <span class="gradient-text">@BrandVal("SiteName", "TeknoSOS")</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-4" style="color: var(--ts-text);"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Index">
+                                <i class="bi bi-house"></i> @L.T("nav.home")
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Index">
+                                <i class="bi bi-house"></i> @L.T("nav.home")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/About">
+                                <i class="bi bi-info-circle"></i> @L.T("nav.about")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/HowItWorks">
+                                <i class="bi bi-question-circle"></i> @L.T("nav.how_it_works")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Blog/Index">
+                                <i class="bi bi-journal-richtext"></i> Blog
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/FAQ">
+                                <i class="bi bi-patch-question"></i> FAQ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Contact">
+                                <i class="bi bi-envelope"></i> @L.T("nav.contact")
+                            </a>
+                        </li>
+                    }
+                </ul>
+                <ul class="navbar-nav align-items-center">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/ReportDefect">
+                                <i class="bi bi-plus-circle"></i> @L.T("nav.report_defect")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/DefectList">
+                                <i class="bi bi-list-check"></i> @L.T("nav.my_reports")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Chat">
+                                <i class="bi bi-chat-dots"></i> Mesazhe
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Dashboard">
+                                <i class="bi bi-speedometer2"></i> @L.T("nav.dashboard")
+                            </a>
+                        </li>
+                        <!-- Notifications -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link notification-bell" href="#" id="notificationBell" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell"></i>
+                                <span class="badge" id="notificationBadge">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationBell" id="notificationDropdown" style="width: 320px;">
+                                <li><h6 class="dropdown-header">@L.T("nav.notifications")</h6></li>
+                                <div id="notificationList">
+                                    <li><span class="dropdown-item-text">@L.T("common.loading")...</span></li>
+                                </div>
+                            </ul>
+                        </li>
+                        <!-- User dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle user-menu-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="@currentUserAvatar" alt="@currentUserDisplayName" class="user-avatar" onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
+                                <span class="user-name" aria-label="@currentUserDisplayName">
+                                    @for (var i = 0; i < currentUserNameParts.Length; i++)
+                                    {
+                                        var part = currentUserNameParts[i];
+                                        if (string.IsNullOrWhiteSpace(part))
+                                        {
+                                            continue;
+                                        }
+
+                                        <span class="user-name-part"><span class="user-name-initial">@char.ToUpperInvariant(part[0])</span>@part.Substring(1)</span>
+
+                                        if (i < currentUserNameParts.Length - 1)
+                                        {
+                                            <span> </span>
+                                        }
+                                    }
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><h6 class="dropdown-header">Llogaria</h6></li>
+                                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-gear me-2"></i> @L.T("nav.profile")</a></li>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li><a class="dropdown-item" asp-page="/Admin/Index"><i class="bi bi-shield-lock me-2"></i> Paneli Admin</a></li>
+                                }
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index")" style="display:inline;">
+                                        <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i> @L.T("nav.logout")</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link nav-auth-btn" asp-area="Identity" asp-page="/Account/Register">
+                                <i class="bi bi-person-plus"></i> @L.T("nav.register")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-auth-btn ms-2" asp-area="Identity" asp-page="/Account/Login">
+                                <i class="bi bi-box-arrow-in-right"></i> @L.T("nav.login")
+                            </a>
+                        </li>
+                    }
+                    <!-- Dark Mode Toggle hidden for public site -->
+                    <li class="nav-item ms-2 d-none">
+                        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" disabled>
+                            <i class="bi bi-moon"></i>
+                        </button>
+                    </li>
+                    <!-- Language Switcher -->
+                    <li class="nav-item dropdown ms-1">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-translate"></i>
+                            @{
+                                var currentLangName = L.CurrentLanguage switch
+                                {
+                                    "sq" => "AL",
+                                    "en" => "EN",
+                                    "it" => "IT",
+                                    "de" => "DE",
+                                    "fr" => "FR",
+                                    _ => "AL"
+                                };
+                            }
+                            @currentLangName
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            <li><a class="dropdown-item @(L.CurrentLanguage == "sq" ? "active" : "")" href="/api/language/set/sq"><span class="me-2">🇦🇱</span> Shqip</a></li>
+                            <li><a class="dropdown-item @(L.CurrentLanguage == "en" ? "active" : "")" href="/api/language/set/en"><span class="me-2">🇬🇧</span> English</a></li>
+                            <li><a class="dropdown-item @(L.CurrentLanguage == "it" ? "active" : "")" href="/api/language/set/it"><span class="me-2">🇮🇹</span> Italiano</a></li>
+                            <li><a class="dropdown-item @(L.CurrentLanguage == "de" ? "active" : "")" href="/api/language/set/de"><span class="me-2">🇩🇪</span> Deutsch</a></li>
+                            <li><a class="dropdown-item @(L.CurrentLanguage == "fr" ? "active" : "")" href="/api/language/set/fr"><span class="me-2">🇫🇷</span> Français</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Top Header -->
+    <header class="mobile-top-header">
+        <div class="mobile-header-content">
+            <!-- Left: Hamburger Menu -->
+            <div class="mobile-header-left">
+                <button type="button" class="mobile-header-icon" id="mobileMenuToggle" aria-label="Menu">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+
+            <!-- Center: Logo -->
+            <a href="/" class="mobile-header-logo">
+                <img src="@BrandVal("LogoUrl", "/images/logo.png")" alt="@BrandVal("SiteName", "TeknoSOS")" style="width:32px;height:32px;" />
+                <span class="gradient-text">@BrandVal("SiteName", "TeknoSOS")</span>
+            </a>
+
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <!-- Right: Notifications -->
+                <div class="mobile-header-right dropdown">
+                    <a href="#" class="mobile-header-icon" id="mobileNotificationBell" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                        <span class="mobile-badge" id="mobileNotificationBadge">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end mobile-dropdown" aria-labelledby="mobileNotificationBell" style="width: 300px; max-height: 400px; overflow-y: auto;">
+                        <h6 class="dropdown-header">@L.T("nav.notifications")</h6>
+                        <div id="mobileNotificationList">
+                            <span class="dropdown-item-text text-muted small">@L.T("common.loading")...</span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Right: Login for guests -->
+                <div class="mobile-header-right">
+                    <a href="/Identity/Account/Login" class="mobile-header-icon">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    </header>
+
+    <!-- Mobile Slide Menu -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+    <nav class="mobile-slide-menu" id="mobileSlideMenu">
+        <div class="mobile-menu-header">
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <div class="mobile-menu-user">
+                    <div class="mobile-menu-avatar">
+                        <img src="@currentUserAvatar" alt="@currentUserDisplayName" class="mobile-menu-avatar-img" onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
+                    </div>
+                    <div class="mobile-menu-user-info">
+                        <h6 aria-label="@currentUserDisplayName">
+                            @for (var i = 0; i < currentUserNameParts.Length; i++)
+                            {
+                                var part = currentUserNameParts[i];
+                                if (string.IsNullOrWhiteSpace(part))
+                                {
+                                    continue;
+                                }
+
+                                <span class="user-name-part"><span class="user-name-initial">@char.ToUpperInvariant(part[0])</span>@part.Substring(1)</span>
+
+                                if (i < currentUserNameParts.Length - 1)
+                                {
+                                    <span> </span>
+                                }
+                            }
+                        </h6>
+                        <span>@L.T("nav.dashboard")</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a href="/" class="mobile-header-logo">
+                    <img src="@BrandVal("LogoUrl", "/images/logo.png")" alt="@BrandVal("SiteName", "TeknoSOS")" style="width:32px;height:32px;" />
+                    <span class="gradient-text">@BrandVal("SiteName", "TeknoSOS")</span>
+                </a>
+            }
+            <button type="button" class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        
+        <div class="mobile-menu-nav">
+            <div class="mobile-menu-section">@L.T("footer.navigation")</div>
+            <a href="/" class="mobile-menu-link" data-page="home">
+                <i class="bi bi-house"></i> @L.T("nav.home")
+            </a>
+            <a href="/About" class="mobile-menu-link" data-page="about">
+                <i class="bi bi-info-circle"></i> @L.T("nav.about")
+            </a>
+            <a href="/HowItWorks" class="mobile-menu-link" data-page="howitworks">
+                <i class="bi bi-question-circle"></i> @L.T("nav.how_it_works")
+            </a>
+            <a href="/Contact" class="mobile-menu-link" data-page="contact">
+                <i class="bi bi-envelope"></i> @L.T("nav.contact")
+            </a>
+            <a href="/FAQ" class="mobile-menu-link" data-page="faq">
+                <i class="bi bi-patch-question"></i> FAQ
+            </a>
+            <a href="/Blog" class="mobile-menu-link" data-page="blog">
+                <i class="bi bi-journal-richtext"></i> Blog
+            </a>
+            
+            <div class="mobile-menu-divider"></div>
+            <div class="mobile-menu-section">Platforma</div>
+            <a href="/Technicians" class="mobile-menu-link" data-page="technicians">
+                <i class="bi bi-people"></i> @L.T("nav.technicians")
+            </a>
+            <a href="/TechniciansMap" class="mobile-menu-link" data-page="techniciansmap">
+                <i class="bi bi-geo-alt"></i> Harta e Teknikëve
+            </a>
+            <a href="/Businesses" class="mobile-menu-link" data-page="businesses">
+                <i class="bi bi-shop"></i> Biznese
+            </a>
+            <a href="/BusinessMap" class="mobile-menu-link" data-page="businessmap">
+                <i class="bi bi-globe"></i> Harta e Platformës
+            </a>
+            
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <div class="mobile-menu-divider"></div>
+                <div class="mobile-menu-section">@L.T("nav.my_reports")</div>
+                <a href="/ReportDefect" class="mobile-menu-link" data-page="report">
+                    <i class="bi bi-plus-circle"></i> @L.T("nav.report_defect")
+                </a>
+                <a href="/DefectList" class="mobile-menu-link" data-page="defects">
+                    <i class="bi bi-list-check"></i> @L.T("nav.my_reports")
+                </a>
+                <a href="/Dashboard" class="mobile-menu-link" data-page="dashboard">
+                    <i class="bi bi-speedometer2"></i> @L.T("nav.dashboard")
+                </a>
+                <a href="/Chat" class="mobile-menu-link" data-page="chat">
+                    <i class="bi bi-chat-dots"></i> Mesazhe
+                </a>
+                <a href="/Messages" class="mobile-menu-link" data-page="messages">
+                    <i class="bi bi-envelope-open"></i> Inbox
+                </a>
+                
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="mobile-menu-divider"></div>
+                    <div class="mobile-menu-section">Admin</div>
+                    <a href="/Admin/Index" class="mobile-menu-link">
+                        <i class="bi bi-shield-lock"></i> Admin Panel
+                    </a>
+                }
+                
+                <div class="mobile-menu-divider"></div>
+                <div class="mobile-menu-section">Account</div>
+                <a href="/Identity/Account/Manage/Index" class="mobile-menu-link">
+                    <i class="bi bi-gear"></i> @L.T("nav.profile")
+                </a>
+            }
+            
+            <div class="mobile-menu-divider"></div>
+            <div class="mobile-menu-section">@L.T("footer.legal")</div>
+            <a href="/Terms" class="mobile-menu-link">
+                <i class="bi bi-file-text"></i> @L.T("nav.terms")
+            </a>
+            <a href="/Privacy" class="mobile-menu-link">
+                <i class="bi bi-shield-check"></i> @L.T("nav.privacy")
+            </a>
+            <a href="/CookiePolicy" class="mobile-menu-link">
+                <i class="bi bi-cookie"></i> @L.T("nav.cookies")
+            </a>
+            <a href="/Disclaimer" class="mobile-menu-link">
+                <i class="bi bi-exclamation-circle"></i> @L.T("nav.disclaimer")
+            </a>
+            <a href="/DataProcessing" class="mobile-menu-link">
+                <i class="bi bi-database-check"></i> Përpunimi i të Dhënave
+            </a>
+        </div>
+        
+        <div class="mobile-menu-footer">
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index")">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-box-arrow-right me-2"></i> @L.T("nav.logout")
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="d-grid gap-2">
+                    <a href="/Identity/Account/Login" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> @L.T("nav.login")
+                    </a>
+                    <a class="btn btn-outline-primary disabled" tabindex="-1" aria-disabled="true" title="Regjistrimi i teknikëve bëhet vetëm nga administratori.">
+                        <i class="bi bi-person-plus me-2"></i> @L.T("nav.register")
+                    </a>
+                </div>
+            }
+            
+            <!-- Theme & Language Toggles (dark mode hidden for public site) -->
+            <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                <button class="btn btn-sm btn-outline-secondary d-none" id="mobileThemeToggle" title="Toggle dark mode" disabled>
+                    <i class="bi bi-moon"></i> Dark Mode
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate"></i>
+                        @{
+                            var mobileLangName = L.CurrentLanguage switch
+                            {
+                                "sq" => "AL",
+                                "en" => "EN",
+                                "it" => "IT",
+                                "de" => "DE",
+                                "fr" => "FR",
+                                _ => "AL"
+                            };
+                        }
+                        @mobileLangName
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/api/language/set/sq">🇦🇱 Shqip</a></li>
+                        <li><a class="dropdown-item" href="/api/language/set/en">🇬🇧 English</a></li>
+                        <li><a class="dropdown-item" href="/api/language/set/it">🇮🇹 Italiano</a></li>
+                        <li><a class="dropdown-item" href="/api/language/set/de">🇩🇪 Deutsch</a></li>
+                        <li><a class="dropdown-item" href="/api/language/set/fr">🇫🇷 Français</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Banners -->
+    @await Html.PartialAsync("_BannersPartial", new ViewDataDictionary(ViewData) { { "Position", "header" }, { "PageKey", Context.Request.Path.Value ?? "/" } })
+
+    @if (showSubscriptionGlobalNotice)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-0" role="alert">
+                <div>
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    @subscriptionGlobalNoticeText
+                </div>
+                <a href="/Account/SubscriptionRenewal" class="btn btn-sm btn-dark">Rinovo Tani</a>
+            </div>
+        </div>
+    }
+
+    <!-- Main Content -->
+    <main class="flex-grow-1" id="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- Global Desktop Assistant -->
+    <button type="button" id="globalAssistantToggle" class="global-assistant-toggle" aria-label="Hap asistentin">
+        <i class="bi bi-chat-dots-fill fs-4"></i>
+    </button>
+    <div id="globalAssistantPanel" class="global-assistant-panel" role="dialog" aria-label="Asistenti global">
+        <div class="global-assistant-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-robot me-1"></i> Asistenti TeknoSOS</span>
+            <button type="button" id="globalAssistantClose" class="btn btn-sm btn-light py-0 px-2">x</button>
+        </div>
+        <div id="globalAssistantBody" class="global-assistant-body"></div>
+    </div>
+
+    <!-- Footer Banners -->
+    @await Html.PartialAsync("_BannersPartial", new ViewDataDictionary(ViewData) { { "Position", "footer" }, { "PageKey", Context.Request.Path.Value ?? "/" } })
+
+    <!-- Footer — Modern 2026 -->
+    @{
+        var footerSettings = await SiteSettings.GetGroupAsync("footer");
+        string FooterVal(string key, string def = "") => footerSettings.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? v : def;
+    }
+    <footer class="footer-2026 mt-auto">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-3 mb-3">
+                    <div class="footer-brand">
+                        <img src="@BrandVal("LogoUrl", "/images/logo.png")" alt="@BrandVal("SiteName", "TeknoSOS") Logo" class="brand-logo" style="width:32px;height:32px;" />
+                        @BrandVal("SiteName", "TeknoSOS")
+                    </div>
+                    <p class="footer-desc">@FooterVal("Description", L.T("footer.description"))</p>
+                    <div class="footer-social d-flex gap-2 mt-3">
+                        <a href="@FooterVal("Facebook", "#")" target="_blank" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="@FooterVal("Instagram", "#")" target="_blank" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="@FooterVal("LinkedIn", "#")" target="_blank" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="@FooterVal("Twitter", "#")" target="_blank" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h6>@L.T("footer.navigation")</h6>
+                    <a asp-page="/Index" class="footer-link">@L.T("nav.home")</a>
+                    <a asp-page="/About" class="footer-link">@L.T("nav.about")</a>
+                    <a asp-page="/HowItWorks" class="footer-link">@L.T("nav.how_it_works")</a>
+                    <a asp-page="/Contact" class="footer-link">@L.T("nav.contact")</a>
+                    <a asp-page="/FAQ" class="footer-link">Pyetjet e Shpeshta</a>
+                    <a asp-page="/Blog/Index" class="footer-link">Blog</a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h6>Shërbime</h6>
+                    <a asp-page="/DefekteElektrike" class="footer-link">Defekte Elektrike</a>
+                    <a asp-page="/KarikuesEV" class="footer-link">Karikues Makinash EV</a>
+                    <a asp-page="/Technicians" class="footer-link">@L.T("nav.technicians")</a>
+                    <a asp-page="/TechniciansMap" class="footer-link">Harta Teknikëve</a>
+                    <a asp-page="/Businesses" class="footer-link">Biznese</a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h6>@L.T("footer.legal")</h6>
+                    <a asp-page="/Terms" class="footer-link">@L.T("nav.terms")</a>
+                    <a asp-page="/Privacy" class="footer-link">@L.T("nav.privacy")</a>
+                    <a asp-page="/CookiePolicy" class="footer-link">@L.T("nav.cookies")</a>
+                    <a asp-page="/Disclaimer" class="footer-link">@L.T("nav.disclaimer")</a>
+                    <a asp-page="/DataProcessing" class="footer-link">Përpunimi të Dhënave</a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <h6>@L.T("footer.contact")</h6>
+                    <div class="d-flex flex-column gap-2" style="font-size: 0.875rem; color: var(--ts-text-muted);">
+                        <span><i class="bi bi-geo-alt me-2" style="color:var(--ts-primary);"></i> @FooterVal("Address", "Tiranë, Shqipëri")</span>
+                        <span><i class="bi bi-envelope me-2" style="color:var(--ts-primary);"></i> @FooterVal("Email", "info@teknosos.al")</span>
+                        <span><i class="bi bi-phone me-2" style="color:var(--ts-primary);"></i> @FooterVal("Phone", "+355 69 123 4567")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom d-flex flex-wrap justify-content-between align-items-center">
+                <span>&copy; @DateTime.Now.Year @FooterVal("Copyright", "TeknoSOS"). @L.T("footer.rights")</span>
+                <span>@Html.Raw(FooterVal("MadeWith", "Made with <i class=\"bi bi-heart-fill\" style=\"color:var(--ts-danger);font-size:0.7rem;\"></i> in Albania"))</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript - defer for better performance -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+            crossorigin="anonymous" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js" defer></script>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <ul class="mobile-bottom-nav-list">
+            <li class="mobile-nav-item">
+                <a href="/" class="mobile-nav-link" data-page="home">
+                    <i class="bi bi-house"></i>
+                    <span>@L.T("nav.home")</span>
+                </a>
+            </li>
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <li class="mobile-nav-item">
+                    <a href="/DefectList" class="mobile-nav-link" data-page="defects">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Kërkesat</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <a href="/ReportDefect" class="mobile-nav-link nav-action" data-page="report">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Raporto</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <a href="/Dashboard" class="mobile-nav-link" data-page="dashboard">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span>Paneli</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index")" style="display:contents;">
+                        <button type="submit" class="mobile-nav-link mobile-nav-logout" data-page="logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Dil</span>
+                        </button>
+                    </form>
+                </li>
+            }
+            else
+            {
+                <li class="mobile-nav-item">
+                    <a href="/Technicians" class="mobile-nav-link" data-page="technicians">
+                        <i class="bi bi-people"></i>
+                        <span>@L.T("nav.technicians")</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <a href="/Identity/Account/Login" class="mobile-nav-link nav-action" data-page="login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>@L.T("nav.login")</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <a href="/About" class="mobile-nav-link" data-page="about">
+                        <i class="bi bi-info-circle"></i>
+                        <span>@L.T("nav.about")</span>
+                    </a>
+                </li>
+                <li class="mobile-nav-item">
+                    <a href="/Identity/Account/Register" class="mobile-nav-link nav-action" data-page="register">
+                        <i class="bi bi-person-plus"></i>
+                        <span>@L.T("nav.register")</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+
+    <script>
+        // Set active state for mobile nav based on current page
+        (function() {
+            const path = window.location.pathname.toLowerCase();
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            
+            mobileNavLinks.forEach(link => {
+                const href = link.getAttribute('href')?.toLowerCase() || '';
+                link.classList.remove('active');
+                
+                if (path === '/' && href === '/') {
+                    link.classList.add('active');
+                } else if (href !== '/' && path.startsWith(href)) {
+                    link.classList.add('active');
+                }
+            });
+        })();
+    </script>
+
+    <!-- Banner Functions -->
+    <script>
+        function applyDeviceViewportClass() {
+            const width = window.innerWidth || document.documentElement.clientWidth || 0;
+            const root = document.documentElement;
+
+            root.classList.remove('ts-device-mobile', 'ts-device-tablet', 'ts-device-desktop');
+
+            if (width < 768) {
+                root.classList.add('ts-device-mobile');
+                root.setAttribute('data-device-size', 'mobile');
+            } else if (width < 1200) {
+                root.classList.add('ts-device-tablet');
+                root.setAttribute('data-device-size', 'tablet');
+            } else {
+                root.classList.add('ts-device-desktop');
+                root.setAttribute('data-device-size', 'desktop');
+            }
+        }
+
+        applyDeviceViewportClass();
+        window.addEventListener('resize', applyDeviceViewportClass);
+
+        function closeBanner(bannerEl) {
+            if (bannerEl) {
+                bannerEl.classList.add('fade-out');
+                setTimeout(() => bannerEl.remove(), 300);
+            }
+        }
+
+        function trackBannerClick(bannerId) {
+            fetch('/api/banners/' + bannerId + '/click', { method: 'POST' }).catch(() => {});
+        }
+    </script>
+
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById('globalAssistantToggle');
+            const panel = document.getElementById('globalAssistantPanel');
+            const closeBtn = document.getElementById('globalAssistantClose');
+            const body = document.getElementById('globalAssistantBody');
+
+            if (!toggleBtn || !panel || !body || window.matchMedia('(max-width: 991.98px)').matches) {
+                return;
+            }
+
+            function addMessage(text, actions) {
+                const box = document.createElement('div');
+                box.className = 'global-assistant-msg';
+                box.textContent = text;
+
+                if (actions && actions.length) {
+                    const actionWrap = document.createElement('div');
+                    actionWrap.className = 'global-assistant-actions';
+
+                    actions.forEach(action => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.textContent = action.label;
+                        btn.addEventListener('click', action.onClick);
+                        actionWrap.appendChild(btn);
+                    });
+
+                    box.appendChild(actionWrap);
+                }
+
+                body.appendChild(box);
+                body.scrollTop = body.scrollHeight;
+            }
+
+            function startConversation() {
+                if (body.dataset.started === '1') {
+                    return;
+                }
+
+                body.dataset.started = '1';
+                addMessage('Pershendetje! Une jam asistenti global ne desktop. Te ndihmoj te shkosh shpejt aty ku duhet.');
+
+                addMessage('Cfare deshiron te besh?', [
+                    { label: 'Raporto defekt', onClick: () => window.location.href = '/ReportDefect' },
+                    { label: 'Shiko tekniket', onClick: () => window.location.href = '/Technicians' },
+                    { label: 'Hap mesazhet', onClick: () => window.location.href = '/Messages' },
+                    { label: 'Hap dashboard', onClick: () => window.location.href = '/Dashboard' }
+                ]);
+
+                const inReportPage = window.location.pathname.toLowerCase().includes('/reportdefect');
+                if (inReportPage) {
+                    addMessage('Je te Raporto Defekt. Mund te te ndihmoj te plotesosh formen me 1 klik:', [
+                        {
+                            label: 'Vendos prioritet Normal',
+                            onClick: () => {
+                                const radio = document.querySelector('input[name="Input.Priority"][value="Normal"]');
+                                if (radio) {
+                                    radio.checked = true;
+                                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+                        },
+                        {
+                            label: 'Vendos prioritet Emergjent',
+                            onClick: () => {
+                                const radio = document.querySelector('input[name="Input.Priority"][value="Emergency"]');
+                                if (radio) {
+                                    radio.checked = true;
+                                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+                        },
+                        {
+                            label: 'Shko te dergimi',
+                            onClick: () => {
+                                const btn = document.getElementById('submitBtn');
+                                if (btn) {
+                                    btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }
+                        }
+                    ]);
+                }
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                const open = panel.style.display !== 'block';
+                panel.style.display = open ? 'block' : 'none';
+                if (open) {
+                    startConversation();
+                }
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    panel.style.display = 'none';
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Organization Schema - JSON-LD for SEO -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "Organization",
+        "name": "TeknoSOS",
+        "alternateName": "TeknoSOS Albania",
+        "url": "https://teknosos.app",
+        "logo": "https://teknosos.app/images/logo.png",
+        "description": "Platforma #1 në Shqipëri për zgjidhjen e defekteve elektrike, hidraulike dhe teknike. Elektricistë dhe teknikë të licencuar.",
+        "foundingDate": "2024",
+        "address": {
+            "@@type": "PostalAddress",
+            "addressLocality": "Tiranë",
+            "addressCountry": "AL"
+        },
+        "contactPoint": {
+            "@@type": "ContactPoint",
+            "contactType": "customer service",
+            "availableLanguage": ["Albanian", "English"]
+        },
+        "sameAs": [
+            "https://www.facebook.com/teknosos",
+            "https://www.instagram.com/teknosos",
+            "https://www.linkedin.com/company/teknosos"
+        ],
+        "areaServed": {
+            "@@type": "Country",
+            "name": "Albania"
+        },
+        "serviceType": ["Riparime Elektrike", "Instalime Elektrike", "Hidraulik", "Karikues EV", "Shërbime Teknike"]
+    }
+    </script>
+    
+    <!-- WebSite Schema for Search Box -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "WebSite",
+        "name": "TeknoSOS",
+        "url": "https://teknosos.app",
+        "potentialAction": {
+            "@@type": "SearchAction",
+            "target": "https://teknosos.app/Technicians?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+</body>
+</html>

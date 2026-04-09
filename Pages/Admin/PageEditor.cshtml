@@ -1,0 +1,621 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.PageEditorModel
+@{
+    ViewData["Title"] = "Editor Vizual i Faqeve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<!-- GrapesJS CSS -->
+<link href="https://unpkg.com/grapesjs@0.21.10/dist/css/grapes.min.css" rel="stylesheet">
+<link href="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css" rel="stylesheet">
+
+<style>
+    /* Custom GrapesJS styling to match TeknoSOS theme */
+    .gjs-one-bg { background-color: var(--ts-info) !important; }
+    .gjs-two-color { color: var(--ts-primary) !important; }
+    .gjs-three-bg { background-color: var(--ts-primary) !important; }
+    .gjs-four-color, .gjs-four-color-h:hover { color: var(--ts-primary) !important; }
+    
+    #gjs-editor {
+        height: calc(100vh - 220px);
+        min-height: 600px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .page-selector-card {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .page-selector-card:hover {
+        border-color: var(--ts-primary);
+        transform: translateY(-2px);
+    }
+    .page-selector-card.active {
+        border-color: var(--ts-primary);
+        background: linear-gradient(135deg, rgba(242, 140, 40, 0.1), rgba(215, 38, 61, 0.05));
+    }
+    
+    .editor-toolbar {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    /* GrapesJS Panel customizations */
+    .gjs-pn-panel { background-color: #f8f9fa; }
+    .gjs-pn-views-container { background-color: #f8f9fa; }
+    .gjs-cv-canvas { background-color: #fff; }
+    
+    .gjs-block {
+        min-height: 60px;
+        border-radius: 6px;
+        margin: 4px;
+    }
+    
+    .editor-status {
+        font-size: 0.875rem;
+    }
+    .editor-status .badge {
+        font-weight: 500;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-bold mb-0">
+        <i class="bi bi-pencil-square text-primary"></i> Editor Vizual i Faqeve
+        <span class="fs-6 fw-normal text-muted ms-2">(Drag & Drop)</span>
+    </h2>
+    <div class="d-flex gap-2">
+        <a href="/Admin/ContentManager" class="btn btn-outline-secondary">
+            <i class="bi bi-grid-3x3"></i> Content Manager
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMsg))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Page & Language Selection -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row align-items-center g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold mb-1">Zgjidh Faqen për të Edituar</label>
+                <select id="pageSelector" class="form-select" onchange="loadPage()">
+                    <option value="">-- Zgjidh faqen --</option>
+                    @foreach (var p in TeknoSOS.WebApp.Pages.Admin.PageEditorModel.EditablePages)
+                    {
+                        if (Model.PageKey == p.Key)
+                        {
+                            <option value="@p.Key" selected>@p.Value (@p.Key)</option>
+                        }
+                        else
+                        {
+                            <option value="@p.Key">@p.Value (@p.Key)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold mb-1">Gjuha</label>
+                <select id="langSelector" class="form-select" onchange="loadPage()">
+                    <option value="sq" selected="@(Model.Language == "sq")">🇦🇱 Shqip</option>
+                    <option value="en" selected="@(Model.Language == "en")">🇬🇧 English</option>
+                    <option value="it" selected="@(Model.Language == "it")">🇮🇹 Italiano</option>
+                    <option value="de" selected="@(Model.Language == "de")">🇩🇪 Deutsch</option>
+                    <option value="fr" selected="@(Model.Language == "fr")">🇫🇷 Français</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold mb-1">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary flex-grow-1" onclick="savePage()" id="btnSave" disabled>
+                        <i class="bi bi-save"></i> Ruaj Faqen
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="previewPage()" id="btnPreview" disabled>
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Editor Status Bar -->
+<div class="editor-toolbar p-2 mb-3 d-flex justify-content-between align-items-center">
+    <div class="editor-status">
+        <span id="statusIndicator" class="badge bg-secondary">Asnjë faqe e zgjedhur</span>
+        <span id="lastSaved" class="text-muted ms-2"></span>
+    </div>
+    <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-secondary" onclick="editor?.runCommand('core:undo')" title="Undo">
+            <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="editor?.runCommand('core:redo')" title="Redo">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="editor?.runCommand('core:canvas-clear')" title="Pastro Canvas">
+            <i class="bi bi-trash"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="toggleFullscreen()" title="Fullscreen">
+            <i class="bi bi-fullscreen"></i>
+        </button>
+    </div>
+</div>
+
+<!-- GrapesJS Editor Container -->
+<div id="gjs-editor"></div>
+
+<!-- Hidden form for saving -->
+<form id="saveForm" method="post" asp-page-handler="SavePage" style="display:none;">
+    <input type="hidden" name="pageKey" id="formPageKey" />
+    <input type="hidden" name="language" id="formLanguage" />
+    <input type="hidden" name="htmlContent" id="formHtmlContent" />
+    <input type="hidden" name="cssContent" id="formCssContent" />
+    <input type="hidden" name="gjsComponents" id="formGjsComponents" />
+    <input type="hidden" name="gjsStyles" id="formGjsStyles" />
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+<!-- GrapesJS Core -->
+<script src="https://unpkg.com/grapesjs@0.21.10/dist/grapes.min.js"></script>
+<!-- GrapesJS Plugins -->
+<script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.js"></script>
+<script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/grapesjs-blocks-basic.min.js"></script>
+
+<script>
+    let editor = null;
+    let currentPage = '@Model.PageKey';
+    let currentLang = '@(Model.Language ?? "sq")';
+    let hasUnsavedChanges = false;
+
+    // Initialize GrapesJS Editor
+    function initEditor() {
+        editor = grapesjs.init({
+            container: '#gjs-editor',
+            fromElement: false,
+            height: '100%',
+            width: 'auto',
+            storageManager: false,
+            plugins: ['grapesjs-preset-webpage', 'grapesjs-blocks-basic'],
+            pluginsOpts: {
+                'grapesjs-preset-webpage': {
+                    blocksBasicOpts: {
+                        flexGrid: true,
+                    },
+                    navbarOpts: false,
+                    countdownOpts: false,
+                    formsOpts: false,
+                },
+                'grapesjs-blocks-basic': {
+                    flexGrid: true,
+                }
+            },
+            canvas: {
+                styles: [
+                    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+                    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css',
+                    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'
+                ]
+            },
+            // Custom blocks for TeknoSOS
+            blockManager: {
+                appendTo: '#blocks'
+            },
+            styleManager: {
+                appendTo: '#styles-container',
+            },
+            layerManager: {
+                appendTo: '#layers-container'
+            },
+            traitManager: {
+                appendTo: '#traits-container'
+            },
+            selectorManager: {
+                appendTo: '#selectors-container'
+            },
+            panels: {
+                defaults: []
+            },
+            deviceManager: {
+                devices: [
+                    { name: 'Desktop', width: '' },
+                    { name: 'Tablet', width: '768px', widthMedia: '992px' },
+                    { name: 'Mobile', width: '320px', widthMedia: '480px' }
+                ]
+            }
+        });
+
+        // Add custom TeknoSOS blocks
+        addTeknoSOSBlocks();
+
+        // Track changes
+        editor.on('change:changesCount', () => {
+            hasUnsavedChanges = true;
+            updateStatus('Ka ndryshime të paruajtura', 'warning');
+        });
+
+        // If page already selected, load it
+        if (currentPage) {
+            loadPageContent();
+        }
+    }
+
+    // Add custom TeknoSOS blocks
+    function addTeknoSOSBlocks() {
+        const bm = editor.BlockManager;
+
+        // Hero Section
+        bm.add('teknosos-hero', {
+            label: '<i class="bi bi-star"></i><br>Hero Section',
+            category: 'TeknoSOS',
+            content: `
+                <section class="py-5 bg-gradient" style="background: linear-gradient(135deg, #F28C28 0%, #D7263D 100%);">
+                    <div class="container text-center text-white py-5">
+                        <h1 class="display-4 fw-bold mb-3">Titulli Kryesor</h1>
+                        <p class="lead mb-4">Përshkrimi i shkurtër i faqes ose shërbimit tuaj.</p>
+                        <a href="#" class="btn btn-light btn-lg px-5">Thirr për Veprim</a>
+                    </div>
+                </section>
+            `
+        });
+
+        // Feature Card
+        bm.add('teknosos-feature', {
+            label: '<i class="bi bi-card-checklist"></i><br>Feature Card',
+            category: 'TeknoSOS',
+            content: `
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-gear display-4" style="color: #F28C28;"></i>
+                        </div>
+                        <h5 class="fw-bold">Titulli i Veçorisë</h5>
+                        <p class="text-muted">Përshkrimi i veçorisë që ofron platforma jonë.</p>
+                    </div>
+                </div>
+            `
+        });
+
+        // Service Card
+        bm.add('teknosos-service', {
+            label: '<i class="bi bi-tools"></i><br>Service Card',
+            category: 'TeknoSOS',
+            content: `
+                <div class="card border-0 shadow-sm hover-lift h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle p-3 me-3" style="background: rgba(242, 140, 40, 0.1);">
+                                <i class="bi bi-wrench display-6" style="color: #F28C28;"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Emri i Shërbimit</h5>
+                        </div>
+                        <p class="text-muted mb-3">Përshkrimi i shërbimit që ofrojmë.</p>
+                        <a href="#" class="btn btn-outline-primary btn-sm">Mëso më shumë</a>
+                    </div>
+                </div>
+            `
+        });
+
+        // Stats Section
+        bm.add('teknosos-stats', {
+            label: '<i class="bi bi-graph-up"></i><br>Stats Section',
+            category: 'TeknoSOS',
+            content: `
+                <section class="py-5" style="background: #0B2545;">
+                    <div class="container">
+                        <div class="row text-center text-white g-4">
+                            <div class="col-md-3">
+                                <div class="display-4 fw-bold" style="color: #F28C28;">500+</div>
+                                <p class="mb-0">Teknikë të Certifikuar</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="display-4 fw-bold" style="color: #2ECC71;">10K+</div>
+                                <p class="mb-0">Shërbime të Kryera</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="display-4 fw-bold" style="color: #F28C28;">98%</div>
+                                <p class="mb-0">Klientë të Kënaqur</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="display-4 fw-bold" style="color: #2ECC71;">24/7</div>
+                                <p class="mb-0">Mbështetje</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            `
+        });
+
+        // Testimonial
+        bm.add('teknosos-testimonial', {
+            label: '<i class="bi bi-chat-quote"></i><br>Testimonial',
+            category: 'TeknoSOS',
+            content: `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-quote display-4" style="color: #F28C28; opacity: 0.3;"></i>
+                        </div>
+                        <p class="fs-5 mb-4">"Shërbim i shkëlqyer! Tekniku erdhi brenda 30 minutash dhe zgjidhi problemin shpejt."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-secondary" style="width:50px;height:50px;"></div>
+                            <div class="ms-3">
+                                <h6 class="mb-0 fw-bold">Emri Mbiemri</h6>
+                                <small class="text-muted">Tiranë</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        // FAQ Item
+        bm.add('teknosos-faq', {
+            label: '<i class="bi bi-question-circle"></i><br>FAQ Item',
+            category: 'TeknoSOS',
+            content: `
+                <div class="accordion-item border-0 mb-2">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse">
+                            Pyetja e shpeshtë?
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse">
+                        <div class="accordion-body text-muted">
+                            Përgjigja e pyetjes së shpeshtë shkon këtu. Mund të përfshihet çdo informacion i nevojshëm.
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        // CTA Section
+        bm.add('teknosos-cta', {
+            label: '<i class="bi bi-megaphone"></i><br>CTA Section',
+            category: 'TeknoSOS',
+            content: `
+                <section class="py-5 text-center" style="background: linear-gradient(135deg, #F5F5F5 0%, #e8e8e8 100%);">
+                    <div class="container py-4">
+                        <h2 class="fw-bold mb-3">Gati për të Filluar?</h2>
+                        <p class="text-muted mb-4">Regjistrohu falas dhe gjej teknikun e duhur për ty.</p>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="/Identity/Account/Register" class="btn btn-primary btn-lg px-5">Regjistrohu Tani</a>
+                            <a href="/Contact" class="btn btn-outline-secondary btn-lg px-4">Na Kontakto</a>
+                        </div>
+                    </div>
+                </section>
+            `
+        });
+
+        // Contact Info
+        bm.add('teknosos-contact', {
+            label: '<i class="bi bi-telephone"></i><br>Contact Info',
+            category: 'TeknoSOS',
+            content: `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4"><i class="bi bi-geo-alt text-primary me-2"></i>Na Kontaktoni</h5>
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-pin-map me-3" style="color: #F28C28; font-size: 1.25rem;"></i>
+                                <span>Rruga e Durrësit, Tiranë, Shqipëri</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-envelope me-3" style="color: #F28C28; font-size: 1.25rem;"></i>
+                                <a href="mailto:info@teknosos.al">info@teknosos.al</a>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-phone me-3" style="color: #F28C28; font-size: 1.25rem;"></i>
+                                <a href="tel:+355691234567">+355 69 123 4567</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        // Bootstrap Row
+        bm.add('bootstrap-row', {
+            label: '<i class="bi bi-layout-three-columns"></i><br>Row (3 Cols)',
+            category: 'Layout',
+            content: `
+                <div class="container py-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded text-center bg-light">Kolona 1</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded text-center bg-light">Kolona 2</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded text-center bg-light">Kolona 3</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        // Section with Title
+        bm.add('section-title', {
+            label: '<i class="bi bi-type-h1"></i><br>Section Title',
+            category: 'Layout',
+            content: `
+                <section class="py-5">
+                    <div class="container">
+                        <div class="text-center mb-5">
+                            <h2 class="fw-bold">Titulli i Seksionit</h2>
+                            <p class="text-muted">Nëntitulli ose përshkrimi i shkurtër i seksionit.</p>
+                        </div>
+                    </div>
+                </section>
+            `
+        });
+    }
+
+    // Load page content from server
+    async function loadPageContent() {
+        const pageKey = document.getElementById('pageSelector').value;
+        const lang = document.getElementById('langSelector').value;
+
+        if (!pageKey) {
+            updateStatus('Asnjë faqe e zgjedhur', 'secondary');
+            document.getElementById('btnSave').disabled = true;
+            document.getElementById('btnPreview').disabled = true;
+            return;
+        }
+
+        updateStatus('Duke ngarkuar...', 'info');
+
+        try {
+            const response = await fetch(`?handler=LoadPage&pageKey=${pageKey}&language=${lang}`);
+            const data = await response.json();
+
+            if (data.gjsComponents) {
+                // Load from GrapesJS format
+                editor.loadProjectData({
+                    components: JSON.parse(data.gjsComponents || '[]'),
+                    styles: JSON.parse(data.gjsStyles || '[]')
+                });
+            } else if (data.html) {
+                // Load from HTML
+                editor.setComponents(data.html);
+                if (data.css) {
+                    editor.setStyle(data.css);
+                }
+            } else {
+                // Empty canvas - show welcome message
+                editor.setComponents(`
+                    <section class="py-5 text-center">
+                        <div class="container">
+                            <h1 class="display-5 fw-bold text-muted">
+                                <i class="bi bi-pencil-square"></i>
+                            </h1>
+                            <p class="lead text-muted">Kjo faqe është bosh. Tërhiq dhe lësho blloqe nga paneli i djathtë për të filluar.</p>
+                        </div>
+                    </section>
+                `);
+            }
+
+            currentPage = pageKey;
+            currentLang = lang;
+            hasUnsavedChanges = false;
+            
+            document.getElementById('btnSave').disabled = false;
+            document.getElementById('btnPreview').disabled = false;
+            updateStatus(`Faqja "${pageKey}" u ngarkua`, 'success');
+
+        } catch (error) {
+            console.error('Error loading page:', error);
+            updateStatus('Gabim gjatë ngarkimit', 'danger');
+        }
+    }
+
+    // Save page content
+    function savePage() {
+        const pageKey = document.getElementById('pageSelector').value;
+        const lang = document.getElementById('langSelector').value;
+
+        if (!pageKey) {
+            alert('Ju lutem zgjidhni një faqe për të ruajtur.');
+            return;
+        }
+
+        updateStatus('Duke ruajtur...', 'info');
+
+        // Get content from editor
+        const html = editor.getHtml();
+        const css = editor.getCss();
+        const projectData = editor.getProjectData();
+
+        // Fill form fields
+        document.getElementById('formPageKey').value = pageKey;
+        document.getElementById('formLanguage').value = lang;
+        document.getElementById('formHtmlContent').value = html;
+        document.getElementById('formCssContent').value = css;
+        document.getElementById('formGjsComponents').value = JSON.stringify(projectData.components || []);
+        document.getElementById('formGjsStyles').value = JSON.stringify(projectData.styles || []);
+
+        // Submit form
+        document.getElementById('saveForm').submit();
+    }
+
+    // Preview page in new tab
+    function previewPage() {
+        const pageKey = document.getElementById('pageSelector').value;
+        if (pageKey) {
+            // Map page keys to actual URLs
+            const pageUrls = {
+                'home': '/',
+                'about': '/About',
+                'howitworks': '/HowItWorks',
+                'faq': '/FAQ',
+                'contact': '/Contact',
+                'terms': '/Terms',
+                'privacy': '/Privacy',
+                'cookies': '/CookiePolicy',
+                'disclaimer': '/Disclaimer',
+                'dataprocessing': '/DataProcessing',
+                'technicians': '/Technicians'
+            };
+            window.open(pageUrls[pageKey] || '/', '_blank');
+        }
+    }
+
+    // Load page when selection changes
+    function loadPage() {
+        if (hasUnsavedChanges) {
+            if (!confirm('Keni ndryshime të paruajtura. Dëshironi të vazhdoni pa ruajtur?')) {
+                return;
+            }
+        }
+        
+        const pageKey = document.getElementById('pageSelector').value;
+        const lang = document.getElementById('langSelector').value;
+        
+        // Update URL
+        if (pageKey) {
+            window.history.pushState({}, '', `?PageKey=${pageKey}&Language=${lang}`);
+        }
+        
+        loadPageContent();
+    }
+
+    // Update status indicator
+    function updateStatus(message, type) {
+        const indicator = document.getElementById('statusIndicator');
+        indicator.textContent = message;
+        indicator.className = `badge bg-${type}`;
+    }
+
+    // Toggle fullscreen
+    function toggleFullscreen() {
+        const editorEl = document.getElementById('gjs-editor');
+        if (!document.fullscreenElement) {
+            editorEl.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // Warn before leaving with unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initEditor);
+</script>
+}

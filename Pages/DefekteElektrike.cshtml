@@ -1,0 +1,452 @@
+@page
+@model TeknoSOS.WebApp.Pages.DefekteElektrikeModel
+@{
+    ViewData["Title"] = "Defekte Elektrike - Elektricist i Licencuar Tiranë | TeknoSOS";
+    ViewData["Description"] = "Zgjidhje profesionale për defekte elektrike në Shqipëri. Elektricistë të licencuar për qark të shkurtër, automat të rënë, priza të djegura. Riparime urgjente 24/7 në Tiranë, Durrës, Vlorë.";
+    ViewData["Keywords"] = "defekt elektrik, elektricist Tiranë, riparime elektrike urgjente, instalime elektrike, elektricist i licencuar, qark i shkurtër, automat elektrik, priza e djegur, kabllo elektrike";
+}
+
+@section Styles {
+<style>
+    .seo-hero {
+        background: linear-gradient(135deg, #0B2545 0%, #13315C 50%, #0B2545 100%);
+        padding: 80px 0 60px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .seo-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(242,140,40,0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .seo-hero h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+    .seo-hero .lead {
+        font-size: 1.15rem;
+        opacity: 0.9;
+        max-width: 700px;
+    }
+    .seo-section {
+        padding: 60px 0;
+    }
+    .seo-section:nth-child(even) {
+        background: var(--ts-bg-secondary, #f8fafc);
+    }
+    .defect-card {
+        background: var(--ts-card-bg, #fff);
+        border-radius: 16px;
+        padding: 24px;
+        height: 100%;
+        border: 1px solid var(--ts-border, #e2e8f0);
+        transition: all 0.3s ease;
+    }
+    .defect-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    }
+    .defect-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #F28C28 0%, #e07b1a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+    }
+    .defect-card h3 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: var(--ts-text, #1e293b);
+    }
+    .defect-card p {
+        font-size: 0.92rem;
+        color: var(--ts-text-muted, #64748b);
+        margin-bottom: 0;
+    }
+    .city-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        background: var(--ts-primary, #0B2545);
+        color: #fff;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 4px;
+    }
+    .price-table {
+        background: var(--ts-card-bg, #fff);
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--ts-border, #e2e8f0);
+    }
+    .price-table th {
+        background: var(--ts-primary, #0B2545);
+        color: #fff;
+        font-weight: 600;
+        padding: 16px;
+    }
+    .price-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--ts-border, #e2e8f0);
+    }
+    .cta-box {
+        background: linear-gradient(135deg, #F28C28 0%, #e07b1a 100%);
+        border-radius: 20px;
+        padding: 40px;
+        color: #fff;
+        text-align: center;
+    }
+    .cta-box h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 16px;
+    }
+    .trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 30px;
+        font-size: 0.9rem;
+        margin: 6px;
+    }
+    .trust-badge i {
+        color: #F28C28;
+    }
+</style>
+}
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "LocalBusiness",
+    "name": "TeknoSOS - Shërbime Elektrike",
+    "description": "Platforma #1 në Shqipëri për zgjidhjen e defekteve elektrike. Elektricistë të licencuar për riparime urgjente.",
+    "url": "https://teknosos.app/DefekteElektrike",
+    "telephone": "+355-69-000-0000",
+    "address": {
+        "@@type": "PostalAddress",
+        "addressLocality": "Tiranë",
+        "addressRegion": "Tiranë",
+        "addressCountry": "AL"
+    },
+    "geo": {
+        "@@type": "GeoCoordinates",
+        "latitude": "41.3275",
+        "longitude": "19.8187"
+    },
+    "areaServed": ["Tiranë", "Durrës", "Vlorë", "Shkodër", "Elbasan", "Korçë"],
+    "serviceType": ["Riparime Elektrike", "Instalime Elektrike", "Emergjenca Elektrike"],
+    "priceRange": "$$",
+    "openingHours": "Mo-Su 00:00-24:00"
+}
+</script>
+
+<!-- Breadcrumb Schema -->
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@@type": "ListItem", "position": 1, "name": "Kryefaqja", "item": "https://teknosos.app/"},
+        {"@@type": "ListItem", "position": 2, "name": "Defekte Elektrike", "item": "https://teknosos.app/DefekteElektrike"}
+    ]
+}
+</script>
+
+<!-- Hero Section -->
+<section class="seo-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb" style="background:transparent; padding:0; margin:0;">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50">Kryefaqja</a></li>
+                <li class="breadcrumb-item active text-white">Defekte Elektrike</li>
+            </ol>
+        </nav>
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1>Defekte Elektrike? Zgjidhje Profesionale Brenda Minutash</h1>
+                <p class="lead">
+                    TeknoSOS është platforma më e avancuar në Shqipëri që lidh qytetarët me <strong>elektricistë të licencuar</strong> 
+                    për çdo emergjencë elektrike. Nga një qark i shkurtër deri te zëvendësimi i automatëve — ne kemi zgjidhjen.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <span class="trust-badge"><i class="bi bi-patch-check-fill"></i> Elektricistë të Verifikuar</span>
+                    <span class="trust-badge"><i class="bi bi-lightning-charge-fill"></i> Përgjigje Brenda 30 Min</span>
+                    <span class="trust-badge"><i class="bi bi-shield-check"></i> Garanci Pune</span>
+                </div>
+                <div class="mt-4">
+                    <a asp-page="/ReportDefect" class="btn btn-warning btn-lg px-4 me-2">
+                        <i class="bi bi-lightning-charge me-2"></i>Raporto Defekt Tani
+                    </a>
+                    <a asp-page="/Technicians" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-people me-2"></i>Shiko Elektricistët
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 d-none d-lg-block text-center">
+                <i class="bi bi-lightning-charge-fill" style="font-size: 180px; opacity: 0.15;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Defekte të Zakonshme -->
+<section class="seo-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Defekte Elektrike të Zakonshme në Shqipëri</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                Rrjeti elektrik dhe instalimet e vjetra krijojnë probleme të vazhdueshme. Këto janë defektet që zgjidhim çdo ditë:
+            </p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <h3>Qark i Shkurtër (Short Circuit)</h3>
+                    <p>Kur rryma kalon rrugën e gabuar, rreziku për zjarr është real. Shenjat: era e djegur plastike, automati që bie vazhdimisht, priza që nxehet. <strong>Mos e injoroni – telefononi menjëherë.</strong></p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-toggle-off"></i></div>
+                    <h3>Automat që Bie Shpesh</h3>
+                    <p>Nëse automati juaj bie pa arsye të dukshme, keni: mbingarkesë në qark, kabllo të dëmtuara, ose pajisje me defekt. Një elektricist profesionist identifikon shkakun brenda minutash.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-plug-fill"></i></div>
+                    <h3>Priza dhe Çelësa të Djegur</h3>
+                    <p>Prizat e zeza ose të shkrira janë alarm i kuq. Shkaqet: lidhje të dobëta, kabllo nën-dimensionuara, ngarkesë e tepërt. Zëvendësimi urgjent parandalon zjarrin.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-lightbulb-fill"></i></div>
+                    <h3>Ndriçim LED që Dridhet</h3>
+                    <p>Llambat LED që dridhen tregojnë: problem me tensionin, ballast/driver të dëmtuar, ose lidhje jo të sigurta. Diagnostifikimi profesional zbulon shkakun.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-cable-car"></i></div>
+                    <h3>Kabllo të Vjetra Alumini</h3>
+                    <p>Shumë ndërtesa në Shqipëri kanë ende kabllo alumini nga koha e komunizmit. Nxehen më shumë se bakri dhe rrisin rrezikun për zjarr. <strong>Rekomandim: zëvendësim i plotë.</strong></p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="defect-card">
+                    <div class="defect-icon"><i class="bi bi-shield-x"></i></div>
+                    <h3>Mungesa e Tokëzimit</h3>
+                    <p>Pa tokëzim të duhur, çdo defekt bëhet rrezik për jetën. Ne instalojmë sisteme tokëzimi sipas standardeve europiane për sigurinë maksimale.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Si Funksionon -->
+<section class="seo-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-4">Si të Zgjidhni Defektin Elektrik me TeknoSOS?</h2>
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <span class="badge bg-primary rounded-circle p-3 fs-5">1</span>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">Raportoni Defektin</h5>
+                        <p class="text-muted mb-0">Përshkruani problemin me foto dhe lokacion. Merr vetëm 2 minuta.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <span class="badge bg-primary rounded-circle p-3 fs-5">2</span>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">Merrni Oferta</h5>
+                        <p class="text-muted mb-0">Elektricistët e zonës suaj dërgojnë çmime brenda minutash.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <span class="badge bg-primary rounded-circle p-3 fs-5">3</span>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">Zgjidhni Profesionistin</h5>
+                        <p class="text-muted mb-0">Shihni vlerësimet, certifikatat dhe zgjidhni më të mirin.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="me-3">
+                        <span class="badge bg-success rounded-circle p-3 fs-5">✓</span>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">Problem i Zgjidhur</h5>
+                        <p class="text-muted mb-0">Paguani vetëm kur jeni të kënaqur. Garanci pune e përfshirë.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <table class="price-table w-100">
+                    <thead>
+                        <tr>
+                            <th>Shërbimi</th>
+                            <th>Çmimi Orientues</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="bi bi-search text-primary me-2"></i>Vizitë diagnostike</td>
+                            <td><strong>1,500 - 2,500 Lekë</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-plug text-primary me-2"></i>Riparim prize/çelësi</td>
+                            <td><strong>2,000 - 4,000 Lekë</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-toggle-on text-primary me-2"></i>Zëvendësim automati</td>
+                            <td><strong>3,000 - 6,000 Lekë</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-lightning text-primary me-2"></i>Riparim qarku elektrik</td>
+                            <td><strong>5,000 - 15,000 Lekë</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-house text-primary me-2"></i>Instalim i ri shtëpie</td>
+                            <td><strong>50,000+ Lekë</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-muted mt-3 small">* Çmimet variojnë sipas kompleksitetit. Merrni ofertë të saktë në TeknoSOS.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Zonat e Mbulimit -->
+<section class="seo-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Elektricistë në Të Gjithë Shqipërinë</h2>
+            <p class="text-muted">Rrjeti ynë mbulon qytetet kryesore me kohë përgjigjeje të shpejtë</p>
+        </div>
+        <div class="text-center mb-4">
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Tiranë — 15-30 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Durrës — 20-40 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Vlorë — 30-60 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Shkodër — 30-60 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Elbasan — 30-45 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Korçë — 45-90 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Fier — 30-50 min</span>
+            <span class="city-badge"><i class="bi bi-geo-alt me-1"></i>Berat — 40-70 min</span>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="cta-box">
+                    <h3>Keni Emergjencë Elektrike?</h3>
+                    <p class="mb-4 opacity-90">Mos prisni derisa të bëhet keq. Një defekt i vogël sot mund të bëhet zjarr nesër.</p>
+                    <a asp-page="/ReportDefect" class="btn btn-light btn-lg px-5">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>Raporto Defektin Tani
+                    </a>
+                    <p class="mt-3 mb-0 small opacity-75">Përgjigje brenda 30 minutash • Elektricistë të licencuar • Çmime transparente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="seo-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Pyetje të Shpeshta për Defektet Elektrike</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Sa shpejt mund të vijë një elektricist?
+                            </button>
+                        </h3>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Në Tiranë, elektricistët tanë përgjigjen zakonisht brenda 15-30 minutash. Për emergjenca, kemi profesionistë 24/7 të gatshëm.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                A janë elektricistët e licencuar?
+                            </button>
+                        </h3>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Po, të gjithë elektricistët në TeknoSOS verifikohen për licencë profesionale, përvojë pune dhe certifikata. Shihni profilet e tyre para se të zgjidhni.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Si paguaj për shërbimin?
+                            </button>
+                        </h3>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Paguani direkt tek elektricisti pas përfundimit të punës. Ne garantojmë transparencë — çmimi që merrni në ofertë është çmimi final.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Çfarë bëj nëse automati bie vazhdimisht?
+                            </button>
+                        </h3>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Mos e riaktivizoni vazhdimisht — kjo tregon mbingarkesë ose defekt të rrezikshëm. Raportoni në TeknoSOS dhe një elektricist do të diagnostifikojë shkakun para se të bëhet problem më i madh.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="seo-section" style="background: var(--ts-primary, #0B2545); color: #fff;">
+    <div class="container text-center py-4">
+        <h2 class="fw-bold mb-3">TeknoSOS — Siguria Elektrike e Familjes Suaj</h2>
+        <p class="opacity-75 mb-4">Defekte elektrike • Instalime • Riparime urgjente • Në të gjithë Shqipërinë</p>
+        <a asp-page="/ReportDefect" class="btn btn-warning btn-lg px-5 me-2">
+            <i class="bi bi-lightning-charge me-2"></i>Raporto Defekt
+        </a>
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-light btn-lg px-5">
+            <i class="bi bi-person-plus me-2"></i>Regjistrohu Falas
+        </a>
+    </div>
+</section>

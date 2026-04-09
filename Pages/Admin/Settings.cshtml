@@ -1,0 +1,391 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.SettingsModel
+@{
+    ViewData["Title"] = "Cilësimet e Platformës";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2 class="fw-bold mb-4"><i class="bi bi-gear text-primary"></i> Cilësimet e Platformës</h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMsg))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@{
+    string BVal(string key, string def = "") => Model.Branding.TryGetValue(key, out var v) ? v : def;
+    string CVal(string key, string def = "") => Model.Contact.TryGetValue(key, out var v) ? v : def;
+    string SeoVal(string key, string def = "") => Model.Seo.TryGetValue(key, out var v) ? v : def;
+    string SocVal(string key, string def = "") => Model.Social.TryGetValue(key, out var v) ? v : def;
+    string LVal(string key, string def = "") => Model.Languages.TryGetValue(key, out var v) ? v : def;
+    string GVal(string key, string def = "") => Model.General.TryGetValue(key, out var v) ? v : def;
+    string FVal(string key, string def = "") => Model.Footer.TryGetValue(key, out var v) ? v : def;
+    string AdVal(string key, string def = "") => Model.Adsense.TryGetValue(key, out var v) ? v : def;
+}
+
+<div class="row g-4">
+    <!-- Branding -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-palette text-primary"></i> Branding dhe Pamja</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Branding">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Emri i Platformës</label>
+                        <input name="siteName" value="@BVal("SiteName","TeknoSOS")" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tagline</label>
+                        <input name="siteTagline" value="@BVal("SiteTagline")" class="form-control" placeholder="Platforma Dixhitale e Shërbimeve Teknike" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ngjyra Primare</label>
+                        <div class="input-group">
+                            <input type="color" name="primaryColor" value="@BVal("PrimaryColor","#2563eb")" class="form-control form-control-color" />
+                            <input type="text" value="@BVal("PrimaryColor","#2563eb")" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ngjyra Sekondare</label>
+                        <div class="input-group">
+                            <input type="color" name="secondaryColor" value="@BVal("SecondaryColor","#764ba2")" class="form-control form-control-color" />
+                            <input type="text" value="@BVal("SecondaryColor","#764ba2")" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">URL e Logos</label>
+                        <input name="logoUrl" value="@BVal("LogoUrl","/images/logo.png")" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">URL e Favicon</label>
+                        <input name="faviconUrl" value="@BVal("FaviconUrl","/favicon.ico")" class="form-control" />
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj Branding</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-envelope text-primary"></i> Kontakti</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Contact">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Kontakti</label>
+                        <input name="contactEmail" value="@CVal("ContactEmail")" class="form-control" type="email" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Numri i Telefonit</label>
+                        <input name="contactPhone" value="@CVal("ContactPhone")" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Adresa</label>
+                        <input name="contactAddress" value="@CVal("ContactAddress")" class="form-control" />
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj Kontaktin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-search text-primary"></i> SEO</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Seo">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Meta Description</label>
+                        <textarea name="metaDescription" class="form-control" rows="3">@SeoVal("MetaDescription")</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Meta Keywords</label>
+                        <input name="metaKeywords" value="@SeoVal("MetaKeywords")" class="form-control" />
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj SEO</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Media -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-share text-primary"></i> Rrjete Sociale</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Social">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-facebook"></i> Facebook</label>
+                        <input name="facebook" value="@SocVal("Facebook")" class="form-control" placeholder="https://facebook.com/..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-instagram"></i> Instagram</label>
+                        <input name="instagram" value="@SocVal("Instagram")" class="form-control" placeholder="https://instagram.com/..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-linkedin"></i> LinkedIn</label>
+                        <input name="linkedin" value="@SocVal("LinkedIn")" class="form-control" placeholder="https://linkedin.com/..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-twitter-x"></i> Twitter/X</label>
+                        <input name="twitter" value="@SocVal("Twitter")" class="form-control" placeholder="https://x.com/..." />
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj Rrjetet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Settings -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-translate text-primary"></i> Gjuhët</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Languages">
+                    @{
+                        var defLang = LVal("DefaultLanguage", "sq");
+                        var activeLangs = LVal("ActiveLanguages", "sq,en,it,de,fr").Split(',');
+                    }
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Gjuha Default</label>
+                        <select name="defaultLanguage" class="form-select">
+                            <option value="sq" selected="@(defLang == "sq")">AL - Shqip</option>
+                            <option value="en" selected="@(defLang == "en")">EN - English</option>
+                            <option value="it" selected="@(defLang == "it")">IT - Italiano</option>
+                            <option value="de" selected="@(defLang == "de")">DE - Deutsch</option>
+                            <option value="fr" selected="@(defLang == "fr")">FR - Francais</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Gjuhët Aktive (ndarje me presje)</label>
+                        <input name="activeLanguages" value="@LVal("ActiveLanguages","sq,en,it,de,fr")" class="form-control" placeholder="sq,en,it,de,fr" />
+                        <small class="text-muted">P.sh.: sq,en,it</small>
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj Gjuhët</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Settings -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-sliders text-primary"></i> Të Përgjithshme</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="General">
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="maintenanceMode" value="true"
+                               checked="@(GVal("MaintenanceMode","false") == "true")" id="chkMaint" />
+                        <label class="form-check-label fw-semibold" for="chkMaint">Modaliteti i Mirëmbajtjes</label>
+                        <small class="d-block text-muted">Kur është aktiv, vetëm adminët mund të hyjnë.</small>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="allowRegistration" value="true"
+                               checked="@(GVal("AllowRegistration","true") == "true")" id="chkReg" />
+                        <label class="form-check-label fw-semibold" for="chkReg">Lejo Regjistrimin</label>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="requireEmailConfirmation" value="true"
+                               checked="@(GVal("RequireEmailConfirmation","false") == "true")" id="chkEmail" />
+                        <label class="form-check-label fw-semibold" for="chkEmail">Kerko Konfirmimin e Email</label>
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Settings -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up text-primary"></i> Analytics & Tracking</h5>
+            </div>
+            <div class="card-body">
+                @{
+                    string AVal(string key, string def = "") => Model.Analytics.TryGetValue(key, out var v) ? v : def;
+                }
+                <form method="post" asp-page-handler="Analytics">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">GA4 Measurement ID</label>
+                        <input name="ga4MeasurementId" value="@AVal("GA4MeasurementId")" class="form-control" placeholder="G-XXXXXXXXXX" />
+                        <small class="text-muted">P.sh.: G-VR3ZX35D8B</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">GTM Container ID</label>
+                        <input name="gtmContainerId" value="@AVal("GTMContainerId")" class="form-control" placeholder="GTM-XXXXXXX" />
+                        <small class="text-muted">P.sh.: GTM-MNB34J4N</small>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="enableTracking" value="true"
+                               checked="@(AVal("EnableTracking","true") == "true")" id="chkTracking" />
+                        <label class="form-check-label fw-semibold" for="chkTracking">Aktivizo Tracking</label>
+                        <small class="d-block text-muted">Kur eshte aktiv, GA4 dhe GTM do te ngarkohen ne cdo faqe.</small>
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj Analytics</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO Advanced -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-3 text-primary"></i> SEO Advanced</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="SeoAdvanced">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Site Base URL</label>
+                        <input name="siteBaseUrl" value="@SeoVal("SiteBaseUrl", "https://teknosos.app")" class="form-control" placeholder="https://teknosos.app" />
+                        <small class="text-muted">Përdoret për canonical URL, sitemap.xml dhe robots.txt.</small>
+                    </div>
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj SEO Advanced</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- AdSense Settings -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-badge-ad text-primary"></i> AdSense (Blog)</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Adsense">
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="adsenseEnabled" value="true"
+                               checked="@(AdVal("Enabled", "false") == "true")" id="chkAdsenseEnabled" />
+                        <label class="form-check-label fw-semibold" for="chkAdsenseEnabled">Aktivizo AdSense</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Client ID</label>
+                        <input name="adsenseClientId" value="@AdVal("ClientId")" class="form-control" placeholder="ca-pub-xxxxxxxxxxxxxxxx" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Blog List Top Slot</label>
+                        <input name="blogListTopSlot" value="@AdVal("BlogListTopSlot")" class="form-control" placeholder="1234567890" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Blog List In-Feed Slot</label>
+                        <input name="blogListInFeedSlot" value="@AdVal("BlogListInFeedSlot")" class="form-control" placeholder="1234567890" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Blog Article Top Slot</label>
+                        <input name="blogArticleTopSlot" value="@AdVal("BlogArticleTopSlot")" class="form-control" placeholder="1234567890" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Blog Article Inline Slot</label>
+                        <input name="blogArticleInlineSlot" value="@AdVal("BlogArticleInlineSlot")" class="form-control" placeholder="1234567890" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Blog Article Bottom Slot</label>
+                        <input name="blogArticleBottomSlot" value="@AdVal("BlogArticleBottomSlot")" class="form-control" placeholder="1234567890" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Max Inline Ads për Artikull</label>
+                        <input name="maxInlineAdsPerArticle" type="number" min="0" max="5" value="@AdVal("MaxInlineAdsPerArticle", "2")" class="form-control" />
+                    </div>
+
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj AdSense</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Settings -->
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-layout-text-window-reverse text-primary"></i> Cilesimet e Footer</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Footer">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Pershkrimi i Footer</label>
+                            <textarea name="footerDescription" class="form-control" rows="2" placeholder="Platforma e besueshme per te gjitha sherbimet e shtepise.">@FVal("Description", "Platforma e besueshme për të gjitha shërbimet e shtëpisë.")</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Teksti i Copyright</label>
+                            <input name="footerCopyright" value="@FVal("Copyright", "TeknoSOS")" class="form-control" placeholder="TeknoSOS" />
+                            <small class="text-muted">Do te shfaqet si: © 2026 [Teksti]. Të gjitha të drejtat e rezervuara.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">"Made With" Teksti</label>
+                            <input name="footerMadeWith" value="@FVal("MadeWith", "Made with ❤️ in Albania")" class="form-control" placeholder="Made with ❤️ in Albania" />
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4" />
+                    <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt text-primary"></i> Informacionet e Kontaktit ne Footer</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Adresa</label>
+                            <input name="footerAddress" value="@FVal("Address", "Tiranë, Shqipëri")" class="form-control" placeholder="Tirane, Shqiperi" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input name="footerEmail" value="@FVal("Email", "info@teknosos.al")" class="form-control" placeholder="info@teknosos.al" type="email" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Telefoni</label>
+                            <input name="footerPhone" value="@FVal("Phone", "+355 69 123 4567")" class="form-control" placeholder="+355 69 123 4567" />
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h6 class="fw-bold mb-3"><i class="bi bi-share text-primary"></i> Linqet Sociale ne Footer</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-facebook"></i> Facebook URL</label>
+                            <input name="footerFacebook" value="@FVal("Facebook", "#")" class="form-control" placeholder="https://facebook.com/teknosos" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-instagram"></i> Instagram URL</label>
+                            <input name="footerInstagram" value="@FVal("Instagram", "#")" class="form-control" placeholder="https://instagram.com/teknosos" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-linkedin"></i> LinkedIn URL</label>
+                            <input name="footerLinkedIn" value="@FVal("LinkedIn", "#")" class="form-control" placeholder="https://linkedin.com/company/teknosos" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-twitter-x"></i> Twitter/X URL</label>
+                            <input name="footerTwitter" value="@FVal("Twitter", "#")" class="form-control" placeholder="https://x.com/teknosos" />
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> Ruaj Cilesimet e Footer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,259 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.MenuManagerModel
+@{
+    ViewData["Title"] = "Menaxhimi i Menysë";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-list text-primary"></i> Menaxhimi i Menysë / Navigimit</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#menuModal" onclick="resetMenuForm()">
+        <i class="bi bi-plus-lg"></i> Shto Element të Ri
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMsg))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Location Filter -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Vendndodhja e Menuse</label>
+                <select name="location" class="form-select" onchange="this.form.submit()">
+                    <option value="main" selected="@(Model.Location == "main")">Navigimi Kryesor</option>
+                    <option value="footer_nav" selected="@(Model.Location == "footer_nav")">Footer - Navigim</option>
+                    <option value="footer_legal" selected="@(Model.Location == "footer_legal")">Footer - Legal</option>
+                    <option value="admin_sidebar" selected="@(Model.Location == "admin_sidebar")">Admin Sidebar</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtro
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.MenuItems.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="bi bi-diagram-3"></i> @Model.Location
+                <span class="badge bg-secondary ms-2">@Model.MenuItems.Count elemente</span>
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px">Rendi</th>
+                        <th>Titulli</th>
+                        <th>URL</th>
+                        <th>Ikona</th>
+                        <th style="width:80px">Roli</th>
+                        <th style="width:60px">Aktiv</th>
+                        <th style="width:140px">Veprime</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.MenuItems)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold">@item.SortOrder</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.IconClass))
+                                {
+                                    <i class="bi @item.IconClass me-1"></i>
+                                }
+                                @item.Title
+                                @if (item.OpenInNewTab)
+                                {
+                                    <i class="bi bi-box-arrow-up-right ms-1 text-muted small"></i>
+                                }
+                            </td>
+                            <td><code class="small">@item.Url</code></td>
+                            <td><code class="small">@item.IconClass</code></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.RequiredRole))
+                                {
+                                    <span class="badge bg-warning text-dark">@item.RequiredRole</span>
+                                }
+                                else if (item.RequiresAuth)
+                                {
+                                    <span class="badge bg-info text-dark">Auth</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark">Publik</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">Po</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Jo</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1" title="Modifiko"
+                                        data-bs-toggle="modal" data-bs-target="#menuModal"
+                                        onclick="fillMenuForm(@item.Id, '@item.MenuLocation', '@System.Net.WebUtility.HtmlEncode(item.Title)', '@item.Url', '@item.IconClass', '@item.CssClass', @(item.OpenInNewTab ? "true" : "false"), '@item.RequiredRole', @(item.RequiresAuth ? "true" : "false"), @(item.UnauthenticatedOnly ? "true" : "false"), @(item.ParentId?.ToString() ?? "null"), @item.SortOrder, @(item.IsActive ? "true" : "false"))">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-page-handler="Delete" class="d-inline"
+                                      onsubmit="return confirm('Jeni i sigurt qe doni ta fshini kete element?')">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Fshi">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Nuk ka elemente menuje për vendndodhjen <strong>@Model.Location</strong>.
+    </div>
+}
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Save">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="menuModalTitle"><i class="bi bi-plus-lg"></i> Shto Element Menuje</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="EditId" id="mId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Titulli</label>
+                            <input name="EditTitle" id="mTitle" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">URL</label>
+                            <input name="EditUrl" id="mUrl" class="form-control" required placeholder="/about ose https://..." />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Vendndodhja</label>
+                            <select name="EditMenuLocation" id="mLocation" class="form-select">
+                                <option value="main">Navigimi Kryesor</option>
+                                <option value="footer_nav">Footer - Navigim</option>
+                                <option value="footer_legal">Footer - Legal</option>
+                                <option value="admin_sidebar">Admin Sidebar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ikona (Bootstrap Icons)</label>
+                            <input name="EditIconClass" id="mIconClass" class="form-control" placeholder="bi-house" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Klasa CSS</label>
+                            <input name="EditCssClass" id="mCssClass" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Rendi (SortOrder)</label>
+                            <input name="EditSortOrder" id="mSortOrder" type="number" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Roli i Kerkuar</label>
+                            <select name="EditRequiredRole" id="mRequiredRole" class="form-select">
+                                <option value="">Asnje</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Professional">Professional</option>
+                                <option value="Citizen">Citizen</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Parent ID</label>
+                            <input name="EditParentId" id="mParentId" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mt-4">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="EditIsActive" id="mIsActive" value="true" checked />
+                                    <label class="form-check-label" for="mIsActive">Aktiv</label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="EditOpenInNewTab" id="mNewTab" value="true" />
+                                    <label class="form-check-label" for="mNewTab">Tab i ri</label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="EditRequiresAuth" id="mAuth" value="true" />
+                                    <label class="form-check-label" for="mAuth">Kerkon login</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="EditUnauthenticatedOnly" id="mUnauth" value="true" />
+                                    <label class="form-check-label" for="mUnauth">Vetem pa login</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Ruaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function resetMenuForm() {
+        document.getElementById('menuModalTitle').innerHTML = '<i class="bi bi-plus-lg"></i> Shto Element Menuje';
+        document.getElementById('mId').value = 0;
+        document.getElementById('mTitle').value = '';
+        document.getElementById('mUrl').value = '';
+        document.getElementById('mLocation').value = '@Model.Location';
+        document.getElementById('mIconClass').value = '';
+        document.getElementById('mCssClass').value = '';
+        document.getElementById('mSortOrder').value = 0;
+        document.getElementById('mRequiredRole').value = '';
+        document.getElementById('mParentId').value = '';
+        document.getElementById('mIsActive').checked = true;
+        document.getElementById('mNewTab').checked = false;
+        document.getElementById('mAuth').checked = false;
+        document.getElementById('mUnauth').checked = false;
+    }
+
+    function fillMenuForm(id, location, title, url, iconClass, cssClass, openNewTab, requiredRole, requiresAuth, unauthOnly, parentId, sortOrder, isActive) {
+        document.getElementById('menuModalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Modifiko #' + id;
+        document.getElementById('mId').value = id;
+        document.getElementById('mLocation').value = location;
+        var txt = document.createElement('textarea'); txt.innerHTML = title;
+        document.getElementById('mTitle').value = txt.value;
+        document.getElementById('mUrl').value = url || '';
+        document.getElementById('mIconClass').value = iconClass || '';
+        document.getElementById('mCssClass').value = cssClass || '';
+        document.getElementById('mSortOrder').value = sortOrder;
+        document.getElementById('mRequiredRole').value = requiredRole || '';
+        document.getElementById('mParentId').value = parentId || '';
+        document.getElementById('mIsActive').checked = isActive;
+        document.getElementById('mNewTab').checked = openNewTab;
+        document.getElementById('mAuth').checked = requiresAuth;
+        document.getElementById('mUnauth').checked = unauthOnly;
+    }
+</script>
+}

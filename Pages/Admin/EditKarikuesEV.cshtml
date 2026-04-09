@@ -1,0 +1,20 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.EditKarikuesEVModel
+@{
+    ViewData["Title"] = "Edito Faqen KarikuesEV";
+}
+
+<h1>Edito Faqen KarikuesEV</h1>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Content.HeroTitle" class="form-label">Titulli Hero</label>
+        <input asp-for="Content.HeroTitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Content.HeroLead" class="form-label">Përshkrimi Hero</label>
+        <textarea asp-for="Content.HeroLead" class="form-control"></textarea>
+    </div>
+    <!-- Shto fushat e tjera sipas modelit -->
+    <button type="submit" class="btn btn-success">Ruaj Ndryshimet</button>
+</form>

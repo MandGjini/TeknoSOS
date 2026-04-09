@@ -1,0 +1,132 @@
+@page
+@model TeknoSOS.WebApp.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log in - TeknoSOS";
+}
+
+<div class="container-fluid vh-100">
+    <div class="row h-100">
+        <!-- Left Side - Branding -->
+        <div class="col-md-6 d-flex align-items-center justify-content-center bg-primary text-white">
+            <div class="text-center">
+                <h1 class="display-4 mb-4">
+                    <i class="bi bi-wrench-adjustable-circle"></i>
+                    TeknoSOS
+                </h1>
+                <p class="lead mb-4">Connect with professional technicians in your area</p>
+                <div class="features-list">
+                    <div class="feature-item mb-3">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span>Find local experts</span>
+                    </div>
+                    <div class="feature-item mb-3">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Verified professionals</span>
+                    </div>
+                    <div class="feature-item mb-3">
+                        <i class="bi bi-clock-fill"></i>
+                        <span>Quick response time</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="col-md-6 d-flex align-items-center justify-content-center">
+            <div class="login-container">
+                <div class="text-center mb-5">
+                    <h2 class="h3 mb-3">Welcome Back</h2>
+                    <p class="text-muted">Please sign in to your account</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                <form method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input asp-for="Input.Email" class="form-control form-control-lg" 
+                                   placeholder="Enter your email" autocomplete="username" required />
+                        </div>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input asp-for="Input.Password" class="form-control form-control-lg" 
+                                   placeholder="Enter your password" autocomplete="current-password" required />
+                        </div>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input asp-for="Input.RememberMe" class="form-check-input" />
+                            <label asp-for="Input.RememberMe" class="form-check-label">
+                                Remember me
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Sign In
+                        </button>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="mb-3">
+                            <a href="#" class="text-decoration-none">Forgot your password?</a>
+                        </p>
+                        <p class="text-muted">
+                            Don't have an account? 
+                            <a href="#" class="text-decoration-none">Sign up here</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .feature-item i {
+        width: 20px;
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    .form-control-lg {
+        padding: 12px 16px;
+    }
+</style>

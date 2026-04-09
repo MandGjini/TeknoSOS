@@ -1,0 +1,115 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.MarketingEmailModel
+@{
+    ViewData["Title"] = "Marketing Email";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2 class="fw-bold mb-4"><i class="bi bi-envelope-paper-heart text-primary"></i> Marketing Email (Bulk)</h2>
+<p class="text-muted">Ngarko CSV me email-e ose vendos listën manualisht. Pastaj shkruaj Subject + Body (tekst ose HTML) dhe dërgoji nga platforma.</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet text-primary"></i> Lista e Marrësve</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="ParseCsv" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CSV File</label>
+                        <input type="file" class="form-control" name="CsvFile" accept=".csv,.txt" />
+                        <small class="text-muted">Kolona e parë ose çdo qelizë që përmban email do të lexohet automatikisht.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ose listë manuale</label>
+                        <textarea class="form-control" name="RecipientsRaw" rows="10" placeholder="email1@domain.com&#10;email2@domain.com&#10;email3@domain.com">@Model.RecipientsRaw</textarea>
+                        <small class="text-muted">Pranohet ndarje me rreshta, presje ose pikëpresje.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-check2-circle"></i> Lexo/Verifiko Listën
+                    </button>
+
+                    @if (Model.ParsedCount > 0)
+                    {
+                        <span class="badge bg-success ms-2">@Model.ParsedCount email-e valide</span>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-megaphone text-primary"></i> Fushata</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Send" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Subjekti</label>
+                        <input class="form-control" name="Subject" value="@Model.Subject" required />
+                    </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="isHtml" name="IsBodyHtml" value="true" @(Model.IsBodyHtml ? "checked" : "")>
+                        <label class="form-check-label fw-semibold" for="isHtml">Dërgo si HTML</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Përmbajtja</label>
+                        <textarea class="form-control" name="Body" rows="12" required>@Model.Body</textarea>
+                        <small class="text-muted">Nëse HTML është aktiv, mund të përdorësh etiketa si &lt;h2&gt;, &lt;p&gt;, &lt;a&gt; etj.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lista e Marrësve (auto/manual)</label>
+                        <textarea class="form-control" name="RecipientsRaw" rows="8" placeholder="email1@domain.com&#10;email2@domain.com">@Model.RecipientsRaw</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CSV (opsionale)</label>
+                        <input type="file" class="form-control" name="CsvFile" accept=".csv,.txt" />
+                        <small class="text-muted">Nëse lista sipër është bosh, do lexohet automatikisht nga ky file.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-send"></i> Dërgo Fushatën
+                    </button>
+                </form>
+
+                @if (Model.SentCount > 0 || Model.FailedCount > 0)
+                {
+                    <hr />
+                    <h6 class="fw-bold">Raporti i Dërgimit</h6>
+                    <p class="mb-1"><strong>Sukses:</strong> @Model.SentCount</p>
+                    <p class="mb-1"><strong>Dështime:</strong> @Model.FailedCount</p>
+
+                    @if (Model.FailedRecipients.Any())
+                    {
+                        <details class="mt-2">
+                            <summary>Shfaq dështimet (max 20)</summary>
+                            <ul class="mt-2 mb-0">
+                                @foreach (var failed in Model.FailedRecipients)
+                                {
+                                    <li>@failed</li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

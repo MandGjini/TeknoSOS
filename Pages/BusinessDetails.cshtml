@@ -1,0 +1,405 @@
+@page "{id:int}"
+@model TeknoSOS.WebApp.Pages.BusinessDetailsModel
+@using TeknoSOS.WebApp.Domain.Enums
+@{
+    ViewData["Title"] = Model.Business?.Name ?? "Biznes";
+}
+
+@if (Model.Business == null)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-shop display-1 text-muted"></i>
+        <h3 class="mt-3">Biznesi nuk u gjet</h3>
+        <a asp-page="/Businesses" class="btn btn-primary mt-3">
+            <i class="bi bi-arrow-left"></i> Kthehu te Bizneset
+        </a>
+    </div>
+    return;
+}
+
+<style>
+    .business-header {
+        background: linear-gradient(135deg, var(--ts-primary) 0%, var(--ts-accent) 100%);
+        padding: 2rem 0;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .business-logo-large {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--ts-radius);
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    
+    .business-logo-placeholder-lg {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--ts-radius);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ts-primary);
+        font-size: 3rem;
+        font-weight: bold;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    
+    .info-card {
+        background: var(--ts-surface);
+        border-radius: var(--ts-radius);
+        box-shadow: var(--ts-shadow-sm);
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--ts-primary);
+    }
+    
+    .contact-warning {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border: 1px solid #f59e0b;
+        border-radius: var(--ts-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .verified-badge-lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+    
+    .product-card {
+        border: 1px solid var(--ts-border);
+        border-radius: var(--ts-radius-sm);
+        padding: 1rem;
+        transition: all var(--ts-transition);
+    }
+    
+    .product-card:hover {
+        box-shadow: var(--ts-shadow);
+    }
+    
+    #businessMap {
+        height: 300px;
+        border-radius: var(--ts-radius);
+    }
+</style>
+
+<!-- Business Header -->
+<div class="business-header">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb" style="--bs-breadcrumb-divider-color: rgba(255,255,255,0.7); --bs-breadcrumb-item-active-color: white;">
+                <li class="breadcrumb-item"><a href="/Businesses" class="text-white-50">Bizneset</a></li>
+                <li class="breadcrumb-item active text-white">@Model.Business.Name</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex align-items-center gap-4">
+            @if (!string.IsNullOrEmpty(Model.Business.LogoUrl))
+            {
+                <img src="@Model.Business.LogoUrl" alt="@Model.Business.Name" class="business-logo-large">
+            }
+            else
+            {
+                <div class="business-logo-placeholder-lg">
+                    @Model.Business.Name.Substring(0, 1).ToUpper()
+                </div>
+            }
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <h1 class="mb-0">@Model.Business.Name</h1>
+                    @if (Model.Business.IsVerified)
+                    {
+                        <span class="verified-badge-lg">
+                            <i class="bi bi-patch-check-fill"></i> I Verifikuar
+                        </span>
+                    }
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge bg-light text-dark">@Model.Business.TypeText</span>
+                    <span class="badge bg-white text-primary">@Model.Business.CategoryText</span>
+                    @if (!string.IsNullOrEmpty(Model.Business.City))
+                    {
+                        <span class="badge bg-white bg-opacity-25">
+                            <i class="bi bi-geo-alt"></i> @Model.Business.City
+                        </span>
+                    }
+                </div>
+                @if (Model.Business.AverageRating > 0)
+                {
+                    <div class="text-warning">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= Model.Business.AverageRating ? "bi-star-fill" : "bi-star")"></i>
+                        }
+                        <span class="text-white ms-2">@Model.Business.AverageRating.ToString("F1") (@Model.Business.TotalReviews vlerësime)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Warning about contact -->
+            <div class="contact-warning">
+                <div class="d-flex align-items-start gap-3">
+                    <i class="bi bi-shield-lock fs-3 text-warning"></i>
+                    <div>
+                        <h5 class="mb-2"><i class="bi bi-info-circle"></i> Komunikimi Brenda Platformës</h5>
+                        <p class="mb-0">
+                            Për sigurinë dhe cilësi shërbimi, të gjitha ndërveprimet me këtë biznes bëhen vetëm brenda platformës TeknoSOS.
+                            Kjo garanton mbrojtjen e të dhënave tuaja, pagesa të sigurta, dhe mundësi ankese në rast problemesh.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            @if (!string.IsNullOrEmpty(Model.Business.Description))
+            {
+                <div class="info-card mb-4">
+                    <h5><i class="bi bi-info-circle text-primary"></i> Rreth Biznesit</h5>
+                    <p class="mb-0">@Model.Business.Description</p>
+                </div>
+            }
+            
+            <!-- Stats -->
+            <div class="info-card mb-4">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="stat-value">@Model.Business.TotalOrders</div>
+                        <div class="text-muted small">Porosi Totale</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-value text-success">@Model.Business.CompletedOrders</div>
+                        <div class="text-muted small">Të Përfunduara</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-value text-warning">@Model.Business.AverageRating.ToString("F1")</div>
+                        <div class="text-muted small">Vlerësim Mesatar</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products/Services -->
+            @if (Model.Products.Any())
+            {
+                <div class="info-card mb-4">
+                    <h5 class="mb-3"><i class="bi bi-box-seam text-primary"></i> Produkte & Shërbime</h5>
+                    <div class="row g-3">
+                        @foreach (var product in Model.Products.Take(6))
+                        {
+                            <div class="col-md-6">
+                                <div class="product-card">
+                                    <div class="d-flex gap-3">
+                                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                        {
+                                            <img src="@product.ImageUrl" alt="@product.Name" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                        }
+                                        else
+                                        {
+                                            <div style="width: 60px; height: 60px; background: var(--ts-surface-hover); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-box text-muted"></i>
+                                            </div>
+                                        }
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@product.Name</h6>
+                                            @if (product.Price.HasValue)
+                                            {
+                                                <span class="fw-bold text-primary">@product.Price.Value.ToString("N0") ALL</span>
+                                                @if (!string.IsNullOrEmpty(product.Unit))
+                                                {
+                                                    <span class="text-muted">/@product.Unit</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            
+            <!-- Reviews -->
+            <div class="info-card">
+                <h5 class="mb-3"><i class="bi bi-star text-warning"></i> Vlerësimet (@Model.Reviews.Count())</h5>
+                @if (!Model.Reviews.Any())
+                {
+                    <p class="text-muted mb-0">Asnjë vlerësim ende.</p>
+                }
+                else
+                {
+                    @foreach (var review in Model.Reviews.Take(5))
+                    {
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong>@(review.Reviewer?.FirstName ?? "Përdorues") @(review.Reviewer?.LastName ?? "")</strong>
+                                    @if (review.IsVerifiedPurchase)
+                                    {
+                                        <span class="badge bg-success-subtle text-success ms-2">
+                                            <i class="bi bi-check"></i> Blerje e verifikuar
+                                        </span>
+                                    }
+                                </div>
+                                <small class="text-muted">@review.CreatedDate.ToString("dd/MM/yyyy")</small>
+                            </div>
+                            <div class="text-warning mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <p class="mb-0 text-muted">@review.Comment</p>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Contact Card -->
+            <div class="info-card mb-4">
+                <h5 class="mb-3"><i class="bi bi-chat-dots text-primary"></i> Kontakto Biznesin</h5>
+                <p class="text-muted small mb-3">
+                    Dërgo një mesazh të sigurt brenda platformës. Biznesi do të përgjigjet në chat-in e brendshëm.
+                </p>
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <a href="/Chat?businessId=@Model.Business.Id" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-chat-fill"></i> Fillo Bisedë
+                    </a>
+                    <button class="btn btn-outline-primary w-100" disabled>
+                        <i class="bi bi-cart-plus"></i> Kërko Ofertë
+                    </button>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Identifikohu për të kontaktuar
+                    </a>
+                }
+            </div>
+            
+            <!-- Info Card -->
+            <div class="info-card mb-4">
+                <h5 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Informacione</h5>
+                <ul class="list-unstyled mb-0">
+                    @if (Model.Business.YearEstablished.HasValue)
+                    {
+                        <li class="mb-2">
+                            <i class="bi bi-calendar3 text-muted me-2"></i>
+                            Themeluar: @Model.Business.YearEstablished
+                        </li>
+                    }
+                    @if (Model.Business.EmployeeCount.HasValue)
+                    {
+                        <li class="mb-2">
+                            <i class="bi bi-people text-muted me-2"></i>
+                            Punonjës: @Model.Business.EmployeeCount
+                        </li>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Business.City))
+                    {
+                        <li class="mb-2">
+                            <i class="bi bi-geo-alt text-muted me-2"></i>
+                            @Model.Business.City@(string.IsNullOrEmpty(Model.Business.Region) ? "" : $", {Model.Business.Region}")
+                        </li>
+                    }
+                    @if (Model.Business.ServiceRadiusKm.HasValue)
+                    {
+                        <li class="mb-2">
+                            <i class="bi bi-broadcast text-muted me-2"></i>
+                            Zona e shërbimit: @Model.Business.ServiceRadiusKm km
+                        </li>
+                    }
+                </ul>
+            </div>
+            
+            <!-- Map -->
+            @if (Model.Business.Latitude.HasValue && Model.Business.Longitude.HasValue)
+            {
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="bi bi-geo-alt-fill text-danger"></i> Vendndodhja</h5>
+                    <div id="businessMap"></div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        @if (Model.Business?.Latitude != null && Model.Business?.Longitude != null)
+        {
+            <text>
+            (function() {
+                const lat = @Model.Business.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                const lng = @Model.Business.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                
+                const map = L.map('businessMap').setView([lat, lng], 14);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                const businessIcon = L.divIcon({
+                    className: 'custom-business-marker',
+                    html: `<div style="
+                        background: @Model.Business.MapMarkerColor;
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 50% 50% 50% 0;
+                        transform: rotate(-45deg);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        border: 2px solid white;
+                    ">
+                        <i class="bi bi-shop" style="transform: rotate(45deg); color: white; font-size: 12px;"></i>
+                    </div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30]
+                });
+
+                L.marker([lat, lng], { icon: businessIcon }).addTo(map);
+                setTimeout(() => map.invalidateSize(), 100);
+            })();
+            </text>
+        }
+    </script>
+}

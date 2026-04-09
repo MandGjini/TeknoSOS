@@ -1,0 +1,128 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.GPSMonitorModel
+@{
+    ViewData["Title"] = "Monitorimi GPS";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-geo-alt-fill text-danger"></i> Monitorimi GPS — Teknikë & Defekte</h2>
+    <button class="btn btn-outline-primary btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Rifresko</button>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <i class="bi bi-person-badge-fill text-success fs-3"></i>
+            <h4 class="fw-bold mb-0">@Model.TotalWithGPS</h4>
+            <small class="text-muted">Teknikë me GPS</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <i class="bi bi-circle-fill text-success fs-3"></i>
+            <h4 class="fw-bold mb-0">@Model.TotalAvailable</h4>
+            <small class="text-muted">Të Disponueshëm</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
+            <h4 class="fw-bold mb-0">@Model.ActiveEmergencies</h4>
+            <small class="text-muted">Emergjenca me GPS</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Technician Locations -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-badge text-success"></i> Teknikët — Vendndodhja GPS</h6>
+            </div>
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover mb-0 table-sm align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr><th>Tekniku</th><th>Qyteti</th><th>Koordinatat</th><th>Radius</th><th>Statusi</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model.TechnicianLocations)
+                    {
+                        <tr>
+                            <td>
+                                <strong class="small">@t.FullName</strong>
+                                @if (t.IsVerified) { <i class="bi bi-patch-check-fill text-primary" title="Verifikuar"></i> }
+                                <br/><small class="text-muted">@string.Join(", ", t.Specialties)</small>
+                            </td>
+                            <td class="small">@t.City</td>
+                            <td>
+                                <small class="font-monospace">@t.Lat.ToString("F5"), @t.Lon.ToString("F5")</small>
+                                <br/>
+                                <a href="https://www.google.com/maps?q=@t.Lat,@t.Lon" target="_blank" class="small text-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Maps
+                                </a>
+                            </td>
+                            <td class="small">@(t.ServiceRadius != null ? $"{t.ServiceRadius} km" : "—")</td>
+                            <td>
+                                @if (t.IsAvailable) { <span class="badge bg-success">Disponueshëm</span> }
+                                else { <span class="badge bg-secondary">I Zënë</span> }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.TechnicianLocations.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">Asnjë teknik me GPS aktiv.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Defect Locations -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-tools text-warning"></i> Defektet Aktive — Vendndodhja GPS</h6>
+            </div>
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover mb-0 table-sm align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr><th>Kodi</th><th>Titulli</th><th>Koordinatat</th><th>Prioriteti</th><th>Data</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var d in Model.DefectLocations)
+                    {
+                        <tr class="@(d.Priority == "Emergency" ? "table-danger" : "")">
+                            <td><a asp-page="/DefectDetails" asp-route-id="@d.Id" class="badge bg-secondary text-decoration-none">@d.UniqueCode</a></td>
+                            <td>
+                                <strong class="small">@d.Title</strong>
+                                <br/><small class="text-muted">@d.Category — @d.ClientName</small>
+                            </td>
+                            <td>
+                                <small class="font-monospace">@d.Lat.ToString("F5"), @d.Lon.ToString("F5")</small>
+                                <br/>
+                                <a href="https://www.google.com/maps?q=@d.Lat,@d.Lon" target="_blank" class="small text-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Maps
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge @(d.Priority == "Emergency" ? "bg-danger" : d.Priority == "High" ? "bg-warning text-dark" : "bg-info")">
+                                    @d.Priority
+                                </span>
+                            </td>
+                            <td class="small">@d.CreatedDate.ToString("dd/MM HH:mm")</td>
+                        </tr>
+                    }
+                    @if (!Model.DefectLocations.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">Asnjë defekt aktiv me GPS.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,471 @@
+@page "{defectId:int?}"
+@model TeknoSOS.WebApp.Pages.ChatModel
+@using TeknoSOS.WebApp.Domain.Enums
+@{
+    ViewData["Title"] = "Chat - " + (Model.Defect?.UniqueCode ?? $"#{Model.Defect?.Id}");
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var otherUserProfileUrl = Model.OtherUser == null
+        ? "#"
+        : Model.OtherUser.Role == UserRole.Professional
+            ? $"/TechnicianProfile/{Model.OtherUser.DisplayUsername ?? Model.OtherUser.Id}"
+            : $"/UserProfile/{Model.OtherUser.DisplayUsername ?? Model.OtherUser.Id}";
+}
+
+@if (Model.Defect == null)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-chat-dots text-muted" style="font-size: 60px;"></i>
+        <h3 class="mt-3">Biseda nuk u gjet</h3>
+        <a asp-page="/DefectList" class="btn btn-primary mt-3">Kthehu te lista</a>
+    </div>
+    return;
+}
+
+<style>
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 120px);
+        max-height: calc(100dvh - 120px);
+        background: var(--ts-bg);
+    }
+    .chat-header {
+        flex-shrink: 0;
+        background: var(--ts-card-bg, #fff);
+        border-bottom: 1px solid var(--ts-border, #e9ecef);
+        padding: 0.6rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .chat-header .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+    }
+    .chat-header .avatar {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: var(--ts-primary, #3b82f6); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 600; font-size: 0.85rem; flex-shrink: 0;
+        overflow: hidden;
+    }
+    .chat-header .avatar img {
+        width: 100%; height: 100%; object-fit: cover;
+        display: block;
+    }
+    .chat-header .profile-link {
+        color: inherit;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+    }
+    .chat-messages {
+        flex: 1; overflow-y: auto; padding: 1rem;
+        display: flex; flex-direction: column; gap: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    .chat-bubble {
+        max-width: 80%; padding: 0.6rem 0.9rem; border-radius: 1rem;
+        word-break: break-word; line-height: 1.4; font-size: 0.92rem;
+        position: relative; animation: fadeIn 0.2s ease;
+    }
+    @@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .bubble-mine {
+        background: var(--ts-primary, #3b82f6); color: #fff;
+        align-self: flex-end; border-bottom-right-radius: 0.25rem;
+    }
+    .bubble-theirs {
+        background: var(--ts-card-bg, #f0f2f5); color: var(--ts-text, #1e293b);
+        align-self: flex-start; border-bottom-left-radius: 0.25rem;
+        border: 1px solid var(--ts-border, #e2e8f0);
+    }
+    .bubble-time {
+        font-size: 0.65rem; opacity: 0.7; margin-top: 0.2rem;
+        display: flex; align-items: center; gap: 0.25rem; justify-content: flex-end;
+    }
+    .bubble-sender { font-size: 0.75rem; font-weight: 600; margin-bottom: 0.15rem; opacity: 0.85; }
+    .chat-input-area {
+        flex-shrink: 0; padding: 0.5rem 0.75rem;
+        background: var(--ts-card-bg, #fff);
+        border-top: 1px solid var(--ts-border, #e9ecef);
+        display: flex; align-items: flex-end; gap: 0.5rem;
+    }
+    .chat-input-area textarea {
+        flex: 1; border: 1px solid var(--ts-border, #dee2e6);
+        border-radius: 1.25rem; padding: 0.5rem 1rem;
+        resize: none; max-height: 100px; font-size: 0.92rem;
+        background: var(--ts-bg, #f8f9fa); line-height: 1.4;
+        transition: border-color 0.2s;
+    }
+    .chat-input-area textarea:focus { outline: none; border-color: var(--ts-primary, #3b82f6); }
+    .chat-input-area .btn-send {
+        width: 42px; height: 42px; border-radius: 50%; border: none;
+        background: var(--ts-primary, #3b82f6); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; flex-shrink: 0; cursor: pointer;
+        transition: transform 0.1s, background 0.2s;
+    }
+    .chat-input-area .btn-send:hover { transform: scale(1.08); }
+    .chat-input-area .btn-send:active { transform: scale(0.95); }
+    .chat-input-area .btn-attach {
+        width: 38px; height: 38px; border-radius: 50%; border: none;
+        background: transparent; color: var(--ts-text-muted, #6b7280);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0; cursor: pointer;
+    }
+    .chat-input-area .btn-attach:hover { color: var(--ts-primary, #3b82f6); }
+    .typing-indicator {
+        padding: 0.3rem 0.8rem; font-size: 0.78rem; color: var(--ts-text-muted, #6b7280);
+        display: none; align-items: center; gap: 0.4rem;
+    }
+    .typing-dot { width:6px; height:6px; border-radius:50%; background: var(--ts-text-muted); animation: typingBounce 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @@keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-4px)} }
+    .chat-date-separator {
+        text-align: center; margin: 0.5rem 0; font-size: 0.72rem;
+        color: var(--ts-text-muted, #94a3b8);
+    }
+    .chat-date-separator span {
+        background: var(--ts-bg-secondary, #e2e8f0); padding: 0.15rem 0.75rem;
+        border-radius: 1rem;
+    }
+    .upload-progress { padding: 0 0.75rem; }
+    .connection-status {
+        padding: 0.25rem 0.75rem; font-size: 0.75rem; text-align: center;
+        background: #fef3cd; color: #856404; display: none;
+    }
+    .connection-status.connected { display: none; }
+    .connection-status.reconnecting { display: block; background: #fff3cd; color: #856404; }
+    .connection-status.disconnected { display: block; background: #f8d7da; color: #842029; }
+    @@media (max-width: 768px) {
+        .chat-wrapper { height: calc(100vh - 80px); height: calc(100dvh - 80px); }
+        .chat-bubble { max-width: 88%; }
+        .chat-header { padding: 0.4rem 0.75rem; }
+        .chat-messages { padding: 0.6rem; }
+        .chat-input-area { padding: 0.4rem 0.5rem; }
+    }
+</style>
+
+<div class="chat-wrapper">
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus"></div>
+
+    <!-- Header -->
+    <div class="chat-header">
+        <div class="user-info">
+            <a href="/DefectDetails/@Model.Defect?.Id" class="text-decoration-none text-muted me-1" title="Kthehu">
+                <i class="bi bi-arrow-left fs-5"></i>
+            </a>
+            <a href="@otherUserProfileUrl" class="profile-link" title="Shiko profilin e përdoruesit">
+                <div class="avatar">
+                    @if (!string.IsNullOrWhiteSpace(Model.OtherUser?.ProfileImageUrl))
+                    {
+                        <img src="@Model.OtherUser.ProfileImageUrl" alt="@Model.OtherUser.GetFullName()" onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
+                    }
+                    else
+                    {
+                        @(Model.OtherUser?.FirstName?.Substring(0, 1))@(Model.OtherUser?.LastName?.Substring(0, 1))
+                    }
+                </div>
+                <div style="min-width:0;">
+                    <div class="fw-semibold text-truncate" style="font-size:0.95rem;">@Model.OtherUser?.GetFullName()</div>
+                    <div id="typingStatus" class="typing-indicator">
+                        <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+                        duke shkruar...
+                    </div>
+                    <div id="onlineLabel" class="text-success small" style="display:none; font-size:0.72rem;">
+                        <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Online
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-@(Model.Defect?.Status == TeknoSOS.WebApp.Domain.Enums.ServiceRequestStatus.Completed ? "success" : Model.Defect?.Status == TeknoSOS.WebApp.Domain.Enums.ServiceRequestStatus.InProgress ? "warning text-dark" : "primary")" style="font-size:0.7rem;">
+                @Model.Defect?.Status
+            </span>
+            <a href="/DefectDetails/@Model.Defect?.Id" class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" style="font-size:0.78rem;">
+                <i class="bi bi-info-circle"></i> Detaje
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="messagesContainer">
+        @{
+            DateTime? lastDate = null;
+        }
+        @foreach (var msg in Model.Messages)
+        {
+            var isMine = msg.SenderId == Model.CurrentUserId;
+            var msgDate = msg.CreatedDate.Date;
+            if (lastDate == null || lastDate != msgDate)
+            {
+                lastDate = msgDate;
+                <div class="chat-date-separator">
+                    <span>@(msgDate == DateTime.UtcNow.Date ? "Sot" : msgDate == DateTime.UtcNow.Date.AddDays(-1) ? "Dje" : msgDate.ToString("dd MMM yyyy"))</span>
+                </div>
+            }
+            <div class="chat-bubble @(isMine ? "bubble-mine" : "bubble-theirs")">
+                @if (!isMine)
+                {
+                    <div class="bubble-sender">@msg.Sender?.GetFullName()</div>
+                }
+                @if (msg.MessageType == "image" && !string.IsNullOrEmpty(msg.AttachmentUrl))
+                {
+                    <a href="@msg.AttachmentUrl" target="_blank">
+                        <img src="@msg.AttachmentUrl" class="img-fluid rounded" style="max-height: 200px;" alt="Photo" />
+                    </a>
+                }
+                else if (msg.MessageType == "document" && !string.IsNullOrEmpty(msg.AttachmentUrl))
+                {
+                    <a href="@msg.AttachmentUrl" target="_blank" class="@(isMine ? "text-white" : "text-primary")">
+                        <i class="bi bi-file-earmark-arrow-down"></i> @(msg.AttachmentFileName ?? "Dokument")
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(msg.Content))
+                {
+                    <div>@msg.Content</div>
+                }
+                <div class="bubble-time">
+                    @msg.CreatedDate.ToString("HH:mm")
+                    @if (isMine)
+                    {
+                        @if (msg.ReadDate.HasValue)
+                        {
+                            <i class="bi bi-check-all text-info"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check2"></i>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Typing indicator at bottom -->
+
+    <!-- Upload Progress -->
+    <div id="uploadProgress" class="upload-progress" style="display: none;">
+        <div class="progress" style="height: 3px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+        <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" />
+        <button class="btn-attach" onclick="document.getElementById('fileInput').click()" title="Ngarko foto/dokument">
+            <i class="bi bi-paperclip"></i>
+        </button>
+        <textarea id="messageInput" rows="1" placeholder="Shkruaj mesazhin..." onkeydown="handleKeyDown(event)" style="height:44px;max-height:44px;resize:none;"></textarea>
+        <button class="btn-send" onclick="sendMessage()" id="sendBtn" title="Dërgo">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const defectId = @(Model.Defect != null ? Model.Defect.Id : 0);
+        const currentUserId = '@Model.CurrentUserId';
+        const otherUserId = '@(Model.OtherUser?.Id ?? "")';
+        let typingTimeout = null;
+
+        // Notification sound for chat
+        function playChatSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.setValueAtTime(800, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e) {}
+        }
+
+        // Connection status
+        const connStatus = document.getElementById('connectionStatus');
+        function setConnectionStatus(status) {
+            connStatus.className = 'connection-status ' + status;
+            if (status === 'reconnecting') connStatus.textContent = 'Duke u rilidhur...';
+            else if (status === 'disconnected') connStatus.textContent = 'Lidhja u ndërpre. Duke provuar përsëri...';
+            else connStatus.textContent = '';
+        }
+
+        // Build SignalR connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
+            .build();
+
+        connection.onreconnecting(() => setConnectionStatus('reconnecting'));
+        connection.onreconnected(() => {
+            setConnectionStatus('connected');
+            connection.invoke("JoinDefectChat", defectId);
+        });
+        connection.onclose(() => setConnectionStatus('disconnected'));
+
+        // Receive messages
+        connection.on("ReceiveMessage", function (msg) {
+            appendMessage(msg);
+            scrollToBottom();
+            if (msg.senderId !== currentUserId) {
+                playChatSound();
+                connection.invoke("MarkAsRead", defectId);
+            }
+        });
+
+        // Typing indicator
+        connection.on("UserTyping", function (data) {
+            const el = document.getElementById('typingStatus');
+            el.style.display = data.isTyping ? 'flex' : 'none';
+            const online = document.getElementById('onlineLabel');
+            if (data.isTyping) online.style.display = 'none';
+            else online.style.display = 'block';
+        });
+
+        connection.on("UserJoined", function (data) {
+            if (data.userId !== currentUserId) {
+                document.getElementById('onlineLabel').style.display = 'block';
+            }
+        });
+
+        connection.on("UserLeft", function (data) {
+            if (data.userId !== currentUserId) {
+                document.getElementById('onlineLabel').style.display = 'none';
+            }
+        });
+
+        connection.on("MessagesRead", function (data) {
+            if (data.userId !== currentUserId) {
+                document.querySelectorAll('.bi-check2').forEach(el => {
+                    el.classList.remove('bi-check2');
+                    el.classList.add('bi-check-all', 'text-info');
+                });
+            }
+        });
+
+        // Start connection
+        connection.start().then(function () {
+            setConnectionStatus('connected');
+            connection.invoke("JoinDefectChat", defectId);
+            connection.invoke("MarkAsRead", defectId);
+        }).catch(function (err) {
+            console.error("SignalR connection error:", err.toString());
+            setConnectionStatus('disconnected');
+        });
+
+        function appendMessage(msg) {
+            const isMine = msg.senderId === currentUserId;
+            let content = '';
+
+            if (msg.messageType === 'image' && msg.attachmentUrl) {
+                content += `<a href="${msg.attachmentUrl}" target="_blank"><img src="${msg.attachmentUrl}" class="img-fluid rounded" style="max-height: 200px;" alt="Photo" /></a>`;
+            } else if (msg.messageType === 'document' && msg.attachmentUrl) {
+                content += `<a href="${msg.attachmentUrl}" target="_blank" class="${isMine ? 'text-white' : 'text-primary'}"><i class="bi bi-file-earmark-arrow-down"></i> ${msg.attachmentFileName || 'Dokument'}</a>`;
+            }
+
+            if (msg.content) {
+                content += `<div>${escapeHtml(msg.content)}</div>`;
+            }
+
+            const time = new Date(msg.timestamp).toLocaleTimeString('sq', { hour: '2-digit', minute: '2-digit' });
+            const html = `
+                <div class="chat-bubble ${isMine ? 'bubble-mine' : 'bubble-theirs'}">
+                    ${!isMine ? `<div class="bubble-sender">${escapeHtml(msg.senderName)}</div>` : ''}
+                    ${content}
+                    <div class="bubble-time">
+                        ${time} ${isMine ? '<i class="bi bi-check2"></i>' : ''}
+                    </div>
+                </div>`;
+            document.getElementById('messagesContainer').insertAdjacentHTML('beforeend', html);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            connection.invoke("SendMessage", defectId, otherUserId, content, "text", null, null);
+            input.value = '';
+            input.style.height = 'auto';
+            connection.invoke("StopTyping", defectId);
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+                return;
+            }
+            connection.invoke("StartTyping", defectId);
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                connection.invoke("StopTyping", defectId);
+            }, 2000);
+        }
+
+        // File upload
+        document.getElementById('fileInput').addEventListener('change', async function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            document.getElementById('uploadProgress').style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`/Chat/${defectId}?handler=Upload`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    connection.invoke("SendMessage", defectId, otherUserId, '', result.messageType, result.url, result.fileName);
+                } else {
+                    alert('Gabim: ' + result.error);
+                }
+            } catch (err) {
+                alert('Gabim gjatë ngarkimit të skedarit');
+            } finally {
+                document.getElementById('uploadProgress').style.display = 'none';
+                this.value = '';
+            }
+        });
+
+        function scrollToBottom() {
+            const c = document.getElementById('messagesContainer');
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        scrollToBottom();
+
+        // Hequr autosize për textarea që të mos zmadhohet në mobile
+
+        // Keep focus on the input
+        document.getElementById('messageInput').focus();
+    </script>
+}

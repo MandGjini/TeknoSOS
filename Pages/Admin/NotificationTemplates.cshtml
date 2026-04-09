@@ -1,0 +1,465 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.NotificationTemplatesModel
+@{
+    ViewData["Title"] = "Menaxhimi i Njoftimeve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<style>
+    .template-card {
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    .template-card:hover {
+        border-color: var(--bs-primary);
+        transform: translateY(-2px);
+    }
+    .template-card.editing {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+    }
+    .placeholder-btn {
+        font-size: 11px;
+        padding: 2px 8px;
+    }
+    .preview-frame {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 8px;
+    }
+    .preview-content {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-active { background: #10b981; }
+    .status-inactive { background: #9ca3af; }
+    .editor-toolbar {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 8px;
+    }
+    .content-textarea {
+        border-radius: 0 0 6px 6px !important;
+        border-top: none !important;
+    }
+    .tab-card {
+        border-top-left-radius: 0;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-envelope-paper text-primary"></i> Njoftimet (Email & SMS)
+        </h2>
+        <p class="text-muted mb-0">Personalizoni mesazhet automatike që dërgohen te përdoruesit</p>
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-plus-lg"></i> Krijo Template të Ri
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <form method="post" asp-page-handler="CreateNew">
+                    <input type="hidden" name="templateType" value="Email" />
+                    <button type="submit" class="dropdown-item">
+                        <i class="bi bi-envelope text-primary"></i> Email Template
+                    </button>
+                </form>
+            </li>
+            <li>
+                <form method="post" asp-page-handler="CreateNew">
+                    <input type="hidden" name="templateType" value="SMS" />
+                    <button type="submit" class="dropdown-item">
+                        <i class="bi bi-chat-dots text-success"></i> SMS Template
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Templates List Column -->
+    <div class="@(Model.EditingTemplate != null ? "col-lg-5" : "col-12")">
+        
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="templateTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#emailPanel" type="button">
+                    <i class="bi bi-envelope"></i> Email 
+                    <span class="badge bg-primary ms-1">@Model.EmailTemplates.Count</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="sms-tab" data-bs-toggle="tab" data-bs-target="#smsPanel" type="button">
+                    <i class="bi bi-chat-dots"></i> SMS 
+                    <span class="badge bg-success ms-1">@Model.SmsTemplates.Count</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Email Templates Tab -->
+            <div class="tab-pane fade show active" id="emailPanel">
+                <div class="card border-0 shadow-sm tab-card">
+                    <div class="card-body p-3">
+                        @if (!Model.EmailTemplates.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-envelope text-muted" style="font-size: 48px;"></i>
+                                <p class="text-muted mt-2">Nuk ka email templates. Krijoni një të ri.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var template in Model.EmailTemplates.OrderBy(t => t.Category).ThenBy(t => t.SortOrder))
+                                {
+                                    var isEditing = Model.EditingTemplate?.Id == template.Id;
+                                    <div class="template-card card mb-2 @(isEditing ? "editing" : "")">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="status-indicator @(template.IsEnabled ? "status-active" : "status-inactive")" title="@(template.IsEnabled ? "Aktiv" : "Joaktiv")"></span>
+                                                        <strong class="text-dark">@template.DisplayName</strong>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge bg-light text-dark border">@(template.Category ?? "Pa kategori")</span>
+                                                        <small class="text-muted font-monospace">@template.TemplateKey</small>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(template.Subject))
+                                                    {
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="bi bi-chat-quote"></i> @(template.Subject.Length > 40 ? template.Subject[..40] + "..." : template.Subject)
+                                                        </small>
+                                                    }
+                                                </div>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="?editId=@template.Id" class="btn btn-outline-primary" title="Edito">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="post" asp-page-handler="ToggleEnabled" class="d-inline">
+                                                        <input type="hidden" name="id" value="@template.Id" />
+                                                        <button type="submit" class="btn @(template.IsEnabled ? "btn-success" : "btn-outline-secondary")" title="@(template.IsEnabled ? "Çaktivizo" : "Aktivizo")">
+                                                            <i class="bi @(template.IsEnabled ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS Templates Tab -->
+            <div class="tab-pane fade" id="smsPanel">
+                <div class="card border-0 shadow-sm tab-card">
+                    <div class="card-body p-3">
+                        @if (!Model.SmsTemplates.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-chat-dots text-muted" style="font-size: 48px;"></i>
+                                <p class="text-muted mt-2">Nuk ka SMS templates. Krijoni një të ri.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var template in Model.SmsTemplates.OrderBy(t => t.Category).ThenBy(t => t.SortOrder))
+                                {
+                                    var isEditing = Model.EditingTemplate?.Id == template.Id;
+                                    <div class="template-card card mb-2 @(isEditing ? "editing" : "")">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="status-indicator @(template.IsEnabled ? "status-active" : "status-inactive")" title="@(template.IsEnabled ? "Aktiv" : "Joaktiv")"></span>
+                                                        <strong class="text-dark">@template.DisplayName</strong>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge bg-light text-dark border">@(template.Category ?? "Pa kategori")</span>
+                                                        <small class="text-muted font-monospace">@template.TemplateKey</small>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1" style="max-width: 300px;">
+                                                        @(template.Content.Length > 60 ? template.Content[..60] + "..." : template.Content)
+                                                    </small>
+                                                </div>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="?editId=@template.Id" class="btn btn-outline-success" title="Edito">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="post" asp-page-handler="ToggleEnabled" class="d-inline">
+                                                        <input type="hidden" name="id" value="@template.Id" />
+                                                        <button type="submit" class="btn @(template.IsEnabled ? "btn-success" : "btn-outline-secondary")" title="@(template.IsEnabled ? "Çaktivizo" : "Aktivizo")">
+                                                            <i class="bi @(template.IsEnabled ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholders Reference -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-braces"></i> Placeholders të Disponueshëm</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{FirstName}}</code> <small class="text-muted">Emri</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{LastName}}</code> <small class="text-muted">Mbiemri</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{Email}}</code> <small class="text-muted">Email-i</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{City}}</code> <small class="text-muted">Qyteti</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{PhoneNumber}}</code> <small class="text-muted">Telefoni</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{TechnicianName}}</code> <small class="text-muted">Tekniku</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{DefectTitle}}</code> <small class="text-muted">Titulli defektit</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{ConfirmationUrl}}</code> <small class="text-muted">Link konfirmimi</small></div>
+                    <div class="col-6 col-md-4"><code class="user-select-all">{{AppUrl}}</code> <small class="text-muted">Link app</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Panel -->
+    @if (Model.EditingTemplate != null)
+    {
+        var isEmail = Model.EditingTemplate.TemplateType == "Email";
+        var accentColor = isEmail ? "primary" : "success";
+        
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-@accentColor text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">
+                                <i class="bi bi-@(isEmail ? "envelope-open" : "phone")"></i>
+                                Edito Template
+                            </h5>
+                            <small class="opacity-75">@Model.EditingTemplate.TemplateKey</small>
+                        </div>
+                        <a href="/Admin/NotificationTemplates" class="btn btn-light btn-sm">
+                            <i class="bi bi-x-lg"></i> Mbyll
+                        </a>
+                    </div>
+                </div>
+                
+                <form method="post" asp-page-handler="SaveTemplate">
+                    <input type="hidden" name="id" value="@Model.EditingTemplate.Id" />
+                    <input type="hidden" name="templateKey" value="@Model.EditingTemplate.TemplateKey" />
+                    <input type="hidden" name="templateType" value="@Model.EditingTemplate.TemplateType" />
+
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Emri i Template-it</label>
+                                <input type="text" name="displayName" value="@Model.EditingTemplate.DisplayName" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Kategoria</label>
+                                <select name="category" class="form-select" id="categorySelect">
+                                    <option value="Regjistrimi" selected="@(Model.EditingTemplate.Category == "Regjistrimi")">Regjistrimi</option>
+                                    <option value="Verifikimi" selected="@(Model.EditingTemplate.Category == "Verifikimi")">Verifikimi</option>
+                                    <option value="Njoftime" selected="@(Model.EditingTemplate.Category == "Njoftime")">Njoftime</option>
+                                    <option value="Custom" selected="@(Model.EditingTemplate.Category == "Custom")">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Përshkrimi <small class="text-muted fw-normal">(opsional)</small></label>
+                            <input type="text" name="description" value="@Model.EditingTemplate.Description" class="form-control" placeholder="P.sh.: Dërgohet kur tekniku verifikon profilin" />
+                        </div>
+
+                        @if (isEmail)
+                        {
+                            <div class="mt-3">
+                                <label class="form-label fw-semibold">Subjekti i Email-it</label>
+                                <input type="text" name="subject" value="@Model.EditingTemplate.Subject" class="form-control" placeholder="P.sh.: Mirë se vini në TeknoSOS, {{FirstName}}!" />
+                            </div>
+                        }
+
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">
+                                @(isEmail ? "Përmbajtja HTML e Email-it" : "Mesazhi SMS")
+                            </label>
+                            
+                            <!-- Placeholder Toolbar -->
+                            <div class="editor-toolbar d-flex flex-wrap gap-1">
+                                <span class="text-muted small me-2 align-self-center">Shto:</span>
+                                <button type="button" class="btn btn-outline-secondary placeholder-btn" onclick="insertPlaceholder('FirstName')">Emri</button>
+                                <button type="button" class="btn btn-outline-secondary placeholder-btn" onclick="insertPlaceholder('LastName')">Mbiemri</button>
+                                <button type="button" class="btn btn-outline-secondary placeholder-btn" onclick="insertPlaceholder('Email')">Email</button>
+                                @if (isEmail)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary placeholder-btn" onclick="insertPlaceholder('ConfirmationUrl')">Link Konfirmimi</button>
+                                }
+                                <button type="button" class="btn btn-outline-secondary placeholder-btn" onclick="insertPlaceholder('TechnicianName')">Tekniku</button>
+                            </div>
+                            
+                            @if (isEmail)
+                            {
+                                <textarea name="content" id="contentEditor" class="form-control font-monospace content-textarea" rows="12" style="font-size: 12px;">@Model.EditingTemplate.Content</textarea>
+                            }
+                            else
+                            {
+                                <textarea name="content" id="contentEditor" class="form-control content-textarea" rows="4" maxlength="160">@Model.EditingTemplate.Content</textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">SMS duhet të jetë i shkurtër dhe pa karaktere speciale.</small>
+                                    <small class="text-muted"><span id="smsCharCount" class="fw-bold">@Model.EditingTemplate.Content.Length</span>/160</small>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" name="isEnabled" value="true" class="form-check-input" id="isEnabled" @(Model.EditingTemplate.IsEnabled ? "checked" : "") style="width: 3em; height: 1.5em;" />
+                                    <label class="form-check-label fw-semibold" for="isEnabled">Template Aktiv</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Renditja</label>
+                                <input type="number" name="sortOrder" value="@Model.EditingTemplate.SortOrder" class="form-control form-control-sm" min="0" style="width: 80px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (isEmail)
+                    {
+                        <!-- Live Preview -->
+                        <div class="card-body border-top bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0"><i class="bi bi-eye"></i> Preview</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="updatePreview()">
+                                    <i class="bi bi-arrow-clockwise"></i> Rifresko
+                                </button>
+                            </div>
+                            <div class="preview-frame">
+                                <div class="preview-content" id="emailPreview">
+                                    @Html.Raw(Model.EditingTemplate.Content
+                                        .Replace("{{FirstName}}", "<b>Arben</b>")
+                                        .Replace("{{LastName}}", "<b>Hoxha</b>")
+                                        .Replace("{{Email}}", "arben@example.com")
+                                        .Replace("{{City}}", "Tiranë")
+                                        .Replace("{{TechnicianName}}", "Petrit Kola")
+                                        .Replace("{{DefectTitle}}", "Prishje elektrike")
+                                        .Replace("{{ConfirmationUrl}}", "#")
+                                        .Replace("{{AppUrl}}", "https://teknosos.app"))
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="card-footer bg-white d-flex gap-2">
+                        <button type="submit" class="btn btn-@accentColor flex-grow-1">
+                            <i class="bi bi-check-lg"></i> Ruaj Ndryshimet
+                        </button>
+                        <a href="/Admin/NotificationTemplates" class="btn btn-outline-secondary">Anulo</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Insert placeholder at cursor position
+        function insertPlaceholder(name) {
+            const textarea = document.getElementById('contentEditor');
+            const placeholder = '{{' + name + '}}';
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + placeholder + text.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
+            textarea.focus();
+            
+            // Trigger change for preview
+            if (document.getElementById('emailPreview')) {
+                updatePreview();
+            }
+        }
+
+        // SMS character counter
+        const smsEditor = document.querySelector('textarea[maxlength="160"]');
+        if (smsEditor) {
+            smsEditor.addEventListener('input', function() {
+                const counter = document.getElementById('smsCharCount');
+                if (counter) {
+                    counter.textContent = this.value.length;
+                    counter.classList.toggle('text-danger', this.value.length > 150);
+                }
+            });
+        }
+
+        // Update email preview
+        function updatePreview() {
+            const content = document.getElementById('contentEditor').value;
+            const preview = document.getElementById('emailPreview');
+            if (preview) {
+                let rendered = content
+                    .replace(/\{\{FirstName\}\}/g, '<b>Arben</b>')
+                    .replace(/\{\{LastName\}\}/g, '<b>Hoxha</b>')
+                    .replace(/\{\{Email\}\}/g, 'arben@example.com')
+                    .replace(/\{\{City\}\}/g, 'Tiranë')
+                    .replace(/\{\{TechnicianName\}\}/g, 'Petrit Kola')
+                    .replace(/\{\{DefectTitle\}\}/g, 'Prishje elektrike')
+                    .replace(/\{\{ConfirmationUrl\}\}/g, '#')
+                    .replace(/\{\{AppUrl\}\}/g, 'https://teknosos.app')
+                    .replace(/\{\{PhoneNumber\}\}/g, '+355 69 123 4567');
+                preview.innerHTML = rendered;
+            }
+        }
+
+        // Auto-update preview on content change (debounced)
+        let previewTimeout;
+        const contentEditor = document.getElementById('contentEditor');
+        if (contentEditor && document.getElementById('emailPreview')) {
+            contentEditor.addEventListener('input', function() {
+                clearTimeout(previewTimeout);
+                previewTimeout = setTimeout(updatePreview, 500);
+            });
+        }
+
+        // Switch to correct tab if editing SMS template
+        @if (Model.EditingTemplate?.TemplateType == "SMS")
+        {
+            <text>
+            document.getElementById('sms-tab').click();
+            </text>
+        }
+    </script>
+}

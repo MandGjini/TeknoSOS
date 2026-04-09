@@ -1,0 +1,1008 @@
+@page
+@model TeknoSOS.WebApp.Pages.ReportDefectModel
+@inject TeknoSOS.WebApp.Services.ILocalizationService L
+@{
+    ViewData["Title"] = "Raporto Defekt - TeknoSOS";
+}
+
+<style>
+    /* Mobile-first styles */
+    .category-btn {
+        min-height: 90px;
+        transition: all 0.2s ease;
+    }
+    .category-btn:hover, .category-btn:active {
+        transform: scale(1.02);
+    }
+    .btn-check:checked + .category-btn {
+        border-width: 3px !important;
+        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    /* Mobile Submit Bar - Fixed at bottom, only button */
+    .mobile-submit-bar {
+        position: fixed;
+        bottom: 80;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 12px 16px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        z-index: 1040;
+        border-top: 1px solid #e5e7eb;
+        pointer-events: auto;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Photo dropzone mobile */
+    .photo-dropzone-mobile {
+        border: 2px dashed #d1d5db;
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .photo-dropzone-mobile:active {
+        border-color: var(--bs-primary);
+        background: #eff6ff;
+    }
+    
+    /* Priority buttons mobile */
+    .priority-btn {
+        border-radius: 12px !important;
+    }
+    .btn-check:checked + .priority-btn {
+        border-width: 3px !important;
+    }
+    
+    /* GPS Card */
+    .gps-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+    }
+    
+    /* Form control sizes for mobile - moved to site.css */
+    
+    /* Progress indicator mini */
+    .progress-mini {
+        height: 4px;
+        border-radius: 2px;
+    }
+    
+    /* Step cards with numbers */
+    .step-number {
+        width: 32px;
+        height: 32px;
+        background: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    /* Quick chatbot assistant (mobile-only, desktop uses global layout assistant) */
+    .quick-bot-toggle,
+    .quick-bot-panel {
+        display: none !important;
+    }
+
+    .quick-bot-toggle {
+        position: fixed;
+        right: 16px;
+        bottom: 150px;
+        width: 56px;
+        height: 56px;
+        border: 0;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb, #0ea5e9);
+        color: #fff;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+        z-index: 1060;
+    }
+
+    .quick-bot-panel {
+        position: fixed;
+        right: 16px;
+        bottom: 215px;
+        width: min(360px, calc(100vw - 24px));
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+        border: 1px solid #dbeafe;
+        background: #fff;
+        z-index: 1060;
+        display: none;
+    }
+
+    .quick-bot-header {
+        padding: 10px 14px;
+        background: linear-gradient(135deg, #1d4ed8, #0284c7);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .quick-bot-body {
+        max-height: 330px;
+        overflow-y: auto;
+        padding: 12px;
+    }
+
+    .quick-bot-msg {
+        background: #f1f5f9;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .quick-bot-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .quick-bot-actions button {
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #0f172a;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    @@media (max-width: 768px) {
+        .quick-bot-panel {
+            bottom: 145px;
+        }
+
+        .quick-bot-toggle {
+            bottom: 95px;
+        }
+    }
+</style>
+
+<div class="container mt-3 mt-md-4 mb-5 main-content-area">
+    <!-- Header - Simplified for mobile -->
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-3"></i>
+                <h2 class="fw-bold mb-0 fs-4 fs-md-2">Raporto Defekt</h2>
+            </div>
+            <p class="text-muted small mb-2">Mund të raportoni vetëm me foto nëse nuk dini detaje. Titulli dhe përshkrimi janë opsionale nëse ngarkoni të paktën një foto.</p>
+            <!-- Shto Foto fillimisht -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Foto <span class="badge bg-secondary small">Opsionale</span></label>
+                <label for="photoInput" class="photo-dropzone-mobile d-block">
+                    <i class="bi bi-camera-fill text-primary fs-2 mb-2"></i>
+                    <p class="mb-1 fw-semibold text-dark">Shto Foto</p>
+                    <small class="text-muted">Deri në 5 foto, max 10MB secila</small>
+                    <input type="file" name="Input.Photos" class="d-none" id="photoInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple form="defectForm">
+                </label>
+                <div id="photoPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-x-circle"></i> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+
+
+    <!-- GPS Status Banner - More compact on mobile -->
+    <div class="alert alert-info py-2 px-3 mb-3" id="gpsStatus">
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" id="gpsSpinner" style="width: 20px; height: 20px;"></div>
+            <i class="bi bi-geo-alt-fill me-2 d-none" id="gpsIcon"></i>
+            <span id="gpsText" class="small">Duke kerkuar vendndodhjen...</span>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="defectForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Input.Latitude" id="inputLatitude" />
+        <input type="hidden" asp-for="Input.Longitude" id="inputLongitude" />
+
+        <div class="row">
+            <!-- Main Form -->
+            <div class="col-lg-8">
+
+                <!-- Step 1: Category Selection -->
+                <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="step-number d-none d-md-flex">1</span>
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-tag-fill d-md-none me-1"></i> Kategoria e Defektit</h5>
+                        </div>
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        <p class="text-muted small mb-2 d-none d-md-block">Zgjidhni kategorine qe pershkruan me mire defektin tuaj.</p>
+                        <div class="row g-2">
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-elektrike" value="elektrike" class="btn-check">
+                                <label for="cat-elektrike" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-lightning-charge-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Elektrike</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-hidraulike" value="hidraulike" class="btn-check">
+                                <label for="cat-hidraulike" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-droplet-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Hidraulike</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-mekanike" value="mekanike" class="btn-check">
+                                <label for="cat-mekanike" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-gear-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Mekanike</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-ngrohje" value="ngrohje-ftohje" class="btn-check">
+                                <label for="cat-ngrohje" class="btn btn-outline-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-thermometer-half fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Ngrohje</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-teknologji" value="teknologji" class="btn-check">
+                                <label for="cat-teknologji" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-pc-display fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">IT</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-zdrukthtari" value="zdrukthtari" class="btn-check">
+                                <label for="cat-zdrukthtari" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-hammer fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Zdrukthtari</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-pajisje" value="pajisje" class="btn-check">
+                                <label for="cat-pajisje" class="btn btn-outline-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-phone fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Pajisje</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-gips" value="gips" class="btn-check">
+                                <label for="cat-gips" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-bricks fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Gips</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-pllaka" value="pllaka" class="btn-check">
+                                <label for="cat-pllaka" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-grid-3x3-gap-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Pllaka</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-parket" value="parket" class="btn-check">
+                                <label for="cat-parket" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-border-all fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Parket</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-izolim-tarace" value="izolim-tarace" class="btn-check">
+                                <label for="cat-izolim-tarace" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-house-lock-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Izolim Tarace</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-arkitekt" value="arkitekt" class="btn-check">
+                                <label for="cat-arkitekt" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-rulers fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Arkitekt</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-inxhinier" value="inxhinier" class="btn-check">
+                                <label for="cat-inxhinier" class="btn btn-outline-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-diagram-3-fill fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Inxhinier</span>
+                                </label>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <input type="radio" name="Input.Category" id="cat-general" value="general" class="btn-check">
+                                <label for="cat-general" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2 py-md-3 category-btn">
+                                    <i class="bi bi-tools fs-4 fs-md-2"></i>
+                                    <span class="mt-1 fw-semibold" style="font-size: 11px;">Tjeter</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Input.Category" class="text-danger small"></span>
+                        <div class="mt-2 p-2 bg-light rounded d-none small" id="categoryInfo">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <span id="categoryInfoText"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Details -->
+                <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="step-number d-none d-md-flex">2</span>
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-pencil-fill d-md-none me-1"></i> Detajet e Defektit</h5>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="mb-3">
+                            <label asp-for="Input.Title" class="form-label fw-semibold">
+                                Titulli <span class="badge bg-secondary small">Opsionale</span>
+                            </label>
+                            <input asp-for="Input.Title" class="form-control"
+                                   placeholder="P.sh.: Prishje e prizave" maxlength="100">
+                            <div class="d-flex justify-content-between mt-1">
+                                <span asp-validation-for="Input.Title" class="text-danger small"></span>
+                                <small class="text-muted"><span id="titleCount">0</span>/100</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Description" class="form-label fw-semibold">
+                                Pershkrimi <span class="badge bg-secondary small">Opsionale</span>
+                            </label>
+                            <textarea asp-for="Input.Description" class="form-control" rows="4"
+                                      placeholder="Pershkruani defektin: Kur filloi? Cfare simptomash ka?" maxlength="2000"></textarea>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span asp-validation-for="Input.Description" class="text-danger small"></span>
+                                <small class="text-muted"><span id="descCount">0</span>/2000</small>
+                            </div>
+                        </div>
+
+                        <!-- Photo Upload - Mobile Optimized -->
+                        <!-- (Tani është lart, nuk përsëritet) -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Location -->
+                <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="step-number d-none d-md-flex">3</span>
+                                <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-geo-alt-fill d-md-none me-1"></i> Vendndodhja</h5>
+                            </div>
+                            <span class="badge bg-white text-primary small">Opsionale</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <!-- GPS Card -->
+                        <div class="gps-card p-3 mb-3" id="gpsCard">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <i class="bi bi-crosshair fs-5"></i>
+                                        <span class="fw-semibold" id="coordsText">Duke pritur GPS...</span>
+                                    </div>
+                                    <small class="opacity-75" id="coordsAccuracy"></small>
+                                </div>
+                                <button type="button" class="btn btn-light btn-sm" onclick="requestGPS()">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 g-md-3">
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Input.City" class="form-label fw-semibold small">Qyteti</label>
+                                <select asp-for="Input.City" class="form-select">
+                                    <option value="">Zgjidhni qytetin...</option>
+                                    @foreach (var city in Model.Cities)
+                                    {
+                                        <option value="@city">@city</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Input.Address" class="form-label fw-semibold small">Adresa</label>
+                                <input asp-for="Input.Address" class="form-control" placeholder="Rruga, Nr.">
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Input.LocationDetails" class="form-label small">Detaje shtese</label>
+                                <input asp-for="Input.LocationDetails" class="form-control" placeholder="Kati, apartamenti...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Priority -->
+                <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="step-number d-none d-md-flex">4</span>
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-flag-fill d-md-none me-1"></i> Prioriteti</h5>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row g-2">
+                            <div class="col-12 col-md-4">
+                                <input type="radio" name="Input.Priority" id="priority-normal" value="Normal" class="btn-check" checked>
+                                <label for="priority-normal" class="btn btn-outline-success w-100 py-3 priority-btn">
+                                    <i class="bi bi-check-circle-fill fs-4 d-block mb-1"></i>
+                                    <strong>Normal</strong>
+                                    <small class="d-block text-muted">Mund te planifikohet</small>
+                                </label>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <input type="radio" name="Input.Priority" id="priority-high" value="High" class="btn-check">
+                                <label for="priority-high" class="btn btn-outline-warning w-100 py-3 priority-btn">
+                                    <i class="bi bi-exclamation-triangle-fill fs-4 d-block mb-1"></i>
+                                    <strong>I Larte</strong>
+                                    <small class="d-block text-muted">Vemendje e shpejte</small>
+                                </label>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <input type="radio" name="Input.Priority" id="priority-emergency" value="Emergency" class="btn-check">
+                                <label for="priority-emergency" class="btn btn-outline-danger w-100 py-3 priority-btn">
+                                    <i class="bi bi-exclamation-octagon-fill fs-4 d-block mb-1"></i>
+                                    <strong>EMERGJENT</strong>
+                                    <small class="d-block text-muted">Rrezik!</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-danger mt-3 d-none small" id="emergencyWarning">
+                            <div class="d-flex gap-2">
+                                <i class="bi bi-exclamation-octagon-fill fs-4 text-danger flex-shrink-0"></i>
+                                <div>
+                                    <strong>EMERGJENCE!</strong>
+                                    <p class="mb-0 mt-1">Njoftim do te dergohet tek te gjithe tekniket. <strong>Per rrezik jete, telefononi 112!</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Contact -->
+                <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="step-number d-none d-md-flex">5</span>
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-telephone-fill d-md-none me-1"></i> Kontakti</h5>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Input.ContactPhone" class="form-label fw-semibold small">Telefoni</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">+355</span>
+                                    <input asp-for="Input.ContactPhone" class="form-control" placeholder="69 123 4567" inputmode="tel">
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Njoftime</label>
+                                <div class="d-flex gap-4 mt-2">
+                                    <div class="form-check">
+                                        <input asp-for="Input.EmailNotifications" class="form-check-input" checked>
+                                        <label asp-for="Input.EmailNotifications" class="form-check-label">
+                                            <i class="bi bi-envelope"></i> Email
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="Input.SmsNotifications" class="form-check-input">
+                                        <label asp-for="Input.SmsNotifications" class="form-check-label">
+                                            <i class="bi bi-phone"></i> SMS
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Card - Mobile visible -->
+                <div class="card border-danger border-2 d-md-none emergency-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center gap-3">
+                            <i class="bi bi-telephone-fill text-danger fs-3"></i>
+                            <div class="text-start">
+                                <strong class="text-danger">Emergjence?</strong>
+                                <p class="small text-muted mb-0">Per rrezik jete:</p>
+                            </div>
+                            <a href="tel:112" class="btn btn-danger fw-bold">
+                                <i class="bi bi-telephone-fill"></i> 112
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar - Desktop only -->
+            <div class="col-lg-4 d-none d-lg-block">
+                <div class="card border-0 shadow-sm mb-4 progress-card-desktop sticky-top" style="top: 80px;">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-list-check"></i> Progresi</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar bg-success" id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted mb-3 d-block"><span id="progressPercent">0</span>% e kompletuar</small>
+
+                        <ul class="list-unstyled small" id="progressChecklist">
+                            <li class="py-1" id="step-category"><i class="bi bi-circle text-muted me-2"></i> Kategoria</li>
+                            <li class="py-1" id="step-title"><i class="bi bi-circle text-muted me-2"></i> Titulli</li>
+                            <li class="py-1" id="step-description"><i class="bi bi-circle text-muted me-2"></i> Pershkrimi</li>
+                            <li class="py-1" id="step-photo"><i class="bi bi-circle text-muted me-2"></i> Foto</li>
+                        </ul>
+
+                        <hr />
+
+                        <div class="mb-3" id="gpsInfoBox">
+                            <h6 class="small fw-bold"><i class="bi bi-geo-alt"></i> Vendndodhja</h6>
+                            <div class="p-2 bg-light rounded small" id="gpsInfoContent">
+                                Duke pritur GPS...
+                            </div>
+                        </div>
+
+                        <div class="desktop-submit-section">
+                            <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn" disabled>
+                                <i class="bi bi-send-fill"></i> Raporto Defektin
+                            </button>
+                            <small class="text-muted d-block text-center mt-2" id="validationMsg"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-danger border-2 mb-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-telephone-fill text-danger fs-3"></i>
+                        <h6 class="mt-2 text-danger">Emergjence?</h6>
+                        <p class="small text-muted mb-2">Per rrezik jete:</p>
+                        <a href="tel:112" class="btn btn-danger btn-lg w-100 fw-bold">
+                            <i class="bi bi-telephone-fill"></i> 112
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Si funksionon?</h6>
+                    </div>
+                    <div class="card-body small">
+                        <div class="d-flex mb-2">
+                            <span class="badge bg-primary rounded-circle me-2" style="width:24px;height:24px;line-height:18px;">1</span>
+                            <span>Plotesoni formen</span>
+                        </div>
+                        <div class="d-flex mb-2">
+                            <span class="badge bg-primary rounded-circle me-2" style="width:24px;height:24px;line-height:18px;">2</span>
+                            <span>Tekniket njoftohen</span>
+                        </div>
+                        <div class="d-flex mb-2">
+                            <span class="badge bg-primary rounded-circle me-2" style="width:24px;height:24px;line-height:18px;">3</span>
+                            <span>Tekniku pranon punen</span>
+                        </div>
+                        <div class="d-flex">
+                            <span class="badge bg-primary rounded-circle me-2" style="width:24px;height:24px;line-height:18px;">4</span>
+                            <span>Komunikoni ne chat</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Mobile Fixed Submit Bar (only button) -->
+<div class="mobile-submit-bar">
+    <button type="submit" form="defectForm" class="btn btn-success btn-lg w-100" id="submitBtnMobile" disabled>
+        <i class="bi bi-send-fill"></i> Raporto
+    </button>
+</div>
+
+<button type="button" id="quickBotToggle" class="quick-bot-toggle" aria-label="Hap asistentin">
+    <i class="bi bi-chat-dots-fill fs-4"></i>
+</button>
+
+<div id="quickBotPanel" class="quick-bot-panel" role="dialog" aria-label="Asistenti i raportimit">
+    <div class="quick-bot-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-robot me-1"></i> Asistenti i Shpejtë</span>
+        <button type="button" id="quickBotClose" class="btn btn-sm btn-light py-0 px-2">x</button>
+    </div>
+    <div id="quickBotBody" class="quick-bot-body"></div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // ========== VALIDATION LOGIC (Unified for desktop & mobile) ========== 
+        function validateForm() {
+            const title = document.querySelector('[name="Input.Title"]').value.trim();
+            const category = document.querySelector('[name="Input.Category"]:checked');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnMobile = document.getElementById('submitBtnMobile');
+            const valid = !!category && title.length > 0;
+            if (submitBtn) submitBtn.disabled = !valid;
+            if (submitBtnMobile) submitBtnMobile.disabled = !valid;
+        }
+        document.addEventListener('input', validateForm);
+        document.addEventListener('change', validateForm);
+
+        // ========== GPS LOGIC ========== 
+        let gpsReady = false;
+
+        function requestGPS() {
+            const statusDiv = document.getElementById('gpsStatus');
+            const spinner = document.getElementById('gpsSpinner');
+            const icon = document.getElementById('gpsIcon');
+            const text = document.getElementById('gpsText');
+            const coordsText = document.getElementById('coordsText');
+            const coordsAccuracy = document.getElementById('coordsAccuracy');
+            const gpsInfo = document.getElementById('gpsInfoContent');
+            const gpsCard = document.getElementById('gpsCard');
+
+            spinner.classList.remove('d-none');
+            icon.classList.add('d-none');
+            statusDiv.className = 'alert alert-info py-2 px-3 mb-3';
+            text.textContent = 'Duke kerkuar vendndodhjen...';
+
+            if (!navigator.geolocation) {
+                statusDiv.className = 'alert alert-warning py-2 px-3 mb-3';
+                spinner.classList.add('d-none');
+                text.textContent = 'GPS nuk suportohet. Vazhdoni pa GPS.';
+                gpsCard.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const acc = pos.coords.accuracy;
+
+                    document.getElementById('inputLatitude').value = lat.toFixed(6);
+                    document.getElementById('inputLongitude').value = lon.toFixed(6);
+
+                    statusDiv.className = 'alert alert-success py-2 px-3 mb-3';
+                    spinner.classList.add('d-none');
+                    icon.classList.remove('d-none');
+                    icon.className = 'bi bi-geo-alt-fill me-2 text-success';
+                    text.innerHTML = '<strong>GPS OK!</strong> ' + lat.toFixed(4) + ', ' + lon.toFixed(4);
+
+                    coordsText.textContent = lat.toFixed(5) + ', ' + lon.toFixed(5);
+                    coordsAccuracy.textContent = '~' + Math.round(acc) + 'm saktesi';
+
+                    if (gpsInfo) {
+                        gpsInfo.innerHTML = '<i class="bi bi-check-circle text-success"></i> ' +
+                            lat.toFixed(4) + ', ' + lon.toFixed(4);
+                    }
+
+                    gpsCard.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    gpsReady = true;
+                    updateProgress();
+                },
+                function (err) {
+                    statusDiv.className = 'alert alert-warning py-2 px-3 mb-3';
+                    spinner.classList.add('d-none');
+                    icon.classList.remove('d-none');
+                    icon.className = 'bi bi-exclamation-triangle-fill me-2 text-warning';
+
+                    let msg = 'GPS jo aktiv - mund te vazhdoni';
+                    if (err.code === 1) msg = 'GPS i bllokuar - vazhdoni pa te';
+                    
+                    text.textContent = msg;
+                    coordsText.textContent = 'Pa GPS';
+                    coordsAccuracy.textContent = 'Vazhdoni me adrese manuale';
+                    
+                    if (gpsInfo) {
+                        gpsInfo.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> ' + msg;
+                    }
+                    
+                    gpsCard.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                    gpsReady = false;
+                    updateProgress();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        }
+
+        // Auto-request GPS on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            requestGPS();
+            updateProgress();
+        });
+
+        // ========== CATEGORY ROUTING INFO ==========
+        const categoryInfo = {
+            'elektrike': 'Defekti shfaqet per tekniket e specializuar ne elektrike.',
+            'hidraulike': 'Defekti shfaqet per tekniket hidraulike.',
+            'mekanike': 'Defekti shfaqet per tekniket mekanike.',
+            'ngrohje-ftohje': 'Defekti shfaqet per tekniket HVAC.',
+            'teknologji': 'Defekti shfaqet per tekniket IT.',
+            'zdrukthtari': 'Defekti shfaqet per zdrukthtaret.',
+            'pajisje': 'Defekti shfaqet per riparues pajisjesh.',
+            'gips': 'Defekti shfaqet per tekniket e gipsit.',
+            'pllaka': 'Defekti shfaqet per mjeshtrat e pllakave.',
+            'parket': 'Defekti shfaqet per specialistet e parketit.',
+            'izolim-tarace': 'Defekti shfaqet per specialistet e izolimit te taraces.',
+            'arkitekt': 'Defekti shfaqet per arkitektet.',
+            'inxhinier': 'Defekti shfaqet per inxhinieret.',
+            'general': 'Defekti shfaqet per te gjithe tekniket.'
+        };
+
+        document.querySelectorAll('input[name="Input.Category"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                const infoDiv = document.getElementById('categoryInfo');
+                const infoText = document.getElementById('categoryInfoText');
+                infoDiv.classList.remove('d-none');
+                infoText.textContent = categoryInfo[this.value] || '';
+                updateProgress();
+            });
+        });
+
+        // ========== PRIORITY / EMERGENCY ==========
+        document.querySelectorAll('input[name="Input.Priority"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                const warning = document.getElementById('emergencyWarning');
+                if (this.value === 'Emergency') {
+                    warning.classList.remove('d-none');
+                } else {
+                    warning.classList.add('d-none');
+                }
+            });
+        });
+
+        // ========== PROGRESS TRACKING ==========
+        function updateProgress() {
+            let completed = 0;
+            const total = 4; // Title, Category, Description, Photo
+            // Step 1: Category
+            const catChecked = document.querySelector('input[name="Input.Category"]:checked');
+            if (catChecked) {
+                completed++;
+                setStepDone('step-category');
+            } else { setStepPending('step-category'); }
+            // Step 2: Title
+            const titleVal = document.querySelector('[name="Input.Title"]').value.trim();
+            if (titleVal.length > 0) {
+                completed++;
+                setStepDone('step-title');
+            } else { setStepPending('step-title'); }
+            // Step 3: Description
+            const descVal = document.querySelector('[name="Input.Description"]').value.trim();
+            if (descVal.length > 0) {
+                completed++;
+                setStepDone('step-description');
+            } else { setStepPending('step-description'); }
+            // Step 4: Photo
+            const photoInput = document.getElementById('photoInput');
+            const hasPhoto = photoInput && photoInput.files && photoInput.files.length > 0;
+            if (hasPhoto) {
+                completed++;
+                setStepDone('step-photo');
+            } else { setStepPending('step-photo'); }
+            // Progress percent
+            const pct = Math.round((completed / total) * 100);
+            // Update all progress bars (desktop + mobile)
+            const progressBars = ['progressBar', 'progressBarMobile', 'progressBarMobileFooter'];
+            const progressTexts = ['progressPercent', 'progressPercentMobile', 'progressPercentMobileFooter'];
+            progressBars.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.transition = 'width 0.4s cubic-bezier(.4,2,.6,1)';
+                    el.style.width = pct + '%';
+                }
+            });
+            progressTexts.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = pct;
+            });
+            // Enable/disable submit buttons
+            const isValid = (titleVal.length > 0 && catChecked);
+            const submitBtns = ['submitBtn', 'submitBtnMobile'];
+            submitBtns.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = !isValid;
+            });
+            // Dynamic validation message
+            const validationMsg = document.getElementById('validationMsg');
+            if (validationMsg) {
+                if (!catChecked && !titleVal) validationMsg.textContent = 'Plotësoni titullin dhe zgjidhni kategorinë.';
+                else if (!catChecked) validationMsg.textContent = 'Zgjidhni kategorinë.';
+                else if (!titleVal) validationMsg.textContent = 'Vendosni titullin.';
+                else validationMsg.textContent = '';
+            }
+        }
+        function setStepDone(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                const icon = el.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-check-circle-fill text-success me-2 animate__animated animate__bounceIn';
+                    setTimeout(() => icon.classList.remove('animate__animated', 'animate__bounceIn'), 700);
+                }
+            }
+        }
+        function setStepPending(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                const icon = el.querySelector('i');
+                if (icon) icon.className = 'bi bi-circle text-muted me-2';
+            }
+        }
+        // Listen for changes on all relevant fields
+        ['input', 'change'].forEach(evt => {
+            document.querySelector('form').addEventListener(evt, updateProgress);
+        });
+
+        // Character counters
+        document.querySelector('[name="Input.Title"]').addEventListener('input', function () {
+            document.getElementById('titleCount').textContent = this.value.length;
+        });
+        document.querySelector('[name="Input.Description"]').addEventListener('input', function () {
+            document.getElementById('descCount').textContent = this.value.length;
+        });
+
+        // ========== PHOTO PREVIEW ==========
+        document.getElementById('photoInput').addEventListener('change', function (e) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = '';
+
+            Array.from(this.files).slice(0, 5).forEach(function (file) {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'position-relative';
+                    
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.className = 'rounded shadow-sm';
+                    img.style.cssText = 'width: 70px; height: 70px; object-fit: cover;';
+                    
+                    wrapper.appendChild(img);
+                    preview.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // ========== FORM SUBMIT ==========
+        document.getElementById('defectForm').addEventListener('submit', function (e) {
+            const submitBtns = document.querySelectorAll('#submitBtn, #submitBtnMobile');
+            submitBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Duke derguar...';
+            });
+        });
+
+        // ========== QUICK CHAT BOT ===========
+        const quickBotToggle = document.getElementById('quickBotToggle');
+        const quickBotPanel = document.getElementById('quickBotPanel');
+        const quickBotClose = document.getElementById('quickBotClose');
+        const quickBotBody = document.getElementById('quickBotBody');
+
+        function toggleQuickBot(show) {
+            quickBotPanel.style.display = show ? 'block' : 'none';
+        }
+
+        function addQuickBotMessage(text, actions) {
+            const msg = document.createElement('div');
+            msg.className = 'quick-bot-msg';
+            msg.textContent = text;
+
+            if (actions && actions.length) {
+                const actionsWrap = document.createElement('div');
+                actionsWrap.className = 'quick-bot-actions';
+
+                actions.forEach(action => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = action.label;
+                    btn.addEventListener('click', action.onClick);
+                    actionsWrap.appendChild(btn);
+                });
+
+                msg.appendChild(actionsWrap);
+            }
+
+            quickBotBody.appendChild(msg);
+            quickBotBody.scrollTop = quickBotBody.scrollHeight;
+        }
+
+        function selectCategory(value) {
+            const radio = document.querySelector(`input[name="Input.Category"][value="${value}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        function selectPriority(value) {
+            const radio = document.querySelector(`input[name="Input.Priority"][value="${value}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        function suggestFlow() {
+            addQuickBotMessage('Zgjidh llojin e problemit që ke:', [
+                { label: 'Elektrike', onClick: () => { selectCategory('elektrike'); addQuickBotMessage('Kategoria u vendos: Elektrike.'); } },
+                { label: 'Hidraulike', onClick: () => { selectCategory('hidraulike'); addQuickBotMessage('Kategoria u vendos: Hidraulike.'); } },
+                { label: 'Pllaka', onClick: () => { selectCategory('pllaka'); addQuickBotMessage('Kategoria u vendos: Pllaka.'); } },
+                { label: 'Parket', onClick: () => { selectCategory('parket'); addQuickBotMessage('Kategoria u vendos: Parket.'); } },
+                { label: 'Tjeter', onClick: () => { selectCategory('general'); addQuickBotMessage('Kategoria u vendos: Tjeter.'); } }
+            ]);
+
+            addQuickBotMessage('Zgjidh prioritetin:', [
+                { label: 'Normal', onClick: () => { selectPriority('Normal'); addQuickBotMessage('Prioriteti u vendos: Normal.'); } },
+                { label: 'I Larte', onClick: () => { selectPriority('High'); addQuickBotMessage('Prioriteti u vendos: I Larte.'); } },
+                { label: 'Emergjent', onClick: () => { selectPriority('Emergency'); addQuickBotMessage('Prioriteti u vendos: Emergjent.'); } }
+            ]);
+
+            addQuickBotMessage('Do të të ndihmoj edhe me titullin/pershkrimin:', [
+                {
+                    label: 'Shto titull',
+                    onClick: () => {
+                        const t = prompt('Shkruaj titullin e shkurtër të defektit:');
+                        if (t) {
+                            const titleInput = document.querySelector('[name="Input.Title"]');
+                            titleInput.value = t;
+                            titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            addQuickBotMessage('Titulli u vendos.');
+                        }
+                    }
+                },
+                {
+                    label: 'Shto pershkrim',
+                    onClick: () => {
+                        const d = prompt('Shkruaj pershkrimin e defektit:');
+                        if (d) {
+                            const descInput = document.querySelector('[name="Input.Description"]');
+                            descInput.value = d;
+                            descInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            addQuickBotMessage('Pershkrimi u vendos.');
+                        }
+                    }
+                },
+                {
+                    label: 'Jam gati per dergim',
+                    onClick: () => {
+                        validateForm();
+                        updateProgress();
+                        document.getElementById('submitBtnMobile').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        addQuickBotMessage('Super. Kontrollo fotot dhe kliko Raporto.');
+                    }
+                }
+            ]);
+        }
+
+        quickBotToggle.addEventListener('click', () => {
+            const opening = quickBotPanel.style.display !== 'block';
+            toggleQuickBot(opening);
+
+            if (opening && !quickBotBody.dataset.started) {
+                quickBotBody.dataset.started = '1';
+                addQuickBotMessage('Pershendetje. Te ndihmoj te raportosh defektin shpejt.');
+                suggestFlow();
+            }
+        });
+
+        quickBotClose.addEventListener('click', () => toggleQuickBot(false));
+    </script>
+}

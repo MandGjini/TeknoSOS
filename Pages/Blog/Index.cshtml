@@ -1,0 +1,403 @@
+@page
+@model TeknoSOS.WebApp.Pages.Blog.BlogIndexModel
+@inject TeknoSOS.WebApp.Services.ISiteSettingsService SiteSettings
+@{
+    ViewData["Title"] = "Blog - Këshilla & Artikuj për Shërbime Teknike";
+    ViewData["Description"] = "Lexoni artikuj të dobishëm rreth defekteve elektrike, kursimit të energjisë, mirëmbajtjes së shtëpisë dhe teknologjisë. Platforma TeknoSOS ju informon dhe ju lidhur me profesionistë.";
+    var seoSettings = await SiteSettings.GetGroupAsync("seo");
+    var siteBaseUrl = seoSettings.TryGetValue("SiteBaseUrl", out var configuredBaseUrl) && !string.IsNullOrWhiteSpace(configuredBaseUrl)
+        ? configuredBaseUrl.TrimEnd('/')
+        : "https://teknosos.app";
+    var adsenseSettings = await SiteSettings.GetGroupAsync("adsense");
+    var adsenseEnabled = adsenseSettings.TryGetValue("Enabled", out var adsEnabledRaw) && adsEnabledRaw == "true";
+    var listTopSlot = adsenseSettings.TryGetValue("BlogListTopSlot", out var listTopSlotRaw) ? listTopSlotRaw : "";
+    var listInFeedSlot = adsenseSettings.TryGetValue("BlogListInFeedSlot", out var listInFeedSlotRaw) ? listInFeedSlotRaw : "";
+    var orderedArticles = Model.Articles.OrderByDescending(a => a.PublishedDate).ToList();
+    var featuredArticle = orderedArticles.FirstOrDefault();
+    var highlightedArticles = orderedArticles.Skip(1).Take(2).ToList();
+    var feedArticles = orderedArticles.Skip(3).ToList();
+    var initialBatchSize = 9;
+    var initialFeedArticles = feedArticles.Take(initialBatchSize).ToList();
+    var remainingFeedArticles = feedArticles.Skip(initialBatchSize).ToList();
+}
+
+@section Styles {
+<style>
+    .blog-shell {
+        margin-top: -2rem;
+        position: relative;
+        z-index: 5;
+        padding-bottom: 3rem;
+    }
+
+    .blog-featured-card,
+    .blog-clean-card,
+    .blog-highlight-card {
+        border-radius: var(--ts-radius-lg);
+        border: 1px solid var(--ts-border);
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(8px);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .blog-featured-card:hover,
+    .blog-clean-card:hover,
+    .blog-highlight-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.08);
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .blog-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        color: var(--ts-text-muted);
+        font-size: 0.8rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .blog-featured-image {
+        min-height: 320px;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(15, 23, 42, 0.04));
+    }
+
+    .blog-highlight-image {
+        width: 88px;
+        min-width: 88px;
+        height: 88px;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(15, 23, 42, 0.04));
+    }
+
+    .blog-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .blog-feed-grid {
+        row-gap: 1.5rem;
+    }
+
+    .blog-scroll-sentinel {
+        height: 1px;
+    }
+
+    .blog-load-status {
+        color: var(--ts-text-muted);
+        font-size: 0.9rem;
+    }
+
+    @@media (max-width: 991.98px) {
+        .blog-section-heading {
+            align-items: start;
+            flex-direction: column;
+        }
+    }
+</style>
+}
+
+<!-- Hero Section -->
+<section class="hero-2026" style="padding: 3rem 0;">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container text-center">
+        <div class="hero-badge mb-3 fade-up"><i class="bi bi-journal-richtext"></i> Blog</div>
+        <h1 class="fade-up" style="font-size: 2.8rem;">Blog që mban audiencën të angazhuar</h1>
+        <p class="hero-subtitle mx-auto fade-up" style="max-width: 600px;">
+            Artikuj praktikë, strukturë më e pastër vizuale dhe ngarkim gradual i postimeve për një eksperiencë më të lehtë në lexim.
+        </p>
+    </div>
+</section>
+
+<div class="container mt-3 mb-2">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Kryefaqja</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Blog</li>
+        </ol>
+    </nav>
+</div>
+
+@await Html.PartialAsync("_BannersPartial", new ViewDataDictionary(ViewData) { { "Position", "inline" }, { "PageKey", HttpContext.Request.Path.Value ?? "/" }, { "CssClass", "container" } })
+
+@if (adsenseEnabled && !string.IsNullOrWhiteSpace(listTopSlot))
+{
+    <div class="container mt-3">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-format="auto"
+             data-full-width-responsive="true"
+             data-ad-slot="@listTopSlot"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+}
+
+<div class="container blog-shell">
+    <div class="blog-section-heading">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--ts-text);">Artikujt më të fundit</h2>
+            <p class="text-muted mb-0">Gjithsej @orderedArticles.Count artikuj. Postimet ngarkohen gradualisht gjatë scroll-it.</p>
+        </div>
+        <div class="small text-muted">
+            Publikimi më i fundit:
+            <strong>@featuredArticle?.PublishedDate.ToString("dd/MM/yyyy HH:mm")</strong>
+        </div>
+    </div>
+
+    @if (featuredArticle != null)
+    {
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <a href="/Blog/@featuredArticle.Slug" class="text-decoration-none">
+                    <article class="card blog-featured-card h-100 overflow-hidden">
+                        <div class="row g-0 h-100">
+                            <div class="col-md-6 blog-featured-image d-flex align-items-center justify-content-center">
+                                @if (!string.IsNullOrEmpty(featuredArticle.ImageIcon) && (featuredArticle.ImageIcon.StartsWith("http://") || featuredArticle.ImageIcon.StartsWith("https://")))
+                                {
+                                    <img src="@featuredArticle.ImageIcon" alt="@featuredArticle.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <i class="bi @featuredArticle.ImageIcon" style="font-size: 5rem; color: var(--ts-primary); opacity: 0.75;"></i>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body p-4 p-xl-5 d-flex flex-column h-100">
+                                    <div class="d-flex align-items-center gap-2 mb-3">
+                                        <span class="badge" style="background: var(--ts-primary-light); color: var(--ts-primary); font-weight: 700;">Postimi Kryesor</span>
+                                        <span class="badge" style="background: var(--ts-bg-secondary); color: var(--ts-text-secondary);">@featuredArticle.Category</span>
+                                    </div>
+                                    <div class="blog-meta-row">
+                                        <span><i class="bi bi-calendar-event me-1"></i>@featuredArticle.PublishedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                        <span><i class="bi bi-clock me-1"></i>@featuredArticle.ReadTime lexim</span>
+                                        <span><i class="bi bi-person me-1"></i>@featuredArticle.Author</span>
+                                    </div>
+                                    <h3 class="fw-bold mb-3" style="font-size: 1.8rem; color: var(--ts-text); line-height: 1.25;">@featuredArticle.Title</h3>
+                                    <p style="color: var(--ts-text-secondary); line-height: 1.7;">@featuredArticle.Excerpt</p>
+                                    <div class="mt-auto pt-3">
+                                        <span style="font-size: 0.95rem; color: var(--ts-primary); font-weight: 700;">Lexo artikullin <i class="bi bi-arrow-right"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </a>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="d-flex flex-column gap-4 h-100">
+                    @foreach (var article in highlightedArticles)
+                    {
+                        <a href="/Blog/@article.Slug" class="text-decoration-none">
+                            <article class="card blog-highlight-card h-100">
+                                <div class="card-body p-3 p-lg-4">
+                                    <div class="d-flex gap-3 align-items-start">
+                                        <div class="blog-highlight-image d-flex align-items-center justify-content-center overflow-hidden">
+                                            @if (!string.IsNullOrEmpty(article.ImageIcon) && (article.ImageIcon.StartsWith("http://") || article.ImageIcon.StartsWith("https://")))
+                                            {
+                                                <img src="@article.ImageIcon" alt="@article.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                            }
+                                            else
+                                            {
+                                                <i class="bi @article.ImageIcon" style="font-size: 2rem; color: var(--ts-primary); opacity: 0.8;"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="blog-meta-row mb-2">
+                                                <span>@article.PublishedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </div>
+                                            <h3 class="fw-bold mb-2" style="font-size: 1.05rem; color: var(--ts-text); line-height: 1.35;">@article.Title</h3>
+                                            <p class="mb-0" style="color: var(--ts-text-secondary); font-size: 0.9rem; line-height: 1.6;">@article.Excerpt</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="blog-section-heading">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--ts-text);">Më shumë postime</h2>
+            <p class="text-muted mb-0">Scroll poshtë dhe postimet do të ngarkohen automatikisht.</p>
+        </div>
+        <div class="blog-load-status" id="blog-load-status">
+            @initialFeedArticles.Count / @feedArticles.Count postime të ngarkuara
+        </div>
+    </div>
+
+    <div class="row blog-feed-grid" id="blog-feed-grid">
+        @{ var articleIndex = 0; }
+        @foreach (var article in initialFeedArticles)
+        {
+            articleIndex++;
+            <div class="col-lg-4 col-md-6 blog-feed-item">
+                <a href="/Blog/@article.Slug" class="text-decoration-none">
+                    <article class="card h-100 blog-clean-card overflow-hidden">
+                        <div class="blog-card-image d-flex align-items-center justify-content-center" style="height: 220px; background: linear-gradient(135deg, var(--ts-primary-light), var(--ts-bg-secondary)); overflow:hidden;">
+                            @if (!string.IsNullOrEmpty(article.ImageIcon) && (article.ImageIcon.StartsWith("http://") || article.ImageIcon.StartsWith("https://")))
+                            {
+                                <img src="@article.ImageIcon" alt="@article.Title" style="width:100%;height:100%;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <i class="bi @article.ImageIcon" style="font-size: 3.5rem; color: var(--ts-primary); opacity: 0.7;"></i>
+                            }
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge" style="background: var(--ts-primary-light); color: var(--ts-primary); font-weight: 600; font-size: 0.75rem;">
+                                    <i class="bi @article.CategoryIcon me-1"></i> @article.Category
+                                </span>
+                            </div>
+                            <div class="blog-meta-row">
+                                <span><i class="bi bi-calendar-event me-1"></i>@article.PublishedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                <span><i class="bi bi-clock me-1"></i>@article.ReadTime lexim</span>
+                            </div>
+                            <h3 class="fw-bold mb-2" style="font-size: 1.1rem; color: var(--ts-text); line-height: 1.4;">@article.Title</h3>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1rem;">@article.Excerpt</p>
+                            <div class="d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--ts-border); padding-top: 0.85rem;">
+                                <span class="small text-muted">@article.Author</span>
+                                <span style="font-size: 0.85rem; color: var(--ts-primary); font-weight: 600;">Lexo më shumë <i class="bi bi-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </article>
+                </a>
+            </div>
+
+            @if (adsenseEnabled && !string.IsNullOrWhiteSpace(listInFeedSlot) && articleIndex % 6 == 0)
+            {
+                <div class="col-12 fade-up">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"
+                         data-ad-slot="@listInFeedSlot"></ins>
+                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+            }
+        }
+    </div>
+
+    <div id="blog-scroll-sentinel" class="blog-scroll-sentinel"></div>
+    <div class="text-center pt-4">
+        <div id="blog-loading-indicator" class="blog-load-status d-none">Po ngarkohen postime të tjera...</div>
+    </div>
+</div>
+
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@@type": "ListItem",
+            "position": 1,
+            "name": "Kryefaqja",
+            "item": "@siteBaseUrl/"
+        },
+        {
+            "@@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "@siteBaseUrl/Blog/Index"
+        }
+    ]
+}
+</script>
+
+@section Scripts {
+<script>
+    const remainingFeedArticles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(remainingFeedArticles.Select(article => new {
+        article.Slug,
+        article.Title,
+        article.Excerpt,
+        article.Category,
+        article.CategoryIcon,
+        article.Author,
+        PublishedDate = article.PublishedDate.ToString("dd/MM/yyyy HH:mm"),
+        article.ReadTime,
+        article.ImageIcon
+    }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+    let loadedCount = @initialFeedArticles.Count;
+    const totalFeedCount = @feedArticles.Count;
+    const batchSize = 6;
+    let cursor = 0;
+    const feedGrid = document.getElementById('blog-feed-grid');
+    const statusEl = document.getElementById('blog-load-status');
+    const loadingEl = document.getElementById('blog-loading-indicator');
+    const sentinel = document.getElementById('blog-scroll-sentinel');
+
+    function renderArticleCard(article) {
+        const imageHtml = article.imageIcon && (article.imageIcon.startsWith('http://') || article.imageIcon.startsWith('https://'))
+            ? `<img src="${article.imageIcon}" alt="${article.title}" style="width:100%;height:100%;object-fit:cover;" />`
+            : `<i class="bi ${article.imageIcon}" style="font-size: 3.5rem; color: var(--ts-primary); opacity: 0.7;"></i>`;
+
+        return `<div class="col-lg-4 col-md-6 blog-feed-item fade-up">
+            <a href="/Blog/${article.slug}" class="text-decoration-none">
+                <article class="card h-100 blog-clean-card overflow-hidden">
+                    <div class="blog-card-image d-flex align-items-center justify-content-center" style="height: 220px; background: linear-gradient(135deg, var(--ts-primary-light), var(--ts-bg-secondary)); overflow:hidden;">
+                        ${imageHtml}
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge" style="background: var(--ts-primary-light); color: var(--ts-primary); font-weight: 600; font-size: 0.75rem;">
+                                <i class="bi ${article.categoryIcon} me-1"></i> ${article.category}
+                            </span>
+                        </div>
+                        <div class="blog-meta-row">
+                            <span><i class="bi bi-calendar-event me-1"></i>${article.publishedDate}</span>
+                            <span><i class="bi bi-clock me-1"></i>${article.readTime} lexim</span>
+                        </div>
+                        <h3 class="fw-bold mb-2" style="font-size: 1.1rem; color: var(--ts-text); line-height: 1.4;">${article.title}</h3>
+                        <p style="color: var(--ts-text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1rem;">${article.excerpt}</p>
+                        <div class="d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--ts-border); padding-top: 0.85rem;">
+                            <span class="small text-muted">${article.author}</span>
+                            <span style="font-size: 0.85rem; color: var(--ts-primary); font-weight: 600;">Lexo më shumë <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+        </div>`;
+    }
+
+    function loadNextBatch() {
+        if (cursor >= remainingFeedArticles.length) {
+            loadingEl.classList.add('d-none');
+            return;
+        }
+
+        loadingEl.classList.remove('d-none');
+        const nextItems = remainingFeedArticles.slice(cursor, cursor + batchSize);
+        nextItems.forEach(article => {
+            feedGrid.insertAdjacentHTML('beforeend', renderArticleCard(article));
+            loadedCount += 1;
+        });
+        cursor += nextItems.length;
+        statusEl.textContent = `${loadedCount} / ${totalFeedCount} postime të ngarkuara`;
+        loadingEl.classList.add('d-none');
+    }
+
+    if (remainingFeedArticles.length > 0) {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadNextBatch();
+                }
+            });
+        }, { rootMargin: '300px 0px 300px 0px' });
+
+        observer.observe(sentinel);
+    } else {
+        statusEl.textContent = `${loadedCount} / ${totalFeedCount} postime të ngarkuara`;
+    }
+</script>
+}

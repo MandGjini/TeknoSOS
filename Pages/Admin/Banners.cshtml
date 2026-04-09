@@ -1,0 +1,494 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.BannersModel
+@{
+    ViewData["Title"] = "Menaxhimi i Banerave";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-megaphone text-primary"></i> Menaxhimi i Banerave</h2>
+        <p class="text-muted mb-0 small">Krijo dhe menaxho banerat reklamues në platformë</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bannerModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> Shto Baner të Ri
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-primary">@Model.Banners.Count</h3>
+            <small class="text-muted">Gjithsej Banera</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-success">@Model.Banners.Count(b => b.IsActive)</h3>
+            <small class="text-muted">Aktivë</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-info">@Model.Banners.Sum(b => b.ViewCount)</h3>
+            <small class="text-muted">Shikime Totale</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-warning">@Model.Banners.Sum(b => b.ClickCount)</h3>
+            <small class="text-muted">Klikime Totale</small>
+        </div>
+    </div>
+</div>
+
+<!-- Banners Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-list-ul"></i> Lista e Banerave</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:60px;">Pamje</th>
+                    <th>Emri</th>
+                    <th>Pozicioni</th>
+                    <th>Faqet</th>
+                    <th class="text-center">Statusi</th>
+                    <th class="text-center">Shikime</th>
+                    <th class="text-center">Klikime</th>
+                    <th class="text-end">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Banners.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-megaphone text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-2 mb-0">Nuk ka banera të krijuara.</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var banner in Model.Banners)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(banner.ImageUrl))
+                            {
+                                <img src="@banner.ImageUrl" alt="@banner.Name" style="width:50px;height:30px;object-fit:cover;border-radius:4px;" />
+                            }
+                            else if (!string.IsNullOrEmpty(banner.HtmlContent))
+                            {
+                                <span class="badge bg-secondary"><i class="bi bi-code"></i> HTML</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark">—</span>
+                            }
+                        </td>
+                        <td>
+                            <strong class="small">@banner.Name</strong>
+                            @if (!string.IsNullOrEmpty(banner.LinkUrl))
+                            {
+                                <br /><small class="text-muted"><i class="bi bi-link-45deg"></i> @(banner.LinkUrl.Length > 30 ? banner.LinkUrl.Substring(0, 30) + "..." : banner.LinkUrl)</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @GetPositionBadgeClass(banner.Position)">
+                                @GetPositionLabel(banner.Position)
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                @if (banner.TargetPages == "*")
+                                {
+                                    <span class="text-success">Të gjitha</span>
+                                }
+                                else
+                                {
+                                    @banner.TargetPages
+                                }
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            @if (banner.IsActive)
+                            {
+                                var isScheduled = banner.StartDate.HasValue && banner.StartDate > DateTime.UtcNow;
+                                var isExpired = banner.EndDate.HasValue && banner.EndDate < DateTime.UtcNow;
+                                if (isExpired)
+                                {
+                                    <span class="badge bg-danger">Skaduar</span>
+                                }
+                                else if (isScheduled)
+                                {
+                                    <span class="badge bg-warning text-dark">Planifikuar</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Aktiv</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Joaktiv</span>
+                            }
+                        </td>
+                        <td class="text-center"><span class="badge bg-info">@banner.ViewCount</span></td>
+                        <td class="text-center"><span class="badge bg-warning text-dark">@banner.ClickCount</span></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="editBanner(@banner.Id)" title="Modifiko">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-page-handler="ToggleActive" asp-route-id="@banner.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-@(banner.IsActive ? "warning" : "success")" title="@(banner.IsActive ? "Çaktivizo" : "Aktivizo")">
+                                        <i class="bi bi-@(banner.IsActive ? "pause" : "play")"></i>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@banner.Id" class="d-inline" onsubmit="return confirm('A jeni të sigurt që dëshironi të fshini këtë baner?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Fshi">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Position Legend -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle"></i> Pozicionet e Banerave</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary">header</span>
+                    <span class="small text-muted">Sipër faqes, poshtë navbar-it</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-info">sidebar</span>
+                    <span class="small text-muted">Në anën e djathtë të përmbajtjes</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success">footer</span>
+                    <span class="small text-muted">Mbi footer-in e faqes</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark">inline</span>
+                    <span class="small text-muted">Ndërmjet seksioneve të përmbajtjes</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-danger">popup</span>
+                    <span class="small text-muted">Modal popup (një herë në sesion)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Banner Modal -->
+<div class="modal fade" id="bannerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"><i class="bi bi-megaphone"></i> Shto Baner të Ri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="bannerForm">
+                <input type="hidden" name="EditId" id="editId" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Basic Info -->
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Emri i Banerit <span class="text-danger">*</span></label>
+                            <input type="text" name="Name" id="name" class="form-control" required placeholder="P.sh.: Promocion Pranveror" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Pozicioni</label>
+                            <select name="Position" id="position" class="form-select">
+                                <option value="header">Header (Sipër)</option>
+                                <option value="sidebar">Sidebar (Djathtas)</option>
+                                <option value="footer">Footer (Poshtë)</option>
+                                <option value="inline">Inline (Ndërmjet)</option>
+                                <option value="popup">Popup (Modal)</option>
+                            </select>
+                        </div>
+
+                        <!-- Image -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Imazhi (URL ose ngarko)</label>
+                            <div class="input-group">
+                                <input type="text" name="ImageUrl" id="imageUrl" class="form-control" placeholder="https://... ose /uploads/banners/..." />
+                                <label class="btn btn-outline-primary mb-0" for="bannerImageUpload">
+                                    <i class="bi bi-upload"></i> Ngarko
+                                </label>
+                            </div>
+                            <input type="file" id="bannerImageUpload" class="d-none" accept="image/*" onchange="uploadBannerImage(this)" />
+                            <div id="imagePreview" class="mt-2" style="display:none;">
+                                <img id="previewImg" src="" alt="Paraqitje" style="max-height:100px;border-radius:8px;" />
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Imazhi për Mobile (opsional)</label>
+                            <input type="text" name="MobileImageUrl" id="mobileImageUrl" class="form-control" placeholder="Imazhi alternativ për pajisje mobile" />
+                        </div>
+
+                        <!-- HTML Content Alternative -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">HTML (alternativë ndaj imazhit)</label>
+                            <textarea name="HtmlContent" id="htmlContent" class="form-control" rows="3" placeholder="<div>Përmbajtja e banerit...</div>"></textarea>
+                            <small class="text-muted">Nëse plotësohet, do të përdoret në vend të imazhit.</small>
+                        </div>
+
+                        <!-- Link -->
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">URL e Linkut</label>
+                            <input type="text" name="LinkUrl" id="linkUrl" class="form-control" placeholder="https://..." />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Hap në</label>
+                            <select name="LinkTarget" id="linkTarget" class="form-select">
+                                <option value="_blank">Dritare të re</option>
+                                <option value="_self">Dritaren aktuale</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Teksti Alt (SEO)</label>
+                            <input type="text" name="AltText" id="altText" class="form-control" placeholder="Përshkrimi i banerit" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngjyra e Sfondit</label>
+                            <div class="input-group">
+                                <input type="color" name="BackgroundColor" id="bgColor" class="form-control form-control-color" value="#ffffff" />
+                                <input type="text" id="bgColorText" class="form-control" value="#ffffff" readonly />
+                            </div>
+                        </div>
+
+                        <!-- Target Pages -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Faqet ku Shfaqet</label>
+                            <input type="text" name="TargetPages" id="targetPages" class="form-control" value="*" placeholder="* për të gjitha, ose: home,about,technicians" />
+                            <small class="text-muted">Përdor * për të gjitha faqet, ose ndaj me presje emrat e faqeve.</small>
+                        </div>
+
+                        <!-- Scheduling -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Radhitja</label>
+                            <input type="number" name="DisplayOrder" id="displayOrder" class="form-control" value="0" min="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Data e Fillimit</label>
+                            <input type="datetime-local" name="StartDate" id="startDate" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Data e Përfundimit</label>
+                            <input type="datetime-local" name="EndDate" id="endDate" class="form-control" />
+                        </div>
+
+                        <!-- Options -->
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsActive" id="isActive" value="true" checked />
+                                <label class="form-check-label" for="isActive">Aktiv</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="ShowCloseButton" id="showCloseButton" value="true" />
+                                <label class="form-check-label" for="showCloseButton">Shfaq butonin X (mbyll)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> <span id="submitText">Krijo Banerin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPositionBadgeClass(string position) => position switch
+    {
+        "header" => "bg-primary",
+        "sidebar" => "bg-info",
+        "footer" => "bg-success",
+        "inline" => "bg-warning text-dark",
+        "popup" => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    string GetPositionLabel(string position) => position switch
+    {
+        "header" => "Sipër",
+        "sidebar" => "Anësor",
+        "footer" => "Poshtë",
+        "inline" => "Ndërmjet",
+        "popup" => "Modal",
+        _ => position
+    };
+}
+
+@section Scripts {
+<script>
+    const bannersData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Banners.Select(b => new {
+        b.Id, b.Name, b.Position, b.ImageUrl, b.MobileImageUrl, b.HtmlContent, b.LinkUrl, b.LinkTarget,
+        b.AltText, b.TargetPages, b.DisplayOrder, b.IsActive, b.StartDate, b.EndDate, b.BackgroundColor, b.ShowCloseButton
+    }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('position').value = 'header';
+        document.getElementById('imageUrl').value = '';
+        document.getElementById('mobileImageUrl').value = '';
+        document.getElementById('htmlContent').value = '';
+        document.getElementById('linkUrl').value = '';
+        document.getElementById('linkTarget').value = '_blank';
+        document.getElementById('altText').value = '';
+        document.getElementById('targetPages').value = '*';
+        document.getElementById('displayOrder').value = '0';
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('bgColor').value = '#ffffff';
+        document.getElementById('bgColorText').value = '#ffffff';
+        document.getElementById('isActive').checked = true;
+        document.getElementById('showCloseButton').checked = false;
+        document.getElementById('imagePreview').style.display = 'none';
+        
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-megaphone"></i> Shto Baner të Ri';
+        document.getElementById('submitText').textContent = 'Krijo Banerin';
+        document.getElementById('bannerForm').action = '?handler=Create';
+    }
+
+    function editBanner(id) {
+        const banner = bannersData.find(b => b.id === id);
+        if (!banner) return;
+
+        document.getElementById('editId').value = banner.id;
+        document.getElementById('name').value = banner.name || '';
+        document.getElementById('position').value = banner.position || 'header';
+        document.getElementById('imageUrl').value = banner.imageUrl || '';
+        document.getElementById('mobileImageUrl').value = banner.mobileImageUrl || '';
+        document.getElementById('htmlContent').value = banner.htmlContent || '';
+        document.getElementById('linkUrl').value = banner.linkUrl || '';
+        document.getElementById('linkTarget').value = banner.linkTarget || '_blank';
+        document.getElementById('altText').value = banner.altText || '';
+        document.getElementById('targetPages').value = banner.targetPages || '*';
+        document.getElementById('displayOrder').value = banner.displayOrder || 0;
+        document.getElementById('isActive').checked = banner.isActive;
+        document.getElementById('showCloseButton').checked = banner.showCloseButton;
+        
+        if (banner.startDate) {
+            document.getElementById('startDate').value = new Date(banner.startDate).toISOString().slice(0, 16);
+        } else {
+            document.getElementById('startDate').value = '';
+        }
+        if (banner.endDate) {
+            document.getElementById('endDate').value = new Date(banner.endDate).toISOString().slice(0, 16);
+        } else {
+            document.getElementById('endDate').value = '';
+        }
+        
+        const bgColor = banner.backgroundColor || '#ffffff';
+        document.getElementById('bgColor').value = bgColor;
+        document.getElementById('bgColorText').value = bgColor;
+
+        if (banner.imageUrl) {
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('previewImg').src = banner.imageUrl;
+        } else {
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil"></i> Modifiko Banerin';
+        document.getElementById('submitText').textContent = 'Ruaj Ndryshimet';
+        document.getElementById('bannerForm').action = '?handler=Update';
+
+        new bootstrap.Modal(document.getElementById('bannerModal')).show();
+    }
+
+    // Sync color picker
+    document.getElementById('bgColor').addEventListener('input', function() {
+        document.getElementById('bgColorText').value = this.value;
+    });
+
+    // Image preview on URL change
+    document.getElementById('imageUrl').addEventListener('change', function() {
+        if (this.value) {
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('previewImg').src = this.value;
+        } else {
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+    });
+
+    // Upload banner image
+    async function uploadBannerImage(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const formData = new FormData();
+        formData.append('bannerImage', input.files[0]);
+
+        try {
+            const response = await fetch('?handler=UploadImage', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('imageUrl').value = result.url;
+                document.getElementById('imagePreview').style.display = 'block';
+                document.getElementById('previewImg').src = result.url;
+            } else {
+                alert(result.message || 'Gabim gjatë ngarkimit.');
+            }
+        } catch (e) {
+            alert('Gabim gjatë ngarkimit të imazhit.');
+        }
+        input.value = '';
+    }
+</script>
+}

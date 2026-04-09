@@ -1,0 +1,115 @@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+<div class="row g-0">
+    <!-- Admin Sidebar — Modern 2026 -->
+    <div class="col-md-3 col-lg-2 admin-sidebar">
+        <div class="d-flex align-items-center gap-2 px-3 pb-3 mb-2" style="border-bottom: 1px solid var(--ts-border);">
+            <div style="width:32px;height:32px;border-radius:var(--ts-radius-sm);background:var(--ts-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+            <div>
+                <div style="font-weight:700;font-size:0.85rem;color:var(--ts-text);">Paneli i Administratorit</div>
+                <div style="font-size:0.68rem;color:var(--ts-text-muted);">TeknoSOS</div>
+            </div>
+        </div>
+        <nav class="d-flex flex-column">
+
+            <a class="nav-link @(currentPage.Contains("Admin/Index") ? "active" : "")" asp-page="/Admin/Index">
+                <i class="bi bi-speedometer2"></i> Paneli Kryesor
+            </a>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Platforma (Konfigurime)</div>
+                <a class="nav-link @(currentPage.Contains("Admin/Settings") ? "active" : "")" asp-page="/Admin/Settings">
+                    <i class="bi bi-gear"></i> Cilësimet
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Payments") ? "active" : "")" asp-page="/Admin/Payments">
+                    <i class="bi bi-credit-card"></i> Pagesat
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/AuditLog") ? "active" : "")" asp-page="/Admin/AuditLog">
+                    <i class="bi bi-journal-text"></i> Regjistri i Veprimeve
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Backlinks") ? "active" : "")" asp-page="/Admin/Backlinks">
+                    <i class="bi bi-link-45deg"></i> Backlinks
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Businesses") ? "active" : "")" asp-page="/Admin/Businesses">
+                    <i class="bi bi-building"></i> Bizneset
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/TechnicianAccess") ? "active" : "")" asp-page="/Admin/TechnicianAccess">
+                    <i class="bi bi-unlock"></i> Qasje për Teknikët
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Editorët (Përmbajtje)</div>
+                <a class="nav-link @(currentPage.Contains("Admin/PageEditor") ? "active" : "")" asp-page="/Admin/PageEditor">
+                    <i class="bi bi-pencil-square"></i> Redaktori i Faqeve
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/ContentManager") ? "active" : "")" asp-page="/Admin/ContentManager">
+                    <i class="bi bi-file-text"></i> Përmbajtja
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Banners") ? "active" : "")" asp-page="/Admin/Banners">
+                    <i class="bi bi-megaphone"></i> Banerat
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/BlogManager") ? "active" : "")" asp-page="/Admin/BlogManager">
+                    <i class="bi bi-journal-richtext"></i> Blog
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Partners") ? "active" : "")" asp-page="/Admin/Partners">
+                    <i class="bi bi-building"></i> Partnerët
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/MenuManager") ? "active" : "")" asp-page="/Admin/MenuManager">
+                    <i class="bi bi-list"></i> Menuja
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/MediaManager") ? "active" : "")" asp-page="/Admin/MediaManager">
+                    <i class="bi bi-images"></i> Media
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/LanguageManager") ? "active" : "")" asp-page="/Admin/LanguageManager">
+                    <i class="bi bi-translate"></i> Gjuhët
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/NotificationTemplates") ? "active" : "")" asp-page="/Admin/NotificationTemplates">
+                    <i class="bi bi-envelope-paper"></i> Email & SMS
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/MarketingEmail") ? "active" : "")" asp-page="/Admin/MarketingEmail">
+                    <i class="bi bi-envelope-paper-heart"></i> Marketing Email
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Menaxherët (Users & Operacione)</div>
+                <a class="nav-link @(currentPage.Contains("Admin/Users") ? "active" : "")" asp-page="/Admin/Users">
+                    <i class="bi bi-people"></i> Përdoruesit
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Technicians") ? "active" : "")" asp-page="/Admin/Technicians">
+                    <i class="bi bi-person-badge"></i> Teknikët
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/Defects") ? "active" : "")" asp-page="/Admin/Defects">
+                    <i class="bi bi-tools"></i> Defektet
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/QuickCases") ? "active" : "")" asp-page="/Admin/QuickCases">
+                    <i class="bi bi-inbox"></i> Quick Cases
+                </a>
+                <a class="nav-link @(currentPage.Contains("Admin/ChatMonitor") ? "active" : "")" asp-page="/Admin/ChatMonitor">
+                    <i class="bi bi-chat-dots"></i> Monitorimi i Bisedave
+                </a>
+            </div>
+
+            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--ts-border);">
+                <a class="nav-link" asp-page="/Index">
+                    <i class="bi bi-arrow-left"></i> Kthehu në Faqen Kryesore
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Content Area -->
+    <div class="col-md-9 col-lg-10 admin-content">
+        @RenderBody()
+    </div>
+</div>
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

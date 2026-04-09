@@ -1,0 +1,79 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.MediaManagerModel
+@{
+    ViewData["Title"] = "Menaxhimi i Mediave";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0"><i class="bi bi-images text-primary"></i> Menaxhimi i Mediave</h3>
+            <p class="text-muted mb-0">Menaxhoni imazhet dhe skedarët e ngarkuar</p>
+    </div>
+    <div>
+        <span class="badge bg-info fs-6">@Model.MediaFiles.Count skedarë</span>
+        <span class="badge bg-secondary fs-6">
+            @(Model.TotalSizeBytes < 1024 * 1024 ? $"{Model.TotalSizeBytes / 1024} KB" : $"{Model.TotalSizeBytes / 1024 / 1024} MB")
+        </span>
+    </div>
+</div>
+
+<!-- Upload Form -->
+            <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="d-flex gap-2">
+            <input type="file" name="files" class="form-control" multiple accept="image/*,.pdf,.doc,.docx" />
+            <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Ngarko</button>
+        </form>
+    </div>
+</div>
+
+<!-- Media Grid -->
+<div class="row g-3">
+    @foreach (var file in Model.MediaFiles)
+    {
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                @if (file.IsImage)
+                {
+                    <img src="@file.RelativePath" class="card-img-top" style="height: 120px; object-fit: cover;" alt="@file.FileName" />
+                }
+                else
+                {
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                        <i class="bi bi-file-earmark-@(file.Extension == ".pdf" ? "pdf" : "text") text-muted" style="font-size: 2.5rem;"></i>
+                    </div>
+                }
+                <div class="card-body p-2">
+                    <small class="d-block text-truncate" title="@file.FileName">@file.FileName</small>
+                    <small class="text-muted">@file.SizeFormatted &middot; @file.LastModified.ToString("dd/MM/yy")</small>
+                    <div class="mt-1">
+                        <a href="@file.RelativePath" target="_blank" class="btn btn-outline-primary btn-sm py-0 px-1"><i class="bi bi-eye"></i></a>
+                        <button class="btn btn-outline-secondary btn-sm py-0 px-1" onclick="copyUrl('@file.RelativePath')" title="Kopjo URL"><i class="bi bi-clipboard"></i></button>
+                        <form method="post" asp-page-handler="Delete" class="d-inline">
+                            <input type="hidden" name="path" value="@file.RelativePath" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" onclick="return confirm('Fshij kete skedar?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.MediaFiles.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-cloud-upload" style="font-size: 3rem;"></i>
+        <p class="mt-2">Nuk ka skedarë të ngarkuar. Ngarkoni një skedar me formularin më lart.</p>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function copyUrl(url) {
+            navigator.clipboard.writeText(window.location.origin + url);
+            alert('URL u kopjua!');
+        }
+    </script>
+}

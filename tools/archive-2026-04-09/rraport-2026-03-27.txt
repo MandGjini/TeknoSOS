@@ -1,0 +1,61 @@
+# Rraport Statusi TeknoSOS
+
+**Data:** 2026-03-27
+
+---
+
+## Informacion i Përgjithshëm
+- Projekti: TeknoSOS.WebApp
+- Versioni: 1.0.0
+- Përshkrimi: Platformë për menaxhimin e shërbimeve teknike, lidhje qytetarësh me teknikë të certifikuar.
+- Sistemi Operativ: Windows 10 Pro (Build 19045)
+- Host: DESKTOP-D1S8CHU (Dell Precision T1700, 32GB RAM)
+- .NET SDK: 10.0.102, .NET Runtime: 10.0.2, 8.0.23
+
+---
+
+## Statusi i Build & Deploy
+- Build i fundit: SUKSESSHËM (Release, 27 Mars 2026)
+- Output ekzekutues: publish/TeknoSOS.WebApp.exe
+- Të gjitha DLL-të dhe asetet janë të pranishme në folderin publish.
+- Konfigurimi i portit: 5050 (HTTP), 5051 (HTTPS)
+
+---
+
+## Konfigurime Kryesore
+- Database: SQL Server (localhost\SQLEXPRESS)
+- JWT, SMTP, WhatsApp, GoogleAuth të konfiguruara sipas appsettings.json
+- TechnicianSelfRegistrationEnabled: false (vetëm admin mund të regjistrojë teknikë)
+
+---
+
+## Stack Teknologjik
+- ASP.NET Core 8.0 LTS, Razor Pages, Bootstrap 5.3.2
+- Entity Framework Core 8.0, SignalR 8.0
+- SQL Server 2022
+- Chart.js, Bootstrap Icons
+
+---
+
+## Funksionalitete Kryesore
+- Raportim defektesh me GPS, foto, kategori, prioritete
+- Marketplace teknikësh të verifikuar
+- Chat real-time, panel admin me 14 module
+- Multilingual (5 gjuhë)
+
+---
+
+## Gjendja e Shërbimit
+- Nuk u gjet asnjë proces aktiv TeknoSOS.WebApp.exe (aplikacioni nuk është duke u ekzekutuar aktualisht)
+- Output-i është gati për deployment ose nisje manuale nga publish/TeknoSOS.WebApp.exe
+
+---
+
+## Rekomandime
+- Nis aplikacionin nga folderi publish për të aktivizuar shërbimin.
+- Kontrollo cloudflared nëse përdor tunnel.
+- Monitoro log-et për çdo problem të mundshëm.
+
+---
+
+Ky rraport u gjenerua automatikisht nga sistemi.

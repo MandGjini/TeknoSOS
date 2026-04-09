@@ -1,0 +1,295 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.PaymentsModel
+@{
+    ViewData["Title"] = "Menaxhimi i Pagesave";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-credit-card text-primary"></i> Menaxhimi i Pagesave & Abonimeve</h2>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h4 class="fw-bold text-success mb-0">@Model.TotalRevenue.ToString("N0") ALL</h4>
+            <small class="text-muted">Të Ardhura Totale</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h4 class="fw-bold text-warning mb-0">@Model.PendingCount</h4>
+            <small class="text-muted">Pagesa në Pritje</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h4 class="fw-bold text-primary mb-0">@Model.ActiveCount</h4>
+            <small class="text-muted">Abonime Aktive</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h4 class="fw-bold text-danger mb-0">@Model.ExpiredCount</h4>
+            <small class="text-muted">Të Skaduara</small>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-sliders text-primary"></i> Konfigurimi i Portave të Pagesës (Admin)</h6>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="SaveGatewaySettings" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Tarifa mujore standard (ALL)</label>
+                <input type="text" name="SubscriptionMonthlyAmount" value="@Model.SubscriptionMonthlyAmount" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Teknikë (ALL / muaj)</label>
+                <input type="text" name="TechnicianMonthlyAmountALL" value="@Model.TechnicianMonthlyAmountALL" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Biznese (ALL / muaj)</label>
+                <input type="text" name="BusinessMonthlyAmountALL" value="@Model.BusinessMonthlyAmountALL" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Kufiri preventivave / muaj</label>
+                <input type="number" min="1" name="MonthlyQuoteLimit" value="@Model.MonthlyQuoteLimit" class="form-control" />
+            </div>
+            <div class="col-md-12">
+                <label class="form-label fw-semibold">Stripe Checkout URL</label>
+                <input type="url" name="StripeCheckoutUrl" value="@Model.StripeCheckoutUrl" class="form-control" placeholder="https://checkout.stripe.com/..." />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">BKT ePOS URL</label>
+                <input type="url" name="BktEposCheckoutUrl" value="@Model.BktEposCheckoutUrl" class="form-control" placeholder="https://..." />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Paysera URL</label>
+                <input type="url" name="PayseraCheckoutUrl" value="@Model.PayseraCheckoutUrl" class="form-control" placeholder="https://..." />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">IBAN (Bank Transfer)</label>
+                <input type="text" name="BankTransferIban" value="@Model.BankTransferIban" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Përfituesi</label>
+                <input type="text" name="BankTransferBeneficiary" value="@Model.BankTransferBeneficiary" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">SWIFT</label>
+                <input type="text" name="BankTransferSwift" value="@Model.BankTransferSwift" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Billing Support Email</label>
+                <input type="email" name="BillingSupportEmail" value="@Model.BillingSupportEmail" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Teknikë pa limit (IDs, ndarje me presje)</label>
+                <textarea name="UnlimitedTechnicianIds" class="form-control" rows="2" placeholder="id1,id2,id3">@Model.UnlimitedTechnicianIds</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Biznese pa limit (Business IDs, ndarje me presje)</label>
+                <textarea name="UnlimitedBusinessIds" class="form-control" rows="2" placeholder="12,25,99">@Model.UnlimitedBusinessIds</textarea>
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="SubscriptionReminderEnabled" value="true" @(Model.SubscriptionReminderEnabled ? "checked" : null) />
+                    <label class="form-check-label">Aktivizo rikujtimet automatike 3-ditore</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    Për siguri PCI, platforma nuk duhet të ruajë numër karte, CVV apo datë skadence. Përdorni URL-të e hostuara të Stripe/BKT ePOS/Paysera.
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Ruaj Konfigurimet e Pagesës
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabTechnicians">Teknikët & Abonimet</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabPayments">Historiku i Pagesave</a></li>
+</ul>
+
+<div class="tab-content">
+    <!-- Tab 1: Technicians Subscription Status -->
+    <div class="tab-pane fade show active" id="tabTechnicians">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tekniku</th>
+                            <th>Email</th>
+                            <th>Regjistrimi</th>
+                            <th>Statusi</th>
+                            <th>Ditë Mbetur</th>
+                            <th>Skadon</th>
+                            <th class="text-end">Veprime</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model.Technicians)
+                    {
+                        var isPaused = t.IsInRestrictedMode && t.IsPlatformActive;
+                        <tr class="@(isPaused ? "table-warning" : t.IsInRestrictedMode ? "table-danger" : t.DaysRemaining < 7 && t.DaysRemaining > 0 ? "table-warning" : "")">
+                            <td><strong>@t.FullName</strong></td>
+                            <td class="small">@t.Email</td>
+                            <td class="small">@t.RegistrationDate.ToString("dd/MM/yy")</td>
+                            <td>
+                                @if (t.IsInTrialPeriod)
+                                {
+                                    <span class="badge bg-info">Trial</span>
+                                }
+                                else if (t.IsSubscriptionActive)
+                                {
+                                    <span class="badge bg-success">Aktiv</span>
+                                }
+                                else if (isPaused)
+                                {
+                                    <span class="badge bg-warning text-dark">Pezulluar</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">I Kufizuar</span>
+                                }
+                            </td>
+                            <td>
+                                @if (t.IsSubscriptionActive)
+                                {
+                                    <span class="fw-bold @(t.DaysRemaining < 7 ? "text-danger" : "text-success")">@t.DaysRemaining ditë</span>
+                                }
+                                else if (isPaused)
+                                {
+                                    <span class="text-warning fw-bold">Pezulluar</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold">Skaduar</span>
+                                }
+                            </td>
+                            <td class="small">@(t.SubscriptionEndDate?.ToString("dd/MM/yyyy") ?? t.RegistrationDate.AddDays(30).ToString("dd/MM/yyyy"))</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Extend -->
+                                    <button class="btn btn-outline-success btn-sm" data-bs-toggle="collapse" data-bs-target="#ext-@t.Id.Replace("-","")">
+                                        <i class="bi bi-plus-circle"></i> Zgjat
+                                    </button>
+                                    @if (t.IsSubscriptionActive)
+                                    {
+                                        <form method="post" asp-page-handler="Suspend" class="d-inline">
+                                            <input type="hidden" name="technicianId" value="@t.Id" />
+                                            <button class="btn btn-outline-danger btn-sm" onclick="return confirm('Pezullo abonimin?')">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                                <div class="collapse mt-2" id="ext-@t.Id.Replace("-","")">
+                                    <form method="post" asp-page-handler="ExtendSubscription" class="input-group input-group-sm">
+                                        <input type="hidden" name="technicianId" value="@t.Id" />
+                                        <select name="months" class="form-select form-select-sm">
+                                            <option value="1">+1 muaj</option>
+                                            <option value="3">+3 muaj</option>
+                                            <option value="6">+6 muaj</option>
+                                            <option value="12">+12 muaj</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-success btn-sm">Konfirmo</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Payment History -->
+    <div class="tab-pane fade" id="tabPayments">
+        <div class="mb-3">
+            <a asp-page="/Admin/Payments" class="btn btn-sm @(Model.Filter == null ? "btn-primary" : "btn-outline-primary")">Të gjitha</a>
+            <a asp-page="/Admin/Payments" asp-route-filter="pending" class="btn btn-sm @(Model.Filter == "pending" ? "btn-warning" : "btn-outline-warning")">Në Pritje</a>
+            <a asp-page="/Admin/Payments" asp-route-filter="confirmed" class="btn btn-sm @(Model.Filter == "confirmed" ? "btn-success" : "btn-outline-success")">Konfirmuara</a>
+            <a asp-page="/Admin/Payments" asp-route-filter="trial" class="btn btn-sm @(Model.Filter == "trial" ? "btn-info" : "btn-outline-info")">Trial</a>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Tekniku</th><th>Periudha</th><th>Shuma</th><th>Metoda</th><th>Statusi</th><th class="text-end">Veprime</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var s in Model.Subscriptions)
+                    {
+                        <tr>
+                            <td>@s.Id</td>
+                            <td>
+                                <strong class="small">@s.TechnicianName</strong><br/>
+                                <small class="text-muted">@s.TechnicianEmail</small>
+                            </td>
+                            <td class="small">@s.StartDate.ToString("dd/MM/yy") — @s.EndDate.ToString("dd/MM/yy")</td>
+                            <td class="fw-bold">@s.Amount.ToString("N0") ALL</td>
+                            <td><span class="badge bg-secondary">@s.PaymentMethod</span></td>
+                            <td>
+                                @if (s.IsTrialPeriod) { <span class="badge bg-info">Trial</span> }
+                                else if (s.IsConfirmed) { <span class="badge bg-success">Konfirmuar</span> }
+                                else { <span class="badge bg-warning text-dark">Në Pritje</span> }
+                            </td>
+                            <td class="text-end">
+                                @if (!s.IsConfirmed && !s.IsTrialPeriod)
+                                {
+                                    <form method="post" asp-page-handler="ConfirmPayment" class="d-inline">
+                                        <input type="hidden" name="subscriptionId" value="@s.Id" />
+                                        <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Konfirmo</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="RejectPayment" class="d-inline">
+                                        <input type="hidden" name="subscriptionId" value="@s.Id" />
+                                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-lg"></i></button>
+                                    </form>
+                                }
+                                @if (s.IsConfirmed)
+                                {
+                                    <small class="text-success"><i class="bi bi-check-circle-fill"></i> @s.ConfirmedDate?.ToString("dd/MM/yy")</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Subscriptions.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">Nuk ka pagesa për të shfaqur.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

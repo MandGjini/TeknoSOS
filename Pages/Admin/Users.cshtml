@@ -1,0 +1,181 @@
+﻿@page
+@model TeknoSOS.WebApp.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Menaxhimi i Përdoruesve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-people text-primary"></i> Menaxhimi i Përdoruesve</h2>
+    <div class="d-flex gap-2">
+        <form method="post" asp-page-handler="SeedCertificates" class="d-inline" onsubmit="return confirm('A jeni të sigurt? Kjo do të krijojë certifikata për të gjithë teknikët që nuk kanë.')">
+            <button class="btn btn-warning btn-sm" title="Krijo certifikata për teknikët që nuk kanë">
+                <i class="bi bi-award"></i> Shto Certifikata
+            </button>
+        </form>
+        <form method="post" asp-page-handler="GenerateTechnicianUsernames" class="d-inline" onsubmit="return confirm('A jeni të sigurt? Kjo do të gjenerojë username emër.mbiemer për të gjithë teknikët.')">
+            <button class="btn btn-success btn-sm" title="Gjenero username emër.mbiemer për të gjithë teknikët">
+                <i class="bi bi-people-fill"></i> Gjenero Username Teknikëve
+            </button>
+        </form>
+        <form method="post" asp-page-handler="SendTestEmailAll" class="d-inline" onsubmit="return confirm('Dërgo email test tek të gjithë përdoruesit (përjashtim teknosos.local)?')">
+            <button class="btn btn-info btn-sm" title="Dërgo email test tek të gjithë">
+                <i class="bi bi-envelope"></i> Dërgo Email Test
+            </button>
+        </form>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#createUserForm"><i class="bi bi-plus-lg"></i> Krijo Përdorues</button>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-2 mb-3">
+    <div class="col"><div class="card border-0 shadow-sm text-center py-2"><h5 class="mb-0 fw-bold">@Model.TotalCount</h5><small class="text-muted">Gjithsej</small></div></div>
+    <div class="col"><div class="card border-0 shadow-sm text-center py-2"><h5 class="mb-0 fw-bold text-danger">@Model.AdminCount</h5><small class="text-muted">Admin</small></div></div>
+    <div class="col"><div class="card border-0 shadow-sm text-center py-2"><h5 class="mb-0 fw-bold text-success">@Model.ProCount</h5><small class="text-muted">Teknikë</small></div></div>
+    <div class="col"><div class="card border-0 shadow-sm text-center py-2"><h5 class="mb-0 fw-bold text-info">@Model.CitizenCount</h5><small class="text-muted">Qytetarë</small></div></div>
+    <div class="col"><div class="card border-0 shadow-sm text-center py-2"><h5 class="mb-0 fw-bold text-primary">@Model.ActiveCount</h5><small class="text-muted">Aktivë</small></div></div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle"></i> @Model.SuccessMessage<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Create User Collapse -->
+<div class="collapse mb-4" id="createUserForm">
+    <div class="card border-primary border-2 shadow-sm">
+        <div class="card-header bg-primary text-white"><h6 class="mb-0"><i class="bi bi-person-plus"></i> Krijo Përdorues të Ri</h6></div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="CreateUser">
+                <div class="row g-3">
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Emri</label><input name="firstName" class="form-control form-control-sm" required /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Mbiemri</label><input name="lastName" class="form-control form-control-sm" required /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Email</label><input name="email" type="email" class="form-control form-control-sm" required /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Password</label><input name="password" type="password" class="form-control form-control-sm" required minlength="6" /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Roli</label><select name="role" class="form-select form-select-sm"><option value="Citizen">Qytetar</option><option value="Professional">Profesionist</option><option value="Admin">Admin</option></select></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Qyteti</label><input name="city" class="form-control form-control-sm" /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Telefoni</label><input name="phone" class="form-control form-control-sm" /></div>
+                    <div class="col-md-3"><label class="form-label small fw-semibold">Username</label><div class="input-group input-group-sm"><span class="input-group-text">@@</span><input name="username" class="form-control" pattern="[a-z0-9_]{3,20}" /></div></div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus"></i> Krijo Përdoruesin</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3"><select asp-for="RoleFilter" class="form-select form-select-sm"><option value="">Te gjithe</option><option value="Admin">Admin</option><option value="Professional">Profesionist</option><option value="Citizen">Qytetar</option></select></div>
+                <div class="col-md-4"><input asp-for="SearchQuery" class="form-control form-control-sm" placeholder="Kerko emrin, emailin, username..." /></div>
+                <div class="col-md-2 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="IncludeInactive" type="checkbox" />
+                        <label class="form-check-label small">Përfshi jo-aktivët</label>
+                    </div>
+                </div>
+                <div class="col-md-1"><button type="submit" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-search"></i> Filtro</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Perdoruesi</th><th>Email</th><th>Roli</th><th>Statusi</th><th class="text-end">Veprime</th></tr></thead>
+            <tbody>
+            @foreach (var user in Model.AllUsers)
+            {
+                var isSuspendedSubscription = user.Role == Domain.Enums.UserRole.Professional && !user.IsActive && user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate.Value <= DateTime.UtcNow;
+                <tr class="@(isSuspendedSubscription ? "table-warning" : "")">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;font-size:14px;">
+                                @(user.FirstName?.Length > 0 ? user.FirstName.Substring(0,1).ToUpper() : "?")@(user.LastName?.Length > 0 ? user.LastName.Substring(0,1).ToUpper() : "")
+                            </div>
+                            <div>
+                                <strong class="small">@user.FirstName @user.LastName</strong>
+                                @if (!string.IsNullOrEmpty(user.DisplayUsername)) { <br/><small class="text-primary">@@@@user.DisplayUsername</small> }
+                                @if (!string.IsNullOrEmpty(user.City)) { <br/><small class="text-muted">@user.City</small> }
+                            </div>
+                        </div>
+                    </td>
+                    <td class="small">@user.Email</td>
+                    <td><span class="badge @(user.Role == Domain.Enums.UserRole.Admin ? "bg-danger" : user.Role == Domain.Enums.UserRole.Professional ? "bg-success" : "bg-info")">@user.Role</span></td>
+                    <td>
+                        @if (isSuspendedSubscription)
+                        {
+                            <span class="badge bg-warning-subtle text-warning">Pezulluar</span>
+                        }
+                        else if (user.IsActive)
+                        {
+                            <span class="badge bg-success-subtle text-success">Aktiv</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger-subtle text-danger">Joaktiv</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <form method="post" asp-page-handler="ToggleActive" class="d-inline"><input type="hidden" name="userId" value="@user.Id" /><button class="btn btn-outline-@(user.IsActive ? "warning" : "success") btn-sm" title="@(user.IsActive ? "Caktivizo" : "Aktivizo")"><i class="bi bi-@(user.IsActive ? "pause-circle" : "play-circle")"></i></button></form>
+                            <form method="post" asp-page-handler="ChangeRole" class="d-inline"><input type="hidden" name="userId" value="@user.Id" /><select name="newRole" onchange="this.form.submit()" class="form-select form-select-sm d-inline" style="width:auto;"><option value="">Roli...</option><option value="Admin">Admin</option><option value="Professional">Pro</option><option value="Citizen">Citizen</option></select></form>
+                            <button class="btn btn-outline-info btn-sm" data-bs-toggle="collapse" data-bs-target="#edit-@user.Id.Replace("-","")" title="Edito"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#uname-@user.Id.Replace("-","")" title="Username"><i class="bi bi-at"></i></button>
+                            <a href="/Admin/SendMail?email=@user.Email" class="btn btn-outline-primary btn-sm" title="Dërgo Email"><i class="bi bi-envelope"></i></a>
+                            <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Fshi perdoruesin?')"><input type="hidden" name="userId" value="@user.Id" /><button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button></form>
+                        </div>
+                        <!-- Edit Collapse -->
+                        <div class="collapse mt-2 text-start" id="edit-@user.Id.Replace("-","")">
+                            <form method="post" asp-page-handler="EditUser" class="border rounded p-2 bg-light">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <div class="row g-2">
+                                    <div class="col-6"><input name="firstName" value="@user.FirstName" class="form-control form-control-sm" placeholder="Emri" /></div>
+                                    <div class="col-6"><input name="lastName" value="@user.LastName" class="form-control form-control-sm" placeholder="Mbiemri" /></div>
+                                    <div class="col-6"><input name="city" value="@user.City" class="form-control form-control-sm" placeholder="Qyteti" /></div>
+                                    <div class="col-6"><input name="phone" value="@user.PhoneNumber" class="form-control form-control-sm" placeholder="Telefoni" /></div>
+                                    <div class="col-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="isActive" value="true" @(user.IsActive ? "checked" : "") /><label class="form-check-label small">Aktiv</label></div></div>
+                                    <div class="col-6"><button type="submit" class="btn btn-primary btn-sm w-100">Ruaj</button></div>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Username Collapse -->
+                        <div class="collapse mt-2" id="uname-@user.Id.Replace("-","")">
+                            <form method="post" asp-page-handler="ChangeUsername" class="input-group input-group-sm">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <span class="input-group-text">@@</span>
+                                <input type="text" name="newUsername" value="@user.DisplayUsername" class="form-control" pattern="[a-z0-9_]{3,20}" />
+                                <button type="submit" class="btn btn-primary btn-sm">Ruaj</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer bg-white border-0">
+                <nav aria-label="Users pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="?RoleFilter=@Model.RoleFilter&SearchQuery=@Model.SearchQuery&IncludeInactive=@Model.IncludeInactive&PageNumber=@(Model.PageNumber-1)">« Para</a>
+                        </li>
+                        @for (int p = 1; p <= Model.PageCount; p++)
+                        {
+                            <li class="page-item @(p == Model.PageNumber ? "active" : "")"><a class="page-link" href="?RoleFilter=@Model.RoleFilter&SearchQuery=@Model.SearchQuery&IncludeInactive=@Model.IncludeInactive&PageNumber=@p">@p</a></li>
+                        }
+                        <li class="page-item @(Model.PageNumber >= Model.PageCount ? "disabled" : "")">
+                            <a class="page-link" href="?RoleFilter=@Model.RoleFilter&SearchQuery=@Model.SearchQuery&IncludeInactive=@Model.IncludeInactive&PageNumber=@(Model.PageNumber+1)">Pas »</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>

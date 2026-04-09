@@ -1,0 +1,385 @@
+@page
+@using TeknoSOS.WebApp.Domain.Enums
+@model TeknoSOS.WebApp.Pages.Admin.BusinessesModel
+@{
+    ViewData["Title"] = "Menaxhimi i Bizneseve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-shop text-primary"></i> Menaxhimi i Bizneseve</h2>
+        <p class="text-muted mb-0 small">Shto dhe menaxho biznese qe ndihmojne qytetaret me materiale dhe sherbime profesionale.</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#businessModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> Shto Biznes të Ri
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-primary">@Model.Businesses.Count</h3>
+            <small class="text-muted">Gjithsej Biznese</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-success">@Model.Businesses.Count(b => b.IsActive)</h3>
+            <small class="text-muted">Aktive</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-warning">@Model.Businesses.Count(b => b.VerificationStatus == BusinessVerificationStatus.Pending)</h3>
+            <small class="text-muted">Në Pritje</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-info">@Model.Businesses.Count(b => b.IsFeatured)</h3>
+            <small class="text-muted">Featured</small>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-list-ul"></i> Lista e Bizneseve</h6>
+        <small class="text-muted">Misioni ynë: klienti gjithmonë i lumtur</small>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 60px;">Logo</th>
+                    <th>Biznesi</th>
+                    <th>Kategoria</th>
+                    <th>Qyteti</th>
+                    <th class="text-center">Statusi</th>
+                    <th class="text-center">Featured</th>
+                    <th class="text-end">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Businesses.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-shop text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-2 mb-0">Nuk ka biznese të regjistruara akoma.</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var business in Model.Businesses)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(business.LogoUrl))
+                            {
+                                <img src="@business.LogoUrl" alt="@business.Name" style="width:50px;height:50px;object-fit:cover;border-radius:8px;" />
+                            }
+                            else
+                            {
+                                <div style="width:50px;height:50px;border-radius:8px;background:#f8f9fa;display:flex;align-items:center;justify-content:center;">
+                                    <strong class="text-muted">@business.Name.Substring(0, 1).ToUpper()</strong>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <strong class="small">@business.Name</strong>
+                            @if (!string.IsNullOrWhiteSpace(business.Slogan))
+                            {
+                                <div class="small text-muted">@business.Slogan</div>
+                            }
+                            <div class="small text-muted">@business.TypeText</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">@business.CategoryText</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">@(string.IsNullOrWhiteSpace(business.City) ? "—" : business.City)</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge @business.StatusBadgeClass">@business.StatusText</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-@(business.IsFeatured ? "warning text-dark" : "secondary")">@(business.IsFeatured ? "Po" : "Jo")</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="editBusiness(@business.Id)" title="Modifiko">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-page-handler="ToggleActive" asp-route-id="@business.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-@(business.IsActive ? "warning" : "success")" title="@(business.IsActive ? "Çaktivizo" : "Aktivizo")">
+                                        <i class="bi bi-@(business.IsActive ? "pause" : "play")"></i>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="ToggleFeatured" asp-route-id="@business.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-warning" title="Featured">
+                                        <i class="bi bi-star@(business.IsFeatured ? "-fill" : "")"></i>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@business.Id" class="d-inline" onsubmit="return confirm('A jeni të sigurt që dëshironi të fshini këtë biznes?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Fshi">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="businessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"><i class="bi bi-shop"></i> Shto Biznes të Ri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="businessForm">
+                <input type="hidden" name="EditId" id="editId" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Emri i Biznesit <span class="text-danger">*</span></label>
+                            <input type="text" name="Name" id="name" class="form-control" required placeholder="P.sh. Mega Elektrike" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Lloji</label>
+                            <select name="Type" id="type" class="form-select">
+                                @foreach (BusinessType item in Enum.GetValues(typeof(BusinessType)))
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategoria Kryesore</label>
+                            <select name="PrimaryCategory" id="primaryCategory" class="form-select">
+                                @foreach (BusinessCategory item in Enum.GetValues(typeof(BusinessCategory)))
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Statusi i Verifikimit</label>
+                            <select name="VerificationStatus" id="verificationStatus" class="form-select">
+                                @foreach (BusinessVerificationStatus item in Enum.GetValues(typeof(BusinessVerificationStatus)))
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Slogan</label>
+                            <input type="text" name="Slogan" id="slogan" class="form-control" placeholder="Klienti gjithmonë i lumtur" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Përshkrimi</label>
+                            <textarea name="Description" id="description" class="form-control" rows="2" placeholder="Përshkrim i shkurtër për biznesin..."></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Qyteti</label>
+                            <input type="text" name="City" id="city" class="form-control" placeholder="Tiranë" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Rajoni</label>
+                            <input type="text" name="Region" id="region" class="form-control" placeholder="Qarku Tiranë" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Telefon Kontakti</label>
+                            <input type="text" name="ContactPhone" id="contactPhone" class="form-control" placeholder="+355..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Kontakti</label>
+                            <input type="email" name="ContactEmail" id="contactEmail" class="form-control" placeholder="biznesi@email.com" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Adresa Fizike</label>
+                            <input type="text" name="PhysicalAddress" id="physicalAddress" class="form-control" placeholder="Rruga, numri, lagjja" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Logo (URL ose ngarko)</label>
+                            <div class="input-group">
+                                <input type="text" name="LogoUrl" id="logoUrl" class="form-control" placeholder="https://... ose /uploads/businesses/..." />
+                                <label class="btn btn-outline-primary mb-0" for="businessLogoUpload">
+                                    <i class="bi bi-upload"></i> Ngarko
+                                </label>
+                            </div>
+                            <input type="file" id="businessLogoUpload" class="d-none" accept="image/*" onchange="uploadLogo(this)" />
+                            <div id="logoPreview" class="mt-2" style="display:none;">
+                                <img id="previewImg" src="" alt="Paraqitje" style="max-height:80px;border-radius:8px;" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsActive" id="isActive" value="true" checked>
+                                <label class="form-check-label" for="isActive">Aktiv</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsFeatured" id="isFeatured" value="true">
+                                <label class="form-check-label" for="isFeatured">Featured në platformë</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> <span id="submitText">Krijo Biznesin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const businessesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Businesses.Select(b => new {
+        b.Id,
+        b.Name,
+        b.Description,
+        b.Slogan,
+        Type = b.Type.ToString(),
+        PrimaryCategory = b.PrimaryCategory.ToString(),
+        b.City,
+        b.Region,
+        b.ContactPhone,
+        b.ContactEmail,
+        b.PhysicalAddress,
+        b.LogoUrl,
+        b.IsActive,
+        b.IsFeatured,
+        VerificationStatus = b.VerificationStatus.ToString()
+    })));
+
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('slogan').value = '';
+        document.getElementById('type').value = 'Supplier';
+        document.getElementById('primaryCategory').value = 'ConstructionMaterials';
+        document.getElementById('city').value = '';
+        document.getElementById('region').value = '';
+        document.getElementById('contactPhone').value = '';
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('physicalAddress').value = '';
+        document.getElementById('logoUrl').value = '';
+        document.getElementById('isActive').checked = true;
+        document.getElementById('isFeatured').checked = false;
+        document.getElementById('verificationStatus').value = 'Pending';
+        document.getElementById('logoPreview').style.display = 'none';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-shop"></i> Shto Biznes të Ri';
+        document.getElementById('submitText').textContent = 'Krijo Biznesin';
+        document.getElementById('businessForm').action = '?handler=Create';
+    }
+
+    function editBusiness(id) {
+        const business = businessesData.find(b => b.Id === id);
+        if (!business) return;
+
+        document.getElementById('editId').value = business.Id;
+        document.getElementById('name').value = business.Name || '';
+        document.getElementById('description').value = business.Description || '';
+        document.getElementById('slogan').value = business.Slogan || '';
+        document.getElementById('type').value = business.Type || 'Supplier';
+        document.getElementById('primaryCategory').value = business.PrimaryCategory || 'ConstructionMaterials';
+        document.getElementById('city').value = business.City || '';
+        document.getElementById('region').value = business.Region || '';
+        document.getElementById('contactPhone').value = business.ContactPhone || '';
+        document.getElementById('contactEmail').value = business.ContactEmail || '';
+        document.getElementById('physicalAddress').value = business.PhysicalAddress || '';
+        document.getElementById('logoUrl').value = business.LogoUrl || '';
+        document.getElementById('isActive').checked = business.IsActive;
+        document.getElementById('isFeatured').checked = business.IsFeatured;
+        document.getElementById('verificationStatus').value = business.VerificationStatus || 'Pending';
+
+        if (business.LogoUrl) {
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('previewImg').src = business.LogoUrl;
+        } else {
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil"></i> Modifiko Biznesin';
+        document.getElementById('submitText').textContent = 'Ruaj Ndryshimet';
+        document.getElementById('businessForm').action = '?handler=Update';
+
+        new bootstrap.Modal(document.getElementById('businessModal')).show();
+    }
+
+    document.getElementById('logoUrl').addEventListener('change', function () {
+        if (this.value) {
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('previewImg').src = this.value;
+        } else {
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+    });
+
+    async function uploadLogo(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const formData = new FormData();
+        formData.append('businessLogo', input.files[0]);
+
+        try {
+            const response = await fetch('?handler=UploadLogo', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('logoUrl').value = result.url;
+                document.getElementById('logoPreview').style.display = 'block';
+                document.getElementById('previewImg').src = result.url;
+            } else {
+                alert(result.message || 'Gabim gjatë ngarkimit.');
+            }
+        } catch (err) {
+            alert('Gabim gjatë ngarkimit të logos.');
+        }
+
+        input.value = '';
+    }
+</script>
+}

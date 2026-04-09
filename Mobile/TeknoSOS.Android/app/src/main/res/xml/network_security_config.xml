@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Network Security Configuration for TeknoSOS Android App -->
+<network-security-config>
+    <!-- Base config: enforce HTTPS by default -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Domain-specific config for TeknoSOS servers -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">teknosos.app</domain>
+        <domain includeSubdomains="true">www.teknosos.app</domain>
+    </domain-config>
+    
+    <!-- Debug-only: allow localhost for development -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+            <certificates src="system" />
+        </trust-anchors>
+        <!-- Allow cleartext only on localhost during development -->
+        <domain-config cleartextTrafficPermitted="true">
+            <domain>localhost</domain>
+            <domain>10.0.2.2</domain>
+            <domain>192.168.1.2</domain>
+        </domain-config>
+    </debug-overrides>
+</network-security-config>

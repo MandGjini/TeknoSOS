@@ -1,0 +1,680 @@
+@page "{id:int}"
+@model TeknoSOS.WebApp.Pages.DefectDetailsModel
+@{
+    ViewData["Title"] = L.T("defects.details_title") + " #" + Model.Defect?.Id;
+}
+
+@if (Model.Defect == null)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 60px;"></i>
+        <h3 class="mt-3">@L.T("defects.not_found")</h3>
+        <a asp-page="/DefectList" class="btn btn-primary mt-3">@L.T("common.back")</a>
+    </div>
+    return;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-page="/DefectList">@L.T("defects.list_title")</a></li>
+        <li class="breadcrumb-item active">#@Model.Defect.Id</li>
+    </ol>
+</nav>
+
+<div class="container text-center" style="margin-top: -1.5rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    <div class="row g-4 justify-content-center">
+    <!-- Main Details -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                    <span class="badge @GetStatusBadge(Model.Defect.Status) fs-6">@GetStatusText(Model.Defect.Status)</span>
+                    <span class="badge bg-secondary">@Model.Defect.Category</span>
+                    @if (Model.Defect.Priority == ServiceRequestPriority.Emergency || Model.Defect.Priority == ServiceRequestPriority.High)
+                    {
+                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill"></i> Urgjent</span>
+                    }
+                </div>
+                <h2 class="fw-bold mb-0">@Model.Defect.Title</h2>
+            </div>
+            <div class="card-body px-4">
+                <p class="mb-4">@Model.Defect.Description</p>
+
+                @if (!string.IsNullOrEmpty(Model.Defect.PhotoUrl))
+                {
+                    <div class="mb-4">
+                        <img src="@Model.Defect.PhotoUrl" class="img-fluid rounded" alt="Foto e defektit" style="max-height: 400px;" />
+                    </div>
+                }
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="bi bi-geo-alt fs-5 me-2 text-primary"></i>
+                            <div>
+                                <small class="d-block fw-semibold">@L.T("defects.location")</small>
+                                @(Model.Defect.Location ?? "—")
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="bi bi-calendar3 fs-5 me-2 text-primary"></i>
+                            <div>
+                                <small class="d-block fw-semibold">@L.T("defects.created_date")</small>
+                                @Model.Defect.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.Defect.ScheduledDate.HasValue)
+                    {
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-clock fs-5 me-2 text-warning"></i>
+                                <div>
+                                    <small class="d-block fw-semibold">@L.T("defects.scheduled_date")</small>
+                                    @Model.Defect.ScheduledDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Defect.CompletedDate.HasValue)
+                    {
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-check-circle fs-5 me-2 text-success"></i>
+                                <div>
+                                    <small class="d-block fw-semibold">@L.T("defects.completed_date")</small>
+                                    @Model.Defect.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Defect.EstimatedCost.HasValue)
+                    {
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-cash-coin fs-5 me-2 text-primary"></i>
+                                <div>
+                                    <small class="d-block fw-semibold">@L.T("defects.estimated_cost")</small>
+                                    @Model.Defect.EstimatedCost.Value.ToString("N0") ALL
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Defect.FinalCost.HasValue)
+                    {
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-cash fs-5 me-2 text-success"></i>
+                                <div>
+                                    <small class="d-block fw-semibold">@L.T("defects.final_cost")</small>
+                                    @Model.Defect.FinalCost.Value.ToString("N0") ALL
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Location Map - OpenStreetMap with Leaflet *@
+        @if (Model.Defect.ClientLatitude.HasValue && Model.Defect.ClientLongitude.HasValue)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt-fill text-danger"></i> Vendndodhja e Defektit</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="defectMap" style="height: 300px; border-radius: 0 0 0.5rem 0.5rem;"></div>
+                </div>
+            </div>
+        }
+
+        <!-- Status Timeline -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history text-primary"></i> @L.T("defects.timeline")</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    @{
+                        var steps = new[] {
+                            (ServiceRequestStatus.Created, Model.Defect.CreatedDate, "bi-plus-circle", "bg-info"),
+                            (ServiceRequestStatus.Matched, (DateTime?)null, "bi-people", "bg-primary"),
+                            (ServiceRequestStatus.InProgress, (DateTime?)null, "bi-gear", "bg-warning"),
+                            (ServiceRequestStatus.Completed, Model.Defect.CompletedDate, "bi-check-circle", "bg-success")
+                        };
+
+                        foreach (var (stepStatus, date, icon, color) in steps)
+                        {
+                            var isActive = (int)Model.Defect.Status >= (int)stepStatus;
+                            var isCurrent = Model.Defect.Status == stepStatus;
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="me-3 text-center" style="width: 40px;">
+                                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center @(isActive ? color : "bg-light") @(isActive ? "text-white" : "text-muted")" style="width: 36px; height: 36px;">
+                                        <i class="bi @icon"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong class="@(isActive ? "" : "text-muted")">@GetStatusText(stepStatus)</strong>
+                                    @if (isCurrent)
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary ms-2">Aktual</span>
+                                    }
+                                    @if (date.HasValue)
+                                    {
+                                        <br /><small class="text-muted">@date.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        @if (Model.Messages.Any())
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots text-primary"></i> @L.T("defects.messages")</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var msg in Model.Messages)
+                    {
+                        var isMe = msg.SenderId == Model.CurrentUserId;
+                        <div class="d-flex mb-3 @(isMe ? "flex-row-reverse" : "")">
+                            <div class="px-3 py-2 rounded-3 @(isMe ? "bg-primary text-white" : "bg-light")" style="max-width: 75%;">
+                                <small class="d-block @(isMe ? "text-white-50" : "text-muted") mb-1">
+                                    @msg.Sender?.FirstName @msg.Sender?.LastName &middot; @msg.CreatedDate.ToString("dd/MM HH:mm")
+                                </small>
+                                @msg.Content
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Client Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-person text-primary"></i> @L.T("defects.client")</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>@Model.Defect.Citizen?.FirstName @Model.Defect.Citizen?.LastName</strong></p>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-envelope"></i> @Model.Defect.Citizen?.Email
+                </p>
+                @if (!string.IsNullOrEmpty(Model.Defect.ClientContactNumber))
+                {
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-phone"></i> @Model.Defect.ClientContactNumber
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Assigned Professional -->
+        @if (Model.Defect.Professional != null)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-wrench text-success"></i> @L.T("defects.professional")</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.Defect.Professional.ProfileImageUrl))
+                        {
+                            <img src="@Model.Defect.Professional.ProfileImageUrl" alt="@Model.Defect.Professional.GetFullName()" class="rounded-circle" style="width:56px;height:56px;object-fit:cover;" onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold" style="width:56px;height:56px;background:linear-gradient(135deg, var(--ts-primary), var(--ts-accent));">
+                                @((Model.Defect.Professional.FirstName?.FirstOrDefault().ToString() ?? "") + (Model.Defect.Professional.LastName?.FirstOrDefault().ToString() ?? ""))
+                            </div>
+                        }
+                        <div>
+                            <p class="mb-1"><strong>@Model.Defect.Professional.FirstName @Model.Defect.Professional.LastName</strong></p>
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-envelope"></i> @Model.Defect.Professional.Email
+                            </p>
+                            <a asp-page="/TechnicianProfile" asp-route-id="@(Model.Defect.Professional.DisplayUsername ?? Model.Defect.Professional.Id)" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-person-vcard me-1"></i>Shiko profilin
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Existing Review Display -->
+        @if (Model.ExistingReview != null)
+        {
+            <div class="card border-0 shadow-sm mb-4 border-success">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h6 class="mb-0"><i class="bi bi-star-fill text-warning"></i> Vlerësimi</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-1 mb-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= Model.ExistingReview.Rating ? "bi-star-fill text-warning" : "bi-star text-muted")" style="font-size:1.1rem;"></i>
+                        }
+                        <span class="ms-2 fw-semibold">@Model.ExistingReview.Rating/5</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ExistingReview.Comment))
+                    {
+                        <p class="mb-1 fst-italic text-muted">"@Model.ExistingReview.Comment"</p>
+                    }
+                    <small class="text-muted">
+                        <i class="bi bi-person"></i> @Model.ExistingReview.Reviewer?.FirstName @Model.ExistingReview.Reviewer?.LastName
+                        &middot; @Model.ExistingReview.CreatedDate.ToString("dd/MM/yyyy")
+                    </small>
+                </div>
+            </div>
+        }
+
+        <!-- Review Form for Client (after completion) -->
+        @if (Model.CanReview)
+        {
+            <div class="card border-0 shadow-sm mb-4 border-warning">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h6 class="mb-0"><i class="bi bi-star text-warning"></i> Vlerëso Teknikun</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Review">
+                        <input type="hidden" name="id" value="@Model.Defect!.Id" />
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Vlerësimi me yje <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-1 star-rating" id="starRating">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <label class="star-label" style="cursor:pointer; font-size:2rem; color:#d1d5db; transition: color 0.15s;">
+                                        <input type="radio" name="rating" value="@i" class="d-none" required />
+                                        <i class="bi bi-star-fill"></i>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Komenti juaj</label>
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Si ishte përvoja juaj me këtë teknik? (opsionale)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100" onclick="return document.querySelector('input[name=rating]:checked') ? true : (alert('Zgjidhni yjet!'), false)">
+                            <i class="bi bi-send-check"></i> Dërgo Vlerësimin
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Technician Interests / Bids -->
+        @if (Model.TechnicianInterests.Any() || Model.CanBid)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-people text-primary"></i> Ofertat e Teknikëve (@Model.TechnicianInterests.Count)</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    @foreach (var interest in Model.TechnicianInterests)
+                    {
+                        <div class="list-group-item px-3 py-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong>@interest.Technician?.FirstName @interest.Technician?.LastName</strong>
+                                    @if (interest.Technician?.AverageRating > 0)
+                                    {
+                                        <span class="ms-1 text-warning small">
+                                            <i class="bi bi-star-fill"></i> @($"{interest.Technician.AverageRating:F1}")
+                                        </span>
+                                    }
+                                    <br /><small class="text-muted">@interest.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <span class="badge @(interest.Status == InterestStatus.Selected ? "bg-success" : interest.Status == InterestStatus.Rejected ? "bg-danger" : interest.Status == InterestStatus.Withdrawn ? "bg-secondary" : "bg-warning text-dark")">
+                                    @(interest.Status == InterestStatus.Interested ? "Në pritje" : interest.Status == InterestStatus.Selected ? "I zgjedhur" : interest.Status == InterestStatus.Rejected ? "I refuzuar" : "I tërhequr")
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(interest.PreventiveOffer))
+                            {
+                                <p class="small mb-2 text-muted fst-italic">
+                                    <i class="bi bi-chat-quote"></i> @interest.PreventiveOffer
+                                </p>
+                            }
+                            <div class="d-flex gap-3 small">
+                                @if (interest.EstimatedCost.HasValue)
+                                {
+                                    <span><i class="bi bi-cash-coin text-success"></i> <strong>@interest.EstimatedCost.Value.ToString("N0") ALL</strong></span>
+                                }
+                                @if (interest.EstimatedTimeInHours.HasValue)
+                                {
+                                    <span><i class="bi bi-clock text-primary"></i> @interest.EstimatedTimeInHours.Value orë</span>
+                                }
+                            </div>
+                            @if (Model.IsOwner && Model.Defect!.Status == ServiceRequestStatus.Created && interest.Status == InterestStatus.Interested)
+                            {
+                                <div class="mt-2">
+                                    <button class="btn btn-success btn-sm select-technician-btn" data-interest-id="@interest.Id">
+                                        <i class="bi bi-check-circle"></i> Zgjidh këtë teknik
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Express Interest Form (Professional) -->
+        @if (Model.CanBid)
+        {
+            <div class="card border-0 shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-hand-index"></i> Shpreh Interes / Bën Ofertë</h6>
+                </div>
+                <div class="card-body">
+                    <div id="bidForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Oferta juaj <span class="text-danger">*</span></label>
+                            <textarea id="bidOffer" class="form-control" rows="3" placeholder="Përshkruani çfarë ofroni, materialet, garancinë..."></textarea>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Kosto (ALL)</label>
+                                <input type="number" id="bidCost" class="form-control" min="0" step="0.01" placeholder="p.sh. 150" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Koha (orë)</label>
+                                <input type="number" id="bidTime" class="form-control" min="1" step="1" placeholder="p.sh. 4" />
+                            </div>
+                        </div>
+                        <button id="submitBidBtn" class="btn btn-primary w-100" onclick="submitBid(@Model.Defect!.Id)">
+                            <i class="bi bi-send"></i> Dërgo Ofertën
+                        </button>
+                    </div>
+                    <div id="bidSuccess" class="d-none text-center py-3">
+                        <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                        <p class="mt-2 fw-semibold">Oferta u dërgua me sukses!</p>
+                        <small class="text-muted">Qytetari do t'ju njoftojë kur të marrë vendimin.</small>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.HasExpressedInterest)
+        {
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle"></i> Ju keni shprehur interes për këtë kërkesë. Prisni përgjigjen e qytetarit.
+            </div>
+        }
+
+        <!-- Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-lightning text-warning"></i> @L.T("common.actions")</h6>
+            </div>
+            <div class="card-body d-grid gap-2">
+                @* Chat button - visible when technician is assigned (Matched, InProgress, Completed) *@
+                @if (Model.Defect.Professional != null && 
+                     (Model.IsOwner || Model.Defect.ProfessionalId == Model.CurrentUserId) &&
+                     Model.Defect.Status != ServiceRequestStatus.Cancelled)
+                {
+                    <a asp-page="/Chat" asp-route-defectId="@Model.Defect.Id" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-chat-dots-fill"></i> Fillo Bisedën me @(Model.IsOwner ? "Teknikun" : "Klientin")
+                    </a>
+                }
+                @* Start Work button - for assigned professional when status is Matched *@
+                @if (Model.Defect.ProfessionalId == Model.CurrentUserId && Model.Defect.Status == ServiceRequestStatus.Matched)
+                {
+                    <button id="startWorkBtn" class="btn btn-warning btn-sm w-100" onclick="startWork(@Model.Defect.Id)">
+                        <i class="bi bi-play-circle-fill"></i> Fillo Punën
+                    </button>
+                }
+                @if (Model.CanCancel)
+                {
+                    <form method="post" asp-page-handler="Cancel">
+                        <input type="hidden" name="id" value="@Model.Defect.Id" />
+                        <button class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('@L.T("defects.confirm_cancel")')">
+                            <i class="bi bi-x-circle"></i> @L.T("defects.cancel_request")
+                        </button>
+                    </form>
+                }
+                @if (Model.CanComplete)
+                {
+                    <form method="post" asp-page-handler="Complete">
+                        <input type="hidden" name="id" value="@Model.Defect.Id" />
+                        <button class="btn btn-success btn-sm w-100">
+                            <i class="bi bi-check-circle"></i> @L.T("defects.mark_complete")
+                        </button>
+                    </form>
+                }
+                <a asp-page="/DefectList" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> @L.T("common.back")
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadge(ServiceRequestStatus status) => status switch
+    {
+        ServiceRequestStatus.Created => "bg-info",
+        ServiceRequestStatus.Matched => "bg-primary",
+        ServiceRequestStatus.InProgress => "bg-warning text-dark",
+        ServiceRequestStatus.Completed => "bg-success",
+        ServiceRequestStatus.Cancelled => "bg-secondary",
+        ServiceRequestStatus.Rejected => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    string GetStatusText(ServiceRequestStatus status) => status switch
+    {
+        ServiceRequestStatus.Created => L.T("defects.status_created"),
+        ServiceRequestStatus.Matched => L.T("defects.status_matched"),
+        ServiceRequestStatus.InProgress => L.T("defects.status_in_progress"),
+        ServiceRequestStatus.Completed => L.T("defects.status_completed"),
+        ServiceRequestStatus.Cancelled => L.T("defects.status_cancelled"),
+        ServiceRequestStatus.Rejected => L.T("defects.status_rejected"),
+        _ => status.ToString()
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+@section Scripts {
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize defect location map
+    @if (Model.Defect?.ClientLatitude != null && Model.Defect?.ClientLongitude != null)
+    {
+        <text>
+        (function() {
+            const lat = @Model.Defect.ClientLatitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const lng = @Model.Defect.ClientLongitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            
+            const map = L.map('defectMap').setView([lat, lng], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // Custom red marker icon for defect location
+            const defectIcon = L.divIcon({
+                className: 'custom-defect-marker',
+                html: `<div style="
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.5);
+                    border: 3px solid white;
+                ">
+                    <i class="bi bi-tools" style="transform: rotate(45deg); color: white; font-size: 14px;"></i>
+                </div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+
+            L.marker([lat, lng], { icon: defectIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="min-width: 200px;">
+                        <h6 class="mb-1"><i class="bi bi-tools text-danger"></i> @Html.Raw(Model.Defect.Title?.Replace("'", "\\'"))</h6>
+                        <p class="small text-muted mb-1">@Html.Raw(Model.Defect.Location?.Replace("'", "\\'") ?? "—")</p>
+                        <span class="badge bg-secondary">@Model.Defect.Category</span>
+                    </div>
+                `)
+                .openPopup();
+
+            // Resize map when visible
+            setTimeout(() => map.invalidateSize(), 100);
+        })();
+        </text>
+    }
+
+    // Star rating interactivity
+    (function() {
+        const container = document.getElementById('starRating');
+        if (!container) return;
+        const labels = container.querySelectorAll('.star-label');
+        labels.forEach((label, idx) => {
+            label.addEventListener('mouseenter', () => {
+                labels.forEach((l, i) => {
+                    l.querySelector('i').style.color = i <= idx ? '#f59e0b' : '#d1d5db';
+                });
+            });
+            label.addEventListener('click', () => {
+                labels.forEach((l, i) => {
+                    const input = l.querySelector('input');
+                    if (i <= idx) {
+                        l.querySelector('i').style.color = '#f59e0b';
+                        l.dataset.selected = i <= idx ? '1' : '0';
+                    } else {
+                        l.querySelector('i').style.color = '#d1d5db';
+                    }
+                });
+                container.dataset.value = idx + 1;
+            });
+        });
+        container.addEventListener('mouseleave', () => {
+            const val = parseInt(container.dataset.value) || 0;
+            labels.forEach((l, i) => {
+                l.querySelector('i').style.color = i < val ? '#f59e0b' : '#d1d5db';
+            });
+        });
+    })();
+
+    // Submit bid / Express Interest
+    // Attach event handler for bid submission (cross-platform, iOS compatible)
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('submitBidBtn');
+        if (!btn) return;
+        btn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            const serviceRequestId = @Model.Defect!.Id;
+            const offer = document.getElementById('bidOffer')?.value?.trim();
+            const cost = document.getElementById('bidCost')?.value;
+            const time = document.getElementById('bidTime')?.value;
+
+            if (!offer) {
+                alert('Ju lutem shkruani ofertën tuaj.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Duke dërguar...';
+
+            try {
+                // Use InterestManager from site.js for consistency
+                await window.interestManager.expressInterest(
+                    serviceRequestId,
+                    offer,
+                    cost ? parseFloat(cost) : null,
+                    time ? parseInt(time) : null
+                );
+                document.getElementById('bidForm').classList.add('d-none');
+                document.getElementById('bidSuccess').classList.remove('d-none');
+                setTimeout(() => location.reload(), 2000);
+            } catch (err) {
+                alert((err && err.message) || 'Gabim gjatë dërgimit të ofertës.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send"></i> Dërgo Ofertën';
+            }
+        });
+    });
+
+    // Select Technician (Accept Bid)
+    document.querySelectorAll('.select-technician-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const interestId = this.dataset.interestId;
+            if (!confirm('A jeni i sigurt që dëshironi të zgjidhni këtë teknik?')) return;
+
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            try {
+                const response = await fetch(`/api/technicianinterests/${interestId}/select`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    alert('Tekniku u zgjodh me sukses!');
+                    location.reload();
+                } else {
+                    const err = await response.json();
+                    alert(err.error || 'Gabim gjatë zgjedhjes.');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-check-circle"></i> Zgjidh këtë teknik';
+                }
+            } catch (e) {
+                alert('Gabim në lidhje.');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle"></i> Zgjidh këtë teknik';
+            }
+        });
+    });
+
+    // Start Work (Professional)
+    async function startWork(serviceRequestId) {
+        if (!confirm('A jeni i sigurt që dëshironi të filloni punën?')) return;
+        const btn = document.getElementById('startWorkBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Duke filluar...';
+
+        try {
+            const response = await fetch(`/api/technicianinterests/${serviceRequestId}/start-work`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                alert('Puna ka filluar me sukses!');
+                location.reload();
+            } else {
+                const err = await response.json();
+                alert(err.error || 'Gabim gjatë fillimit të punës.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-circle-fill"></i> Fillo Punën';
+            }
+        } catch (e) {
+            alert('Gabim në lidhje.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-play-circle-fill"></i> Fillo Punën';
+        }
+    }
+</script>
+}

@@ -1,0 +1,50 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.AuditLogModel
+@{
+    ViewData["Title"] = "Regjistri i Veprimeve";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2 class="fw-bold mb-4"><i class="bi bi-journal-text text-primary"></i> Regjistri i Veprimeve</h2>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        @if (Model.Logs.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Përdoruesi</th>
+                            <th>Veprimi</th>
+                            <th>Entiteti</th>
+                            <th>Data</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td class="small">@log.Id</td>
+                                <td class="small">@(log.User?.GetFullName() ?? log.UserId ?? "Sistem")</td>
+                                <td><span class="badge bg-info">@log.Action</span></td>
+                                <td class="small">@log.Entity @(log.EntityId.HasValue ? $"#{log.EntityId}" : "")</td>
+                                <td class="small">@log.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small text-muted">@log.IpAddress</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-journal text-muted" style="font-size: 50px;"></i>
+                <p class="text-muted mt-2">Nuk ka regjistrime në audit log.</p>
+            </div>
+        }
+    </div>
+</div>

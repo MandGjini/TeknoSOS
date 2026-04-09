@@ -1,0 +1,107 @@
+@page
+@model TeknoSOS.WebApp.Pages.Account.SubscriptionRenewalModel
+@{
+    ViewData["Title"] = "Rinovimi i Abonimit";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <h2 class="fw-bold mb-1"><i class="bi bi-credit-card text-primary"></i> Rinovo Abonimin</h2>
+                    <p class="text-muted mb-3">Menaxho rinovimin e abonimit tënd profesional në mënyrë të sigurt.</p>
+
+                    <div class="alert @(Model.IsExpired ? "alert-danger" : "alert-warning") mb-3">
+                        @if (Model.IsExpired)
+                        {
+                            <strong>Abonimi ka skaduar.</strong>
+                        }
+                        else
+                        {
+                            <strong>Abonimi skadon së shpejti:</strong>
+                        }
+                        <span class="ms-2">@Model.DaysLeft ditë të mbetura.</span>
+                    </div>
+
+                    @if (TempData["SubscriptionMessage"] is string msg && !string.IsNullOrWhiteSpace(msg))
+                    {
+                        <div class="alert alert-success">@msg</div>
+                    }
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        Për siguri dhe përputhshmëri PCI, kjo platformë nuk ruan numrin e kartës apo CVV.
+                        Pagesa kryhet te porta zyrtare (Stripe/BKT ePOS/Paysera) e konfiguruar nga admini.
+                    </div>
+
+                    <form method="post" class="row g-3">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.FullName" class="form-label fw-semibold">Emër Mbiemër</label>
+                            <input asp-for="Input.FullName" class="form-control" />
+                            <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Email" class="form-label fw-semibold">Email</label>
+                            <input asp-for="Input.Email" class="form-control" />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.NidOrNipt" class="form-label fw-semibold">NID/NIPT (10-16 shifra)</label>
+                            <input asp-for="Input.NidOrNipt" class="form-control" maxlength="16" inputmode="numeric" />
+                            <span asp-validation-for="Input.NidOrNipt" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="Input.Months" class="form-label fw-semibold">Muaj</label>
+                            <select asp-for="Input.Months" class="form-select">
+                                <option value="1">1 muaj</option>
+                                <option value="3">3 muaj</option>
+                                <option value="6">6 muaj</option>
+                                <option value="12">12 muaj</option>
+                            </select>
+                            <span asp-validation-for="Input.Months" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Tarifa mujore</label>
+                            <div class="form-control bg-light">@Model.MonthlyAmount.ToString("N0") ALL</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.PaymentGateway" class="form-label fw-semibold">Porta e pagesës</label>
+                            <select asp-for="Input.PaymentGateway" class="form-select">
+                                <option value="Stripe">Stripe</option>
+                                <option value="BKT-EPOS">BKT ePOS</option>
+                                <option value="Paysera">Paysera</option>
+                                <option value="BankTransfer">Bank Transfer</option>
+                            </select>
+                            <span asp-validation-for="Input.PaymentGateway" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Notes" class="form-label fw-semibold">Shënime (opsionale)</label>
+                            <input asp-for="Input.Notes" class="form-control" placeholder="P.sh. kërkoj faturë me NIPT" />
+                            <span asp-validation-for="Input.Notes" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send-check me-1"></i> Dërgo kërkesën e rinovimit
+                            </button>
+                            <a href="/Dashboard" class="btn btn-outline-secondary">Kthehu te Dashboard</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,144 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.ChatMonitorModel
+@{
+    ViewData["Title"] = "Monitorimi i Bisedave";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0"><i class="bi bi-chat-dots text-primary"></i> Monitorimi i Bisedave</h3>
+        <p class="text-muted mb-0">Monitoro bisedat në kohë reale ndërmjet klientëve dhe teknikëve</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h2 class="text-primary mb-0">@Model.TotalMessages</h2>
+                <small class="text-muted">Mesazhe Totale</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h2 class="text-success mb-0">@Model.TodayMessages</h2>
+                <small class="text-muted">Mesazhe Sot</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h2 class="text-warning mb-0">@Model.ActiveChats</h2>
+                <small class="text-muted">Biseda Aktive (24h)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversations -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bisedat e Defekteve</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Defekti</th>
+                    <th>Klienti</th>
+                    <th>Tekniku</th>
+                    <th class="text-center">Mesazhe</th>
+                    <th class="text-center">Pa lexuar</th>
+                    <th>Mesazhi i Fundit</th>
+                    <th class="text-center">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var conv in Model.Conversations)
+                {
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary">@conv.DefectCode</span>
+                            <br /><small>@conv.DefectTitle</small>
+                        </td>
+                        <td>@conv.CitizenName</td>
+                        <td>@(conv.TechnicianName ?? "<span class='text-muted'>Pa caktuar</span>")</td>
+                        <td class="text-center">
+                            <strong>@conv.MessageCount</strong>
+                            @if (conv.HasAttachments)
+                            {
+                                <i class="bi bi-paperclip text-muted ms-1"></i>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (conv.UnreadCount > 0)
+                            {
+                                <span class="badge bg-danger">@conv.UnreadCount</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">0</span>
+                            }
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                @(conv.LastMessage?.Length > 40 ? conv.LastMessage.Substring(0, 40) + "..." : conv.LastMessage)
+                            </small>
+                            <br /><small class="text-muted"><i class="bi bi-clock"></i> @conv.LastMessageDate?.ToString("dd/MM HH:mm")</small>
+                        </td>
+                        <td class="text-center">
+                            <a asp-page="/Chat" asp-route-defectId="@conv.DefectId" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i> Shiko
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Conversations.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+            <p class="mt-2">Nuk ka biseda ende</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        // Connect to admin monitoring
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("NewChatMessage", function (data) {
+            // Show toast notification for new messages
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed bottom-0 end-0 p-3';
+            toast.style.zIndex = '11';
+            toast.innerHTML = `
+                <div class="toast show bg-white shadow" role="alert">
+                    <div class="toast-header">
+                        <strong class="me-auto">${data.senderName}</strong>
+                        <small>tani</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${data.content}</div>
+                </div>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        });
+
+        connection.start().then(() => {
+            connection.invoke("JoinAdminMonitoring");
+        });
+    </script>
+}

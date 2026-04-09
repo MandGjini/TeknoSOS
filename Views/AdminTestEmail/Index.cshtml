@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Test Email";
+}
+<h2>Testo Dërgimin e Email-it të Mirëseardhjes</h2>
+<form method="post">
+    <div class="mb-3">
+        <label for="email" class="form-label">Email i destinatarit</label>
+        <input type="email" class="form-control" id="email" name="email" required placeholder="shkruaj email-in...">
+    </div>
+    <div class="mb-3">
+        <label for="templateKey" class="form-label">Template Key</label>
+        <input type="text" class="form-control" id="templateKey" name="templateKey" value="citizen_welcome">
+        <div class="form-text">Lëre bosh për default: <b>citizen_welcome</b></div>
+    </div>
+    <button type="submit" class="btn btn-primary">Dërgo Email Test</button>
+</form>
+@if (Context.Request.Method == "POST") {
+    <div class="alert alert-info mt-3">@ViewBag.Message</div>
+}

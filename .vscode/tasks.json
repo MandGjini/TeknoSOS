@@ -1,0 +1,115 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet build TeknoSOS.WebApp.slnx",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Seed Armand Gjini profile and reviews",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp with fixed review seeding",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run TeknoSOS.WebApp after fixing BacklinksModel",
+			"type": "shell",
+			"command": "dotnet run --project TeknoSOS.WebApp.csproj",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Build TeknoSOS.WebApp pas mbylljes së proceseve",
+			"type": "shell",
+			"command": "dotnet build TeknoSOS.WebApp.csproj",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		}
+	]
+}

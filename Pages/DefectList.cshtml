@@ -1,0 +1,185 @@
+@page
+@model TeknoSOS.WebApp.Pages.DefectListModel
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+<style>
+    .defectlist-hero {
+        padding: var(--ts-section-padding, 2.5rem) 0 1.5rem 0;
+    }
+</style>
+ 
+</style>
+<section class="hero-2026 defectlist-hero">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container text-center">
+        <div class="hero-badge mb-3 fade-up"><i class="bi bi-list-check"></i> Defekte</div>
+        <h1 class="fade-up" style="font-size: 2.2rem;">@L.T("defects.list_title")</h1>
+        <p class="hero-subtitle mx-auto fade-up" style="max-width: 500px;">Shikoni dhe menaxhoni të gjitha raportimet e defekteve</p>
+        <div class="mt-4 fade-up">
+            <a asp-page="/ReportDefect" class="btn btn-primary btn-lg btn-pill">
+                <i class="bi bi-plus-circle me-2"></i> @L.T("defects.report_new")
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -1.1rem; position: relative; z-index: 5; padding-bottom: 2rem;">
+    
+    <!-- Filters Card -->
+    <div class="card mb-4 fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+        <div class="card-body" style="padding: 1.1rem;">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.82rem;">@L.T("defects.status")</label>
+                    <select asp-for="StatusFilter" class="form-select" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border);">
+                        <option value="">@L.T("common.all")</option>
+                        <option value="Created">@L.T("defects.status_created")</option>
+                        <option value="Matched">@L.T("defects.status_matched")</option>
+                        <option value="InProgress">@L.T("defects.status_in_progress")</option>
+                        <option value="Completed">@L.T("defects.status_completed")</option>
+                        <option value="Cancelled">@L.T("defects.status_cancelled")</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.82rem;">@L.T("defects.category")</label>
+                    <select asp-for="CategoryFilter" class="form-select" style="border-radius: var(--ts-radius); border: 1px solid var(--ts-border);">
+                        <option value="">@L.T("common.all")</option>
+                        <option value="Plumbing">Hidraulikë</option>
+                        <option value="Electrical">Elektrike</option>
+                        <option value="HVAC">Ngrohje/Ftohje</option>
+                        <option value="Carpentry">Zdrukthtari</option>
+                        <option value="Appliance">Pajisje</option>
+                        <option value="General">Të përgjithshme</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="color: var(--ts-text); font-size: 0.82rem;">@L.T("common.search")</label>
+                    <div class="input-group">
+                        <span class="input-group-text" style="border-radius: var(--ts-radius) 0 0 var(--ts-radius); border: 1px solid var(--ts-border); border-right: none; background: var(--ts-bg-secondary);">
+                            <i class="bi bi-search" style="color: var(--ts-text-muted);"></i>
+                        </span>
+                        <input asp-for="SearchQuery" class="form-control" placeholder="@L.T("common.search")..." style="border-radius: 0 var(--ts-radius) var(--ts-radius) 0; border: 1px solid var(--ts-border);" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 btn-pill btn-mobile-full">
+                        <i class="bi bi-funnel me-1"></i> @L.T("common.filter")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mb-3 d-flex align-items-center gap-2 fade-up">
+        <span class="chip chip-primary">@Model.Defects.Count defekte</span>
+        @if (!string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.CategoryFilter) || !string.IsNullOrEmpty(Model.SearchQuery))
+        {
+            <a asp-page="/DefectList" class="chip" style="text-decoration: none; background: var(--ts-bg-tertiary); color: var(--ts-text-secondary);">
+                <i class="bi bi-x-lg me-1"></i> Pastro Filtrat
+            </a>
+        }
+    </div>
+
+    <!-- Results -->
+    @if (Model.Defects.Any())
+    {
+        <div class="row g-3">
+            @foreach (var defect in Model.Defects)
+            {
+                <div class="col-12 fade-up">
+                    <div class="card defect-card-clickable" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border); transition: all 0.2s ease;">
+                        <div class="card-body" style="padding: 1.5rem;">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                        <span class="chip @GetStatusChip(defect.Status)">@GetStatusText(defect.Status)</span>
+                                        <span class="chip" style="background: var(--ts-bg-tertiary); color: var(--ts-text-secondary);">@GetCategoryText(defect.Category)</span>
+                                        @if (defect.Priority == ServiceRequestPriority.Emergency || defect.Priority == ServiceRequestPriority.High)
+                                        {
+                                            <span class="chip chip-danger"><i class="bi bi-exclamation-triangle me-1"></i>Urgjent</span>
+                                        }
+                                    </div>
+                                    <h5 class="fw-bold mb-2" style="color: var(--ts-text);">
+                                        @defect.Title
+                                    </h5>
+                                    <p style="color: var(--ts-text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">
+                                        @(defect.Description.Length > 120 ? defect.Description.Substring(0, 120) + "..." : defect.Description)
+                                    </p>
+                                    <div class="d-flex flex-wrap gap-3" style="font-size: 0.82rem; color: var(--ts-text-muted);">
+                                        <span><i class="bi bi-geo-alt me-1"></i>@(defect.Location ?? "—")</span>
+                                        <span><i class="bi bi-calendar3 me-1"></i>@defect.CreatedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    <a asp-page="/DefectDetails" asp-route-id="@defect.Id" class="btn btn-primary btn-pill btn-mobile-full" style="min-width: 120px;" onclick="event.stopPropagation();">
+                                        <i class="bi bi-eye me-1"></i> @L.T("common.view")
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card fade-up" style="border-radius: var(--ts-radius-xl); border: 1px solid var(--ts-border);">
+            <div class="card-body text-center py-5">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--ts-bg-secondary);">
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: var(--ts-text-muted);"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--ts-text);">Nuk ka raporte</h5>
+                <p style="color: var(--ts-text-secondary); margin-bottom: 1.5rem;">@L.T("defects.no_reports")</p>
+                <a asp-page="/ReportDefect" class="btn btn-primary btn-pill">
+                    <i class="bi bi-plus-circle me-2"></i> @L.T("defects.report_new")
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusChip(ServiceRequestStatus status) => status switch
+    {
+        ServiceRequestStatus.Created => "chip-info",
+        ServiceRequestStatus.Matched => "chip-primary",
+        ServiceRequestStatus.InProgress => "chip-warning",
+        ServiceRequestStatus.Completed => "chip-success",
+        ServiceRequestStatus.Cancelled => "",
+        ServiceRequestStatus.Rejected => "chip-danger",
+        _ => ""
+    };
+
+    string GetStatusText(ServiceRequestStatus status) => status switch
+    {
+        ServiceRequestStatus.Created => L.T("defects.status_created"),
+        ServiceRequestStatus.Matched => L.T("defects.status_matched"),
+        ServiceRequestStatus.InProgress => L.T("defects.status_in_progress"),
+        ServiceRequestStatus.Completed => L.T("defects.status_completed"),
+        ServiceRequestStatus.Cancelled => L.T("defects.status_cancelled"),
+        ServiceRequestStatus.Rejected => L.T("defects.status_rejected"),
+        _ => status.ToString()
+    };
+
+    string GetCategoryText(ServiceCategory category) => category switch
+    {
+        ServiceCategory.Plumbing => "Hidraulikë",
+        ServiceCategory.Electrical => "Elektrike",
+        ServiceCategory.HVAC => "Ngrohje/Ftohje",
+        ServiceCategory.Carpentry => "Zdrukthtari",
+        ServiceCategory.Appliance => "Pajisje",
+        ServiceCategory.General => "Të përgjithshme",
+        ServiceCategory.Mechanical => "Mekanike",
+        ServiceCategory.ITTechnology => "IT",
+        ServiceCategory.Gypsum => "Gips",
+        ServiceCategory.Tiles => "Pllaka",
+        ServiceCategory.Parquet => "Parket",
+        ServiceCategory.TerraceInsulation => "Izolim Tarace",
+        ServiceCategory.Architect => "Arkitekt",
+        ServiceCategory.Engineer => "Inxhinier",
+        _ => category.ToString()
+    };
+}

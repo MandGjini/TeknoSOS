@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- TeknoSOS Logo - Stylized House with Four Quadrants -->
+  <!-- Transparent background, optimized for small sizes -->
+  
+  <defs>
+    <!-- House shape clip path -->
+    <clipPath id="houseClip">
+      <path d="M32 4 L60 26 L60 60 L4 60 L4 26 Z"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Four quadrants within house shape -->
+  <g clip-path="url(#houseClip)">
+    <!-- Top Left - Orange (#F28C28) - Pipe Wrench -->
+    <rect x="4" y="4" width="28" height="28" fill="#F28C28"/>
+    
+    <!-- Top Right - Red (#D7263D) - TeknoSOS Text -->
+    <rect x="32" y="4" width="28" height="28" fill="#D7263D"/>
+    
+    <!-- Bottom Left - Green (#2ECC71) - Electric Screwdriver -->
+    <rect x="4" y="32" width="28" height="28" fill="#2ECC71"/>
+    
+    <!-- Bottom Right - Orange (#F28C28) - Hammer -->
+    <rect x="32" y="32" width="28" height="28" fill="#F28C28"/>
+  </g>
+  
+  <!-- House outline - Dark Blue (#0B2545) -->
+  <path d="M32 4 L60 26 L60 60 L4 60 L4 26 Z" 
+        fill="none" stroke="#0B2545" stroke-width="2" stroke-linejoin="round"/>
+  
+  <!-- Divider lines -->
+  <line x1="32" y1="15" x2="32" y2="60" stroke="#0B2545" stroke-width="1.5" stroke-opacity="0.3"/>
+  <line x1="4" y1="32" x2="60" y2="32" stroke="#0B2545" stroke-width="1.5" stroke-opacity="0.3"/>
+  
+  <!-- Top Left: Simplified Pipe Wrench -->
+  <g transform="translate(18, 22)">
+    <rect x="-8" y="-2" width="16" height="4" rx="1" fill="white"/>
+    <path d="M6,-5 L11,-5 L11,5 L6,5 L6,2 L8,2 L8,-2 L6,-2 Z" fill="white"/>
+  </g>
+  
+  <!-- Top Right: TeknoSOS Text -->
+  <text x="46" y="21" font-family="Arial, Helvetica, sans-serif" font-size="5" font-weight="700" 
+        fill="white" text-anchor="middle" letter-spacing="0.3">
+    <tspan x="46" dy="0">TEKNO</tspan>
+    <tspan x="46" dy="6">SOS</tspan>
+  </text>
+  
+  <!-- Bottom Left: Simplified Screwdriver -->
+  <g transform="translate(18, 46)">
+    <rect x="-1.5" y="-10" width="3" height="14" fill="white"/>
+    <ellipse cx="0" cy="6" rx="4" ry="5" fill="white"/>
+    <circle cx="0" cy="7" r="1.5" fill="#2ECC71"/>
+    <polygon points="-1,-10 1,-10 0,-13" fill="white"/>
+  </g>
+  
+  <!-- Bottom Right: Simplified Hammer -->
+  <g transform="translate(46, 46) rotate(-35)">
+    <rect x="-1.5" y="-2" width="3" height="14" rx="0.5" fill="white"/>
+    <rect x="-6" y="-6" width="12" height="5" rx="1" fill="white"/>
+  </g>
+  
+</svg>

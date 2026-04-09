@@ -1,0 +1,77 @@
+name: iOS Build - TeknoSOS
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Mobile/TeknoSOS.iOS/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project from spec
+        working-directory: Mobile/TeknoSOS.iOS
+        run: xcodegen generate --spec project.yml
+
+      - name: Verify scheme exists
+        working-directory: Mobile/TeknoSOS.iOS
+        run: xcodebuild -project TeknoSOS.xcodeproj -list
+
+      - name: Build for iOS Simulator (compile check)
+        working-directory: Mobile/TeknoSOS.iOS
+        run: |
+          xcodebuild \
+            -project TeknoSOS.xcodeproj \
+            -scheme TeknoSOS \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Build unsigned .app for device
+        working-directory: Mobile/TeknoSOS.iOS
+        run: |
+          mkdir -p build/Debug-iphoneos
+          xcodebuild \
+            -project TeknoSOS.xcodeproj \
+            -scheme TeknoSOS \
+            -sdk iphoneos \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$(pwd)/build/Debug-iphoneos" \
+            build
+
+      - name: Package as unsigned IPA
+        working-directory: Mobile/TeknoSOS.iOS
+        run: |
+          mkdir -p Payload
+          cp -r build/Debug-iphoneos/TeknoSOS.app Payload/
+          zip -r TeknoSOS-v1.0-unsigned.ipa Payload/
+          rm -rf Payload
+          echo "=== IPA ready ==="
+          ls -lh TeknoSOS-v1.0-unsigned.ipa
+
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeknoSOS-iOS-v1.0
+          path: Mobile/TeknoSOS.iOS/TeknoSOS-v1.0-unsigned.ipa
+          retention-days: 14

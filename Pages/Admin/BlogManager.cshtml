@@ -1,0 +1,295 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.BlogManagerModel
+@{
+    ViewData["Title"] = "Menaxhimi i Blogut";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-journal-richtext text-primary"></i> Menaxhimi i Blogut</h2>
+        <p class="text-muted mb-0 small">Krijo, modifiko dhe menaxho artikujt e blogut</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#blogModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> Shto Artikull të Ri
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-primary">@Model.Posts.Count</h3>
+            <small class="text-muted">Gjithsej Artikuj</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-success">@Model.Posts.Count(p => p.IsActive)</h3>
+            <small class="text-muted">Aktivë</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-info">@Model.Posts.Select(p => p.Category).Distinct().Count()</h3>
+            <small class="text-muted">Kategori</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <h3 class="fw-bold mb-0 text-secondary">@Model.Posts.Count(p => !p.IsActive)</h3>
+            <small class="text-muted">Joaktivë</small>
+        </div>
+    </div>
+</div>
+
+<!-- Posts Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-list-ul"></i> Lista e Artikujve</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Titulli</th>
+                    <th>Kategoria</th>
+                    <th>Autori</th>
+                    <th>Data</th>
+                    <th class="text-center">Statusi</th>
+                    <th class="text-end">Veprime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Posts.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="bi bi-journal-richtext text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-2 mb-0">Nuk ka artikuj të krijuar.</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var post in Model.Posts)
+                {
+                    <tr>
+                        <td>
+                            <strong class="small">@(post.Title.Length > 50 ? post.Title.Substring(0, 50) + "..." : post.Title)</strong>
+                            <br /><small class="text-muted">/Blog/@post.Slug</small>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: var(--ts-primary-light, #e8f0fe); color: var(--ts-primary, #2563eb); font-weight: 600; font-size: 0.75rem;">
+                                <i class="bi @post.CategoryIcon me-1"></i> @post.Category
+                            </span>
+                        </td>
+                        <td><small>@post.Author</small></td>
+                        <td><small class="text-muted">@post.PublishedDate.ToString("dd/MM/yyyy HH:mm")</small></td>
+                        <td class="text-center">
+                            <span class="badge bg-@(post.IsActive ? "success" : "secondary")">@(post.IsActive ? "Aktiv" : "Joaktiv")</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="/Blog/@post.Slug" target="_blank" class="btn btn-outline-info" title="Shiko">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-primary" onclick="editPost(@post.Id)" title="Modifiko">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-page-handler="ToggleActive" asp-route-id="@post.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-@(post.IsActive ? "warning" : "success")" title="@(post.IsActive ? "Çaktivizo" : "Aktivizo")">
+                                        <i class="bi bi-@(post.IsActive ? "pause" : "play")"></i>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@post.Id" class="d-inline" onsubmit="return confirm('A jeni të sigurt që dëshironi të fshini këtë artikull?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Fshi">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Blog Post Modal -->
+<div class="modal fade" id="blogModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"><i class="bi bi-journal-richtext"></i> Shto Artikull të Ri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="blogForm">
+                <input type="hidden" name="EditId" id="editId" />
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="row g-3">
+                        <!-- Basic Info -->
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Titulli <span class="text-danger">*</span></label>
+                            <input type="text" name="Title" id="title" class="form-control" required placeholder="Titulli i artikullit" onchange="generateSlug()" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Slug (URL) <span class="text-danger">*</span></label>
+                            <input type="text" name="Slug" id="slug" class="form-control" required placeholder="titulli-i-artikullit" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Kategoria</label>
+                            <input type="text" name="Category" id="category" class="form-control" placeholder="P.sh.: Siguria Elektrike" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ikona e Kategorisë</label>
+                            <input type="text" name="CategoryIcon" id="categoryIcon" class="form-control" value="bi-tag" placeholder="bi-tag" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ikona e Artikullit</label>
+                            <input type="text" name="ImageIcon" id="imageIcon" class="form-control" value="bi-file-text" placeholder="bi-file-text" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Autori</label>
+                            <input type="text" name="Author" id="author" class="form-control" value="TeknoSOS" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Koha e Leximit</label>
+                            <input type="text" name="ReadTime" id="readTime" class="form-control" value="3 min" placeholder="3 min" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Data dhe Ora e Publikimit</label>
+                            <input type="datetime-local" name="PublishedDate" id="publishedDate" class="form-control" />
+                        </div>
+
+                        <!-- SEO -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Meta Description (SEO)</label>
+                            <textarea name="MetaDescription" id="metaDescription" class="form-control" rows="2" placeholder="Pershkrimi per motoret e kerkimit..." maxlength="500"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Excerpt (Pershkrim i shkurter)</label>
+                            <textarea name="Excerpt" id="excerpt" class="form-control" rows="2" placeholder="Pershkrim i shkurter qe shfaqet ne listen e blogut..." maxlength="500"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Tags (ndarje me presje)</label>
+                            <input type="text" name="Tags" id="tags" class="form-control" placeholder="tag1,tag2,tag3" />
+                        </div>
+
+                        <!-- Content -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Permbajtja (HTML)</label>
+                            <textarea name="Body" id="content" class="form-control" rows="12" placeholder="Shkruani permbajtjen e artikullit ne HTML..."></textarea>
+                            <small class="text-muted">Mund te perdorni etiketa HTML si &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;strong&gt;, etj.</small>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Radhitja</label>
+                            <input type="number" name="SortOrder" id="sortOrder" class="form-control" value="0" min="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" name="IsActive" id="isActive" value="true" checked />
+                                <label class="form-check-label" for="isActive">Aktiv (i publikuar)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> <span id="submitText">Krijo Artikullin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const postsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Posts.Select(p => new {
+        p.Id, p.Slug, p.Title, p.MetaDescription, p.Excerpt, p.Category, p.CategoryIcon,
+        p.Author, PublishedDate = p.PublishedDate.ToString("yyyy-MM-ddTHH:mm"), p.ReadTime,
+        p.ImageIcon, p.Tags, p.Content, p.IsActive, p.SortOrder
+    }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('slug').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('metaDescription').value = '';
+        document.getElementById('excerpt').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('categoryIcon').value = 'bi-tag';
+        document.getElementById('author').value = 'TeknoSOS';
+        document.getElementById('readTime').value = '3 min';
+        document.getElementById('imageIcon').value = 'bi-file-text';
+        document.getElementById('tags').value = '';
+        document.getElementById('content').value = '';
+        document.getElementById('sortOrder').value = '0';
+        document.getElementById('isActive').checked = true;
+        const now = new Date();
+        const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('publishedDate').value = localNow;
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-journal-richtext"></i> Shto Artikull të Ri';
+        document.getElementById('submitText').textContent = 'Krijo Artikullin';
+        document.getElementById('blogForm').action = '?handler=Create';
+    }
+
+    function editPost(id) {
+        const post = postsData.find(p => p.id === id);
+        if (!post) return;
+
+        document.getElementById('editId').value = post.id;
+        document.getElementById('slug').value = post.slug || '';
+        document.getElementById('title').value = post.title || '';
+        document.getElementById('metaDescription').value = post.metaDescription || '';
+        document.getElementById('excerpt').value = post.excerpt || '';
+        document.getElementById('category').value = post.category || '';
+        document.getElementById('categoryIcon').value = post.categoryIcon || 'bi-tag';
+        document.getElementById('author').value = post.author || 'TeknoSOS';
+        document.getElementById('readTime').value = post.readTime || '3 min';
+        document.getElementById('imageIcon').value = post.imageIcon || 'bi-file-text';
+        document.getElementById('tags').value = post.tags || '';
+        document.getElementById('content').value = post.content || '';
+        document.getElementById('sortOrder').value = post.sortOrder || 0;
+        document.getElementById('isActive').checked = post.isActive;
+        document.getElementById('publishedDate').value = post.publishedDate || '';
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil"></i> Modifiko Artikullin';
+        document.getElementById('submitText').textContent = 'Ruaj Ndryshimet';
+        document.getElementById('blogForm').action = '?handler=Update';
+
+        new bootstrap.Modal(document.getElementById('blogModal')).show();
+    }
+
+    function generateSlug() {
+        const title = document.getElementById('title').value;
+        if (!document.getElementById('slug').value || !document.getElementById('editId').value) {
+            const slug = title.toLowerCase()
+                .replace(/[ëê]/g, 'e').replace(/[çč]/g, 'c').replace(/[šś]/g, 's')
+                .replace(/[žź]/g, 'z').replace(/[ü]/g, 'u').replace(/[ö]/g, 'o')
+                .replace(/[ä]/g, 'a').replace(/[î]/g, 'i')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            document.getElementById('slug').value = slug;
+        }
+    }
+</script>
+}

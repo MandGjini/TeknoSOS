@@ -1,0 +1,335 @@
+@page
+@model TeknoSOS.WebApp.Pages.TechniciansMapModel
+@{
+    ViewData["Title"] = "Harta e Teknikëve";
+}
+
+<style>
+    #technicianMap {
+        height: 600px;
+        width: 100%;
+        border-radius: var(--ts-radius-lg);
+        box-shadow: var(--ts-shadow-md);
+        z-index: 1;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--ts-radius-md) !important;
+    }
+    
+    .technician-popup {
+        min-width: 200px;
+    }
+    
+    .technician-popup h5 {
+        color: var(--ts-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .technician-popup .badge {
+        font-size: 0.7rem;
+    }
+    
+    .map-legend {
+        background: var(--ts-surface);
+        border-radius: var(--ts-radius-md);
+        padding: 1rem;
+        box-shadow: var(--ts-shadow-sm);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .legend-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .legend-marker {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .marker-available { background: #22c55e; }
+    .marker-busy { background: #f59e0b; }
+    .marker-offline { background: #94a3b8; }
+    
+    .sos-banner {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border-radius: var(--ts-radius-lg);
+        padding: 1rem 1.5rem;
+    }
+    
+    .sos-banner a {
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.25rem;
+    }
+</style>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-geo-alt-fill text-primary"></i> Harta e Teknikëve
+            </h2>
+            <p class="text-muted mb-0">Gjeni teknikë profesionistë pranë jush në kohë reale</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshTechnicians()">
+                <i class="bi bi-arrow-clockwise"></i> Rifresko
+            </button>
+            <a href="/Technicians" class="btn btn-primary">
+                <i class="bi bi-list"></i> Lista e Teknikëve
+            </a>
+        </div>
+    </div>
+
+    <!-- SOS Banner -->
+    <div class="sos-banner mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-telephone-fill fs-3"></i>
+                <div>
+                    <div class="small opacity-75">Emergjencë? Na telefononi tani:</div>
+                    <a href="tel:00355693446516">00355693446516</a>
+                </div>
+            </div>
+            <a href="/ReportDefect" class="btn btn-light">
+                <i class="bi bi-plus-circle"></i> Raporto Problem
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Map -->
+        <div class="col-lg-9 mb-4">
+            <div id="technicianMap"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Legend -->
+            <div class="map-legend mb-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-info-circle"></i> Legjenda</h6>
+                <div class="legend-item">
+                    <span class="legend-marker marker-available"></span>
+                    <span>I disponueshëm</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker marker-busy"></span>
+                    <span>I zënë</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker marker-offline"></span>
+                    <span>Jashtë linje</span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart"></i> Statistika</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Teknikë:</span>
+                        <span class="fw-bold" id="statTotal">@Model.TotalTechnicians</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Të disponueshëm:</span>
+                        <span class="fw-bold text-success" id="statAvailable">@Model.AvailableTechnicians</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Me GPS aktiv:</span>
+                        <span class="fw-bold text-primary" id="statWithGPS">@Model.TechniciansWithGPS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter by Category -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Filtro sipas Kategorisë</h6>
+                    <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
+                        <option value="">Të gjitha kategoritë</option>
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Related Links -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-compass"></i> Eksploro më shumë</h6>
+                    <div class="d-grid gap-2">
+                        <a asp-page="/Technicians" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list-ul me-1"></i> Lista e Teknikëve
+                        </a>
+                        <a asp-page="/Businesses" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-shop me-1"></i> Bizneset
+                        </a>
+                        <a asp-page="/BusinessMap" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-globe me-1"></i> Harta e Platformës
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script>
+    // Initialize map centered on Albania
+    const map = L.map('technicianMap').setView([41.3275, 19.8187], 8);
+
+    // Add OpenStreetMap tiles with TeknoSOS styles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | TeknoSOS'
+    }).addTo(map);
+
+    // Custom marker icons
+    const availableIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#22c55e;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill" style="color:white;font-size:16px;"></i></div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+    });
+
+    const busyIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#f59e0b;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill" style="color:white;font-size:16px;"></i></div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+    });
+
+    const offlineIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#94a3b8;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill" style="color:white;font-size:16px;"></i></div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+    });
+
+    let technicianMarkers = [];
+    let allTechnicians = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Technicians));
+
+    function loadTechnicians(technicians) {
+        // Clear existing markers
+        technicianMarkers.forEach(marker => map.removeLayer(marker));
+        technicianMarkers = [];
+
+        technicians.forEach(tech => {
+            if (tech.latitude && tech.longitude) {
+                const icon = tech.isAvailable ? availableIcon : (tech.isVerified ? busyIcon : offlineIcon);
+                
+                const marker = L.marker([tech.latitude, tech.longitude], { icon: icon })
+                    .bindPopup(`
+                        <div class="technician-popup">
+                            <h5>${tech.fullName}</h5>
+                            <p class="mb-1"><i class="bi bi-geo-alt"></i> ${tech.city || 'N/A'}</p>
+                            <p class="mb-2"><i class="bi bi-briefcase"></i> ${tech.specialties || 'Shërbime të përgjithshme'}</p>
+                            ${tech.isAvailable 
+                                ? '<span class="badge bg-success">I disponueshëm</span>' 
+                                : '<span class="badge bg-secondary">Jo i disponueshëm</span>'}
+                            ${tech.isVerified 
+                                ? '<span class="badge bg-primary ms-1">Verifikuar</span>' 
+                                : ''}
+                            ${tech.averageRating 
+                                ? `<p class="mt-2 mb-1"><i class="bi bi-star-fill text-warning"></i> ${tech.averageRating.toFixed(1)}/5</p>` 
+                                : ''}
+                            <div class="mt-2">
+                                <a href="/TechnicianProfile/${tech.id}" class="btn btn-sm btn-primary">Shiko Profilin</a>
+                            </div>
+                        </div>
+                    `);
+                
+                marker.techData = tech;
+                marker.addTo(map);
+                technicianMarkers.push(marker);
+            }
+        });
+    }
+
+    function filterByCategory() {
+        const category = document.getElementById('categoryFilter').value;
+        let filtered = allTechnicians;
+        
+        if (category) {
+            filtered = allTechnicians.filter(t => 
+                t.specialties && t.specialties.toLowerCase().includes(category.toLowerCase())
+            );
+        }
+        
+        loadTechnicians(filtered);
+    }
+
+    async function refreshTechnicians() {
+        try {
+            const response = await fetch('/api/technicians/locations');
+            if (response.ok) {
+                allTechnicians = await response.json();
+                filterByCategory();
+                
+                // Update stats
+                document.getElementById('statTotal').textContent = allTechnicians.length;
+                document.getElementById('statAvailable').textContent = 
+                    allTechnicians.filter(t => t.isAvailable).length;
+                document.getElementById('statWithGPS').textContent = 
+                    allTechnicians.filter(t => t.latitude && t.longitude).length;
+            }
+        } catch (error) {
+            console.error('Failed to refresh technicians:', error);
+        }
+    }
+
+    // Initial load
+    loadTechnicians(allTechnicians);
+
+    // Auto-refresh every 30 seconds
+    setInterval(refreshTechnicians, 30000);
+
+    // Try to get user location and center map
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                map.setView([position.coords.latitude, position.coords.longitude], 12);
+                
+                // Add user location marker
+                L.marker([position.coords.latitude, position.coords.longitude], {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: '<div style="background:#3b82f6;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map).bindPopup('<strong>Vendndodhja juaj</strong>');
+            },
+            error => {
+                console.log('Geolocation not available or denied');
+            }
+        );
+    }
+</script>

@@ -1,0 +1,64 @@
+@inject TeknoSOS.WebApp.Data.ApplicationDbContext Db
+@using Microsoft.EntityFrameworkCore
+@{
+    var partners = await Db.Partners.Where(p => p.IsActive).OrderBy(p => p.DisplayOrder).ToListAsync();
+}
+
+@if (partners.Any())
+{
+<section class="section-2026" style="background: var(--ts-bg-secondary);">
+    <div class="container">
+        <div class="section-header text-center fade-up">
+            <div class="section-badge"><i class="bi bi-building"></i> Partnerët Tanë</div>
+            <h2>Bashkëpunojmë me Më të Mirët</h2>
+            <p class="section-desc mx-auto">Partnerë të besuar që na ndihmojnë t'ju ofrojmë shërbime cilësore.</p>
+        </div>
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 mt-4 fade-up">
+            @foreach (var partner in partners)
+            {
+                var hasLink = !string.IsNullOrEmpty(partner.WebsiteUrl);
+                <div class="partner-card text-center" style="min-width: 160px; max-width: 200px;">
+                    @if (hasLink)
+                    {
+                        <a href="@partner.WebsiteUrl" target="_blank" rel="noopener noreferrer" class="text-decoration-none" title="@partner.Name">
+                            @if (!string.IsNullOrEmpty(partner.LogoUrl))
+                            {
+                                <img src="@partner.LogoUrl" alt="@partner.Name" style="max-height: 60px; max-width: 150px; object-fit: contain; filter: grayscale(30%); transition: filter 0.3s; margin-bottom: 0.5rem;" onmouseover="this.style.filter='grayscale(0)'" onmouseout="this.style.filter='grayscale(30%)'" />
+                            }
+                            else
+                            {
+                                <div style="width:60px;height:60px;border-radius:var(--ts-radius-md);background:var(--ts-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto 0.5rem;">
+                                    <i class="bi bi-building" style="font-size:1.5rem;color:var(--ts-primary);"></i>
+                                </div>
+                            }
+                            <div style="font-weight:600;font-size:0.85rem;color:var(--ts-text);">@partner.Name</div>
+                            @if (!string.IsNullOrEmpty(partner.Description))
+                            {
+                                <div style="font-size:0.75rem;color:var(--ts-text-muted);margin-top:0.25rem;">@partner.Description</div>
+                            }
+                        </a>
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(partner.LogoUrl))
+                        {
+                            <img src="@partner.LogoUrl" alt="@partner.Name" style="max-height: 60px; max-width: 150px; object-fit: contain; filter: grayscale(30%); transition: filter 0.3s; margin-bottom: 0.5rem;" onmouseover="this.style.filter='grayscale(0)'" onmouseout="this.style.filter='grayscale(30%)'" />
+                        }
+                        else
+                        {
+                            <div style="width:60px;height:60px;border-radius:var(--ts-radius-md);background:var(--ts-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto 0.5rem;">
+                                <i class="bi bi-building" style="font-size:1.5rem;color:var(--ts-primary);"></i>
+                            </div>
+                        }
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--ts-text);">@partner.Name</div>
+                        @if (!string.IsNullOrEmpty(partner.Description))
+                        {
+                            <div style="font-size:0.75rem;color:var(--ts-text-muted);margin-top:0.25rem;">@partner.Description</div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>
+}

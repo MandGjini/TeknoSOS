@@ -1,0 +1,599 @@
+@page
+@model TeknoSOS.WebApp.Pages.KarikuesEVModel
+@{
+    ViewData["Title"] = "Instalim Karikues Makinash Elektrike (EV Charger) Shqipëri | TeknoSOS";
+    ViewData["Description"] = "Instalim profesional karikuesish për makina elektrike në Shqipëri. EV Charger për shtëpi dhe biznese. Wallbox, ABB, Schneider. Zgjidhje të plota në Tiranë, Durrës, Vlorë.";
+    ViewData["Keywords"] = "charger makine elektrike, EV charger Albania, instalim karikues makinash elektrike, wallbox shqiperi, stacion karikimi, makina elektrike albania, karikues tesla, karikues shtepie";
+}
+
+@section Styles {
+<style>
+    .ev-hero {
+        background: linear-gradient(135deg, #065f46 0%, #047857 50%, #065f46 100%);
+        padding: 80px 0 60px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .ev-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .ev-hero h1 {
+        font-size: 2.4rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+    .ev-hero .lead {
+        font-size: 1.15rem;
+        opacity: 0.9;
+        max-width: 700px;
+    }
+    .ev-section {
+        padding: 60px 0;
+    }
+    .ev-section:nth-child(even) {
+        background: var(--ts-bg-secondary, #f8fafc);
+    }
+    .ev-service-card {
+        background: var(--ts-card-bg, #fff);
+        border-radius: 20px;
+        padding: 32px;
+        height: 100%;
+        border: 1px solid var(--ts-border, #e2e8f0);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .ev-service-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    .ev-service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+    }
+    .ev-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.75rem;
+        margin-bottom: 20px;
+    }
+    .ev-service-card h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 14px;
+        color: var(--ts-text, #1e293b);
+    }
+    .check-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .check-list li {
+        padding: 8px 0;
+        padding-left: 28px;
+        position: relative;
+        color: var(--ts-text-muted, #64748b);
+    }
+    .check-list li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-weight: bold;
+    }
+    .brand-logo {
+        width: 100px;
+        height: 60px;
+        background: var(--ts-card-bg, #fff);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--ts-border, #e2e8f0);
+        font-weight: 700;
+        color: var(--ts-text-muted, #64748b);
+        font-size: 0.85rem;
+    }
+    .pricing-card {
+        background: var(--ts-card-bg, #fff);
+        border-radius: 20px;
+        padding: 32px;
+        border: 2px solid var(--ts-border, #e2e8f0);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .pricing-card.featured {
+        border-color: #10b981;
+        transform: scale(1.02);
+        box-shadow: 0 20px 60px rgba(16,185,129,0.15);
+    }
+    .pricing-card .price {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #10b981;
+    }
+    .pricing-card .price span {
+        font-size: 1rem;
+        font-weight: 400;
+        color: var(--ts-text-muted);
+    }
+    .ev-cta {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 24px;
+        padding: 48px;
+        color: #fff;
+        text-align: center;
+    }
+    .step-number {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #10b981;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .car-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: rgba(16,185,129,0.1);
+        color: #059669;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 4px;
+        border: 1px solid rgba(16,185,129,0.2);
+    }
+</style>
+}
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "Service",
+    "serviceType": "Instalim Karikues Makinash Elektrike",
+    "provider": {
+        "@@type": "LocalBusiness",
+        "name": "TeknoSOS",
+        "url": "https://teknosos.app"
+    },
+    "areaServed": {
+        "@@type": "Country",
+        "name": "Albania"
+    },
+    "description": "Instalim profesional i karikuesve për makina elektrike (EV Chargers) në Shqipëri. Zgjidhje për shtëpi dhe biznese.",
+    "offers": {
+        "@@type": "Offer",
+        "priceRange": "25000-120000 ALL",
+        "priceCurrency": "ALL"
+    }
+}
+</script>
+
+<!-- Product Schema for EV Chargers -->
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "Product",
+    "name": "Instalim Karikues EV",
+    "description": "Shërbim instalimi karikuesish për makina elektrike në Shqipëri",
+    "brand": {"@@type": "Brand", "name": "TeknoSOS"},
+    "offers": {
+        "@@type": "AggregateOffer",
+        "lowPrice": "25000",
+        "highPrice": "120000",
+        "priceCurrency": "ALL",
+        "offerCount": "50+"
+    },
+    "aggregateRating": {
+        "@@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "127"
+    }
+}
+</script>
+
+<!-- Breadcrumb Schema -->
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@@type": "ListItem", "position": 1, "name": "Kryefaqja", "item": "https://teknosos.app/"},
+        {"@@type": "ListItem", "position": 2, "name": "Karikues EV", "item": "https://teknosos.app/KarikuesEV"}
+    ]
+}
+</script>
+
+<!-- Hero Section -->
+<section class="ev-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb" style="background:transparent; padding:0; margin:0;">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50">Kryefaqja</a></li>
+                <li class="breadcrumb-item active text-white">Karikues Makinash Elektrike</li>
+            </ol>
+        </nav>
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-white text-success px-3 py-2 mb-3">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> #1 në Shqipëri për EV Chargers
+                </span>
+                <h1>Instalim Karikues për Makina Elektrike në Shqipëri</h1>
+                <p class="lead">
+                    Keni blerë makinë elektrike? Ne instalojmë <strong>karikuesin tuaj personal</strong> në shtëpi ose biznes. 
+                    Zgjidhje të plota nga profesionistë të certifikuar — Wallbox, ABB, Schneider dhe më shumë.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-4 mb-4">
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>Tesla</span>
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>BMW i-Series</span>
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>Mercedes EQ</span>
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>Volkswagen ID</span>
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>Audi e-tron</span>
+                    <span class="car-badge"><i class="bi bi-ev-front me-1"></i>Hyundai/Kia EV</span>
+                </div>
+                <div class="mt-4">
+                    <a asp-page="/ReportDefect" class="btn btn-warning btn-lg px-4 me-2">
+                        <i class="bi bi-plug me-2"></i>Kërko Instalim Tani
+                    </a>
+                    <a asp-page="/Technicians" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-people me-2"></i>Shiko Instaluesit
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 d-none d-lg-block text-center">
+                <i class="bi bi-ev-station" style="font-size: 160px; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Shërbimet EV -->
+<section class="ev-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Shërbime Karikuesish për Makina Elektrike</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                Nga instalimi bazë deri te zgjidhjet komerciale — kemi ekspertizën për çdo nevojë
+            </p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="ev-service-card">
+                    <div class="ev-icon"><i class="bi bi-house-fill"></i></div>
+                    <h3>Instalim Karikuesi në Shtëpi</h3>
+                    <p class="text-muted mb-3">Karikoni makinën tuaj elektrike komodësisht brenda natës, në garazhin ose parkimin tuaj.</p>
+                    <ul class="check-list">
+                        <li>Karikues Nivel 2 (7kW - 22kW)</li>
+                        <li>Karikim i plotë brenda 4-8 orësh</li>
+                        <li>Kabllim i dedikuar nga kutia elektrike</li>
+                        <li>Mbrojtje me automat dhe RCD</li>
+                        <li>Wallbox të certifikuara (ABB, Schneider, Easee)</li>
+                        <li>Testim dhe certifikatë instalimi</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="ev-service-card">
+                    <div class="ev-icon"><i class="bi bi-building"></i></div>
+                    <h3>Instalim për Biznese</h3>
+                    <p class="text-muted mb-3">Hotele, qendra tregtare, zyra — ofroni karikues për klientët dhe punonjësit tuaj.</p>
+                    <ul class="check-list">
+                        <li>Stacione me shumë pika karikimi</li>
+                        <li>Sisteme me pagesë dhe menaxhim</li>
+                        <li>Zgjidhje për parkingje publike</li>
+                        <li>Integrim me panele diellore</li>
+                        <li>Load balancing për shumë makina</li>
+                        <li>Raportim dhe analitikë përdorimi</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="ev-service-card">
+                    <div class="ev-icon"><i class="bi bi-tools"></i></div>
+                    <h3>Riparime dhe Diagnostikime</h3>
+                    <p class="text-muted mb-3">Karikuesi nuk funksionon? Diagnostifikojmë dhe riparojmë çdo problem.</p>
+                    <ul class="check-list">
+                        <li>Ekran që nuk ndizet</li>
+                        <li>Karikimi ndërpritet</li>
+                        <li>Gabime komunikimi me makinën</li>
+                        <li>Dëmtime nga moti</li>
+                        <li>Zëvendësim pjesësh</li>
+                        <li>Diagnostikim i shpejtë në vend</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="ev-service-card">
+                    <div class="ev-icon"><i class="bi bi-clipboard-data"></i></div>
+                    <h3>Konsulencë Kapaciteti</h3>
+                    <p class="text-muted mb-3">Para instalimit, vlerësojmë nëse rrjeti juaj e mban karikuesin.</p>
+                    <ul class="check-list">
+                        <li>Llogaritje e ngarkesës totale</li>
+                        <li>Koordinim me OSHEE për upgrade</li>
+                        <li>Instalim load balancer</li>
+                        <li>Zgjidhje për kontrata 5kW/10kW</li>
+                        <li>Optimizim i konsumit</li>
+                        <li>Planifikim afatgjatë</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Procesi -->
+<section class="ev-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-4">Si Instalohet Karikuesi EV?</h2>
+                <p class="text-muted mb-4">
+                    Procesi ynë i thjeshtë siguron instalim të sigurt dhe profesional brenda 1-2 ditësh pune.
+                </p>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="step-number me-3">1</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Kërkesë Online</h5>
+                        <p class="text-muted mb-0 small">Tregoni llojin e makinës dhe lokacionin. Merrni oferta brenda orës.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="step-number me-3">2</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Vizitë Teknike</h5>
+                        <p class="text-muted mb-0 small">Instaluesi vjen për të parë kutinë elektrike dhe lokacionin e karikuesit.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="step-number me-3">3</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Instalim Profesional</h5>
+                        <p class="text-muted mb-0 small">Kabllim, montim i wallbox, lidhje dhe konfigurim.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="step-number me-3" style="background: #059669;">✓</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Testim dhe Dorëzim</h5>
+                        <p class="text-muted mb-0 small">Testojmë karikimin, ju mësojmë përdorimin dhe lëshojmë certifikatë.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="pricing-card">
+                            <h4 class="fw-bold mb-2">Bazë</h4>
+                            <p class="text-muted small mb-3">Për shtëpi me infrastrukturë ekzistuese</p>
+                            <div class="price mb-3">25,000 <span>Lekë</span></div>
+                            <ul class="check-list text-start">
+                                <li>Wallbox deri 7kW</li>
+                                <li>Kabllim deri 5m</li>
+                                <li>Automat mbrojtës</li>
+                                <li>Testim dhe garanci</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="pricing-card featured">
+                            <span class="badge bg-success mb-2">Më i Popullarizuar</span>
+                            <h4 class="fw-bold mb-2">Standard</h4>
+                            <p class="text-muted small mb-3">Instalim i plotë me kabllim të ri</p>
+                            <div class="price mb-3">55,000 <span>Lekë</span></div>
+                            <ul class="check-list text-start">
+                                <li>Wallbox deri 11kW</li>
+                                <li>Kabllim i ri deri 15m</li>
+                                <li>Automat + RCD</li>
+                                <li>Konfigurim smart app</li>
+                                <li>Certifikatë instalimi</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="pricing-card">
+                            <h4 class="fw-bold mb-2">Premium / Komercial</h4>
+                            <p class="text-muted small mb-3">Për biznese dhe instalime komplekse</p>
+                            <div class="price mb-3">80,000+ <span>Lekë</span></div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="check-list text-start">
+                                        <li>Karikues deri 22kW</li>
+                                        <li>Kabllim pa limit</li>
+                                        <li>Upgrade panel elektrik</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="check-list text-start">
+                                        <li>Load balancing</li>
+                                        <li>Sistem pagesash (opsionale)</li>
+                                        <li>Mbështetje 1 vit</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pse Ne -->
+<section class="ev-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Pse të Zgjidhni TeknoSOS për Karikuesin EV?</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-patch-check-fill text-success" style="font-size: 48px;"></i>
+                </div>
+                <h5 class="fw-bold">Instalues të Certifikuar</h5>
+                <p class="text-muted small">Të gjithë profesionistët janë të trajnuar për instalime EV dhe të verifikuar në platformë.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-shield-check text-success" style="font-size: 48px;"></i>
+                </div>
+                <h5 class="fw-bold">Garanci Instalimi</h5>
+                <p class="text-muted small">Çdo instalim vjen me garanci pune dhe material. Siguri për investimin tuaj.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-speedometer2 text-success" style="font-size: 48px;"></i>
+                </div>
+                <h5 class="fw-bold">Instalim i Shpejtë</h5>
+                <p class="text-muted small">Shumica e instalimeve përfundojnë brenda 1-2 ditësh pune.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-cash-stack text-success" style="font-size: 48px;"></i>
+                </div>
+                <h5 class="fw-bold">Çmime Konkurruese</h5>
+                <p class="text-muted small">Merrni disa oferta dhe zgjidhni çmimin më të mirë për buxhetin tuaj.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Markat -->
+<section class="ev-section">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold">Punojmë me Markat Më të Mira</h3>
+            <p class="text-muted">Karikues të certifikuar nga prodhuesit kryesorë botërorë</p>
+        </div>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <div class="brand-logo">ABB</div>
+            <div class="brand-logo">Schneider</div>
+            <div class="brand-logo">Wallbox</div>
+            <div class="brand-logo">Easee</div>
+            <div class="brand-logo">EVBox</div>
+            <div class="brand-logo">Fronius</div>
+            <div class="brand-logo">Tesla</div>
+            <div class="brand-logo">Siemens</div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="ev-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Pyetje të Shpeshta për Karikuesit EV</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="evFaqAccordion">
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#evfaq1">
+                                Sa kohë zgjat karikimi në shtëpi?
+                            </button>
+                        </h3>
+                        <div id="evfaq1" class="accordion-collapse collapse show" data-bs-parent="#evFaqAccordion">
+                            <div class="accordion-body">
+                                Me karikues 7kW, një makinë elektrike mesatare (bateri 50-70kWh) karikohet plotësisht në 6-10 orë — përgjatë natës. Me karikues 11kW ose 22kW, koha shkurtohet ndjeshëm.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#evfaq2">
+                                A e mban rrjeti im një karikues EV?
+                            </button>
+                        </h3>
+                        <div id="evfaq2" class="accordion-collapse collapse" data-bs-parent="#evFaqAccordion">
+                            <div class="accordion-body">
+                                Shumica e shtëpive në Shqipëri kanë kontratë 5kW-10kW me OSHEE. Për karikues 7kW, zakonisht nevojitet upgrade në 15kW ose instalim i load balancer që menaxhon konsumin automatikisht.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#evfaq3">
+                                A funksionon karikuesi me të gjitha makinat elektrike?
+                            </button>
+                        </h3>
+                        <div id="evfaq3" class="accordion-collapse collapse" data-bs-parent="#evFaqAccordion">
+                            <div class="accordion-body">
+                                Po, karikuesit Type 2 (standardi europian) funksionojnë me pothuajse të gjitha makinat elektrike: Tesla, BMW, Mercedes, Volkswagen, Hyundai, Kia, etj. Tesla ka adaptorë të veçantë që përfshihet.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#evfaq4">
+                                Sa kushton energjia për të karikuar makinën?
+                            </button>
+                        </h3>
+                        <div id="evfaq4" class="accordion-collapse collapse" data-bs-parent="#evFaqAccordion">
+                            <div class="accordion-body">
+                                Me tarifën aktuale të OSHEE (~14 Lekë/kWh), karikimi i plotë i një baterie 50kWh kushton rreth 700 Lekë — rreth 10x më lirë se benzina për të njëjtën distancë. Me tarifë nate ose panele diellore, kurseni edhe më shumë.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-sm">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#evfaq5">
+                                A mund ta instaloj vetë karikuesin?
+                            </button>
+                        </h3>
+                        <div id="evfaq5" class="accordion-collapse collapse" data-bs-parent="#evFaqAccordion">
+                            <div class="accordion-body">
+                                <strong>Jo, nuk rekomandohet.</strong> Instalimi kërkon kabllim të veçantë, automat mbrojtës, dhe njohuri teknike. Instalim i gabuar mund të dëmtojë makinën, karikuesin dhe të shkaktojë zjarr. Gjithmonë përdorni profesionist të certifikuar.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="ev-section">
+    <div class="container">
+        <div class="ev-cta">
+            <h2 class="fw-bold mb-3">Gati për Karikuesin Tuaj të Parë?</h2>
+            <p class="mb-4 opacity-90">Merrni oferta nga instalues të certifikuar brenda orës. Instalim i sigurt dhe profesional.</p>
+            <a asp-page="/ReportDefect" class="btn btn-light btn-lg px-5 me-2">
+                <i class="bi bi-plug me-2"></i>Kërko Instalim Tani
+            </a>
+            <a href="tel:+355690000000" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-telephone me-2"></i>Na Telefononi
+            </a>
+            <p class="mt-4 mb-0 small opacity-75">
+                <i class="bi bi-check-circle me-1"></i> Instalues të certifikuar
+                <i class="bi bi-check-circle ms-3 me-1"></i> Garanci pune
+                <i class="bi bi-check-circle ms-3 me-1"></i> Çmime transparente
+            </p>
+        </div>
+    </div>
+</section>

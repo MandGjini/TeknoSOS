@@ -1,0 +1,124 @@
+@page
+@model TeknoSOS.WebApp.Areas.Identity.Pages.Account.RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Konfirmo Regjistrimin";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TeknoSOS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #0B2545 0%, #1a3a5c 50%, #0B2545 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .confirmation-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #2ECC71, #27ae60);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            color: white;
+        }
+        
+        .email-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #F28C28, #D7263D);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #F28C28, #D7263D);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(242, 140, 40, 0.35);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-card">
+        @if (Model.DisplayConfirmAccountLink)
+        {
+            <div class="success-icon">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h2 class="fw-bold mb-3" style="color: #0B2545;">Regjistrimi u krye!</h2>
+            <p class="text-muted mb-4">
+                Llogaria juaj u krijua me sukses. Klikoni butonin më poshtë për të konfirmuar email-in tuaj.
+            </p>
+            <a id="confirm-link" href="@Model.EmailConfirmationUrl" class="btn btn-primary-custom mb-3">
+                <i class="bi bi-envelope-check me-2"></i> Konfirmo Email-in
+            </a>
+        }
+        else
+        {
+            <div class="email-icon">
+                <i class="bi bi-envelope-paper"></i>
+            </div>
+            <h2 class="fw-bold mb-3" style="color: #0B2545;">Kontrolloni Email-in!</h2>
+            <p class="text-muted mb-4">
+                Ju kemi dërguar një email konfirmimi në <strong>@Model.Email</strong>. 
+                Ju lutem klikoni linkun në email për të aktivizuar llogarinë tuaj.
+            </p>
+            <div class="alert mb-4" style="background: rgba(242,140,40,0.1); border-color: #F28C28; color: #0B2545;">
+                <i class="bi bi-info-circle me-2"></i>
+                Nëse nuk e shihni email-in, kontrolloni dosjen e spam-it.
+            </div>
+        }
+        
+        <hr class="my-4">
+        
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-1"></i> Faqja Kryesore
+            </a>
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary-custom">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Hyni
+            </a>
+        </div>
+    </div>
+</body>
+</html>

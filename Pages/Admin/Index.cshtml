@@ -1,0 +1,434 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Paneli i Administratorit";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-speedometer2 text-primary"></i> Paneli i Administratorit</h2>
+    <small class="text-muted"><i class="bi bi-clock"></i> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
+</div>
+
+<!-- ═══ ROW 1: KPI Cards (8 cards) ═══ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><small class="opacity-75">Përdorues</small><h3 class="fw-bold mb-0">@Model.TotalUsers</h3></div>
+                    <i class="bi bi-people-fill fs-2 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><small class="opacity-75">Teknikë Aktivë</small><h3 class="fw-bold mb-0">@Model.ActiveTechnicians</h3></div>
+                    <i class="bi bi-person-badge-fill fs-2 opacity-50"></i>
+                </div>
+                <small class="opacity-75">nga @Model.TotalTechnicians gjithsej</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><small class="opacity-75">Qytetarë</small><h3 class="fw-bold mb-0">@Model.TotalCitizens</h3></div>
+                    <i class="bi bi-person-fill fs-2 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm bg-warning text-dark h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><small class="opacity-75">Defekte Aktive</small><h3 class="fw-bold mb-0">@Model.ActiveDefects</h3></div>
+                    <i class="bi bi-tools fs-2 opacity-50"></i>
+                </div>
+                <small>@Model.TotalDefects gjithsej / @Model.CompletedDefects të zgjidhura</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ROW 2: Secondary KPIs ═══ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 text-center">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
+                <h4 class="fw-bold mb-0 mt-1 text-danger">@Model.EmergencyDefects</h4>
+                <small class="text-muted">Emergjenca Aktive</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 text-center">
+                <i class="bi bi-chat-dots-fill text-primary fs-3"></i>
+                <h4 class="fw-bold mb-0 mt-1">@Model.TotalMessages</h4>
+                <small class="text-muted">Mesazhe në Biseda</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 text-center">
+                <i class="bi bi-credit-card-fill text-success fs-3"></i>
+                <h4 class="fw-bold mb-0 mt-1">@Model.PendingPayments</h4>
+                <small class="text-muted">Pagesa në Pritje</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 text-center">
+                <i class="bi bi-star-fill text-warning fs-3"></i>
+                <h4 class="fw-bold mb-0 mt-1">@Model.TotalReviews</h4>
+                <small class="text-muted">Vlerësime të Marra</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ROW 3: Charts ═══ -->
+<div class="row g-4 mb-4">
+    <!-- Defects Last 7 Days (Line Chart) -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0"><h6 class="mb-0 fw-bold"><i class="bi bi-graph-up text-primary"></i> Defektet — 7 Ditët e Fundit</h6></div>
+            <div class="card-body"><canvas id="chartLine" height="200"></canvas></div>
+        </div>
+    </div>
+    <!-- Category Distribution (Doughnut) -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0"><h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart text-success"></i> Shpërndarja sipas Kategorisë</h6></div>
+            <div class="card-body d-flex align-items-center justify-content-center"><canvas id="chartDoughnut" height="200"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Status Distribution (Bar) -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0"><h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart text-info"></i> Shpërndarja sipas Statusit</h6></div>
+            <div class="card-body"><canvas id="chartBar" height="200"></canvas></div>
+        </div>
+    </div>
+    <!-- Defects by City (Horizontal Bar) -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0"><h6 class="mb-0 fw-bold"><i class="bi bi-geo-alt text-danger"></i> Shpërndarja sipas Zonës/Qytetit</h6></div>
+            <div class="card-body"><canvas id="chartCity" height="200"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ROW 4: Emergency Defects ═══ -->
+@if (Model.EmergencyDefectList.Any())
+{
+<div class="card border-danger border-2 shadow-sm mb-4">
+    <div class="card-header bg-danger text-white">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> DEFEKTE EMERGJENTE — Kërkojnë Vëmendje të Menjëhershme</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th>ID</th><th>Titulli</th><th>Klienti</th><th>Vendndodhja</th><th>Data</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var d in Model.EmergencyDefectList)
+            {
+                <tr class="table-danger">
+                    <td><span class="badge bg-danger">@d.UniqueCode</span></td>
+                    <td class="fw-bold">@d.Title</td>
+                    <td>@d.Citizen?.GetFullName()</td>
+                    <td><i class="bi bi-geo-alt"></i> @d.Location</td>
+                    <td>@d.CreatedDate.ToString("dd/MM HH:mm")</td>
+                    <td><a asp-page="/DefectDetails" asp-route-id="@d.Id" class="btn btn-sm btn-outline-danger">Shiko</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+}
+
+<!-- ═══ ROW 5: SEO Overview & Performance ═══ -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-search text-primary"></i> Statusi i SEO-së</h6>
+                <a asp-page="/Admin/Settings" class="btn btn-sm btn-outline-primary"><i class="bi bi-gear"></i> Cilësimet SEO</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center p-3 bg-success bg-opacity-10 rounded">
+                            <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Përshkrimi Meta</small>
+                                <span class="fw-semibold text-success">I konfiguruar</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center p-3 bg-success bg-opacity-10 rounded">
+                            <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Fjalë Kyçe (Meta)</small>
+                                <span class="fw-semibold text-success">I konfiguruar</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center p-3 bg-info bg-opacity-10 rounded">
+                            <i class="bi bi-globe text-info fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Hartë e Faqeve (Sitemap)</small>
+                                <span class="fw-semibold text-info">Aktive</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="bi bi-share text-primary fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Open Graph (OG)</small>
+                                <span class="fw-semibold">Konfiguruar</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="bi bi-phone text-primary fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Përshtatshmëri Mobile</small>
+                                <span class="fw-semibold">Po</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="bi bi-shield-check text-success fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">SSL / HTTPS</small>
+                                <span class="fw-semibold text-success">Aktive</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="bi bi-speedometer2 text-warning fs-4 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Performanca</small>
+                                <span class="fw-semibold text-warning">E mirë</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ROW 6: Recent Items, Quick Links & Page Monitoring ═══ -->
+<!-- ═══ MONITORIMI I FAQEVE (ALL PAGES MONITORING) ═══ -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-eye text-primary"></i> Faqet në Monitorim</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3 col-6"><a href="/Index" class="btn btn-outline-dark w-100 mb-2">🏠 Ballina</a></div>
+                    <div class="col-md-3 col-6"><a href="/DefectList" class="btn btn-outline-dark w-100 mb-2">🛠️ Lista e Defekteve</a></div>
+                    <div class="col-md-3 col-6"><a href="/DefectDetails" class="btn btn-outline-dark w-100 mb-2">📄 Detajet e Defektit</a></div>
+                    <div class="col-md-3 col-6"><a href="/ReportDefect" class="btn btn-outline-dark w-100 mb-2">➕ Raporto Defekt</a></div>
+                    <div class="col-md-3 col-6"><a href="/Messages" class="btn btn-outline-dark w-100 mb-2">💬 Mesazhet</a></div>
+                    <div class="col-md-3 col-6"><a href="/Chat" class="btn btn-outline-dark w-100 mb-2">💬 Chat</a></div>
+                    <div class="col-md-3 col-6"><a href="/Technicians" class="btn btn-outline-dark w-100 mb-2">👷‍♂️ Teknikët</a></div>
+                    <div class="col-md-3 col-6"><a href="/TechniciansMap" class="btn btn-outline-dark w-100 mb-2">🗺️ Harta Teknikëve</a></div>
+                    <div class="col-md-3 col-6"><a href="/Businesses" class="btn btn-outline-dark w-100 mb-2">🏢 Bizneset</a></div>
+                    <div class="col-md-3 col-6"><a href="/BusinessMap" class="btn btn-outline-dark w-100 mb-2">🗺️ Harta Bizneseve</a></div>
+                    <div class="col-md-3 col-6"><a href="/FAQ" class="btn btn-outline-dark w-100 mb-2">❓ FAQ</a></div>
+                    <div class="col-md-3 col-6"><a href="/HowItWorks" class="btn btn-outline-dark w-100 mb-2">ℹ️ Si Funksionon</a></div>
+                    <div class="col-md-3 col-6"><a href="/Terms" class="btn btn-outline-dark w-100 mb-2">📜 Termat</a></div>
+                    <div class="col-md-3 col-6"><a href="/Privacy" class="btn btn-outline-dark w-100 mb-2">🔒 Privatësia</a></div>
+                    <div class="col-md-3 col-6"><a href="/Contact" class="btn btn-outline-dark w-100 mb-2">✉️ Kontakti</a></div>
+                    <div class="col-md-3 col-6"><a href="/Dashboard" class="btn btn-outline-dark w-100 mb-2">📊 Dashboard</a></div>
+                </div>
+                <div class="text-muted small mt-2">Të gjitha faqet kryesore të sistemit janë të monitoruara nga ky panel.</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-4 mb-4">
+    <!-- Recent Defects -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                <h6 class="mb-0 fw-bold">Defektet e Fundit</h6>
+                <a asp-page="/Admin/Defects" class="btn btn-sm btn-outline-primary">Shiko të gjitha</a>
+            </div>
+            <div class="list-group list-group-flush">
+            @foreach (var d in Model.RecentDefects)
+            {
+                <a asp-page="/DefectDetails" asp-route-id="@d.Id" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-secondary me-1 small">@d.UniqueCode</span>
+                            <strong class="small">@d.Title</strong>
+                            <br/><small class="text-muted">@d.Category — @d.Citizen?.GetFullName() — @d.CreatedDate.ToString("dd/MM/yyyy")</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge @(d.Status == Domain.Enums.ServiceRequestStatus.Completed ? "bg-success" : d.Priority == Domain.Enums.ServiceRequestPriority.Emergency ? "bg-danger" : "bg-info")">
+                                @d.Status
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            }
+            </div>
+        </div>
+    </div>
+    <!-- Recent Users + Quick Actions -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                <h6 class="mb-0 fw-bold">Përdoruesit e Rinj</h6>
+                <a asp-page="/Admin/Users" class="btn btn-sm btn-outline-primary">Shiko të gjithë</a>
+            </div>
+            <div class="list-group list-group-flush">
+            @foreach (var u in Model.RecentUsers)
+            {
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="small">@u.FirstName @u.LastName</strong>
+                            @if (!string.IsNullOrEmpty(u.DisplayUsername)) { <small class="text-primary">@@@u.DisplayUsername</small> }
+                            <br/><small class="text-muted">@u.Email</small>
+                        </div>
+                        <span class="badge @(u.Role == Domain.Enums.UserRole.Admin ? "bg-danger" : u.Role == Domain.Enums.UserRole.Professional ? "bg-success" : "bg-info")">@u.Role</span>
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0"><h6 class="mb-0 fw-bold"><i class="bi bi-lightning text-warning"></i> Veprime të Shpejta</h6></div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-page="/Admin/Users" class="btn btn-outline-primary btn-sm"><i class="bi bi-people"></i> Përdoruesit</a>
+                    <a asp-page="/Admin/Defects" class="btn btn-outline-info btn-sm"><i class="bi bi-tools"></i> Defektet</a>
+                    <a asp-page="/Admin/Technicians" class="btn btn-outline-success btn-sm"><i class="bi bi-person-badge"></i> Teknikët</a>
+                    <a asp-page="/Admin/Businesses" class="btn btn-outline-warning btn-sm"><i class="bi bi-shop"></i> Bizneset</a>
+                    <a asp-page="/Admin/Payments" class="btn btn-outline-warning btn-sm"><i class="bi bi-credit-card"></i> Pagesat</a>
+                    <a asp-page="/Admin/ChatMonitor" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chat-dots"></i> Bisedat</a>
+                    <a asp-page="/Admin/GPSMonitor" class="btn btn-outline-danger btn-sm"><i class="bi bi-geo-alt"></i> Harta GPS</a>
+                    <a asp-page="/Admin/ContentManager" class="btn btn-outline-dark btn-sm"><i class="bi bi-file-text"></i> Përmbajtja</a>
+                    <a asp-page="/Admin/Settings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Cilësimet</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ROW 7: GPS Overview ═══ -->
+@if (Model.TechnicianLocations.Any())
+{
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill text-success"></i> Teknikët me GPS — @Model.TechnicianLocations.Count aktiv</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-2">
+        @foreach (var t in Model.TechnicianLocations)
+        {
+            <div class="col-md-3 col-6">
+                <div class="border rounded p-2 small @(t.IsAvailable ? "border-success" : "border-secondary")">
+                    <i class="bi bi-circle-fill @(t.IsAvailable ? "text-success" : "text-secondary")" style="font-size:8px;"></i>
+                    <strong>@t.Name</strong><br/>
+                    <small class="text-muted">@t.City — @t.Lat?.ToString("F4"), @t.Lon?.ToString("F4")</small>
+                </div>
+            </div>
+        }
+        </div>
+    </div>
+</div>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+// ── Line Chart: Last 7 Days ──
+new Chart(document.getElementById('chartLine'), {
+    type: 'line',
+    data: {
+        labels: [@Html.Raw(string.Join(",", Model.DefectsLast7Days.Keys.Select(k => $"'{k}'")))],
+        datasets: [{
+            label: 'Defekte',
+            data: [@Html.Raw(string.Join(",", Model.DefectsLast7Days.Values))],
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: '#2563eb'
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+// ── Doughnut: Category ──
+new Chart(document.getElementById('chartDoughnut'), {
+    type: 'doughnut',
+    data: {
+        labels: [@Html.Raw(string.Join(",", Model.CategoryDistribution.Keys.Select(k => $"'{k}'")))],
+        datasets: [{
+            data: [@Html.Raw(string.Join(",", Model.CategoryDistribution.Values))],
+            backgroundColor: ['#2563eb','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16']
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+});
+
+// ── Bar: Status ──
+var statusColors = { 'Created': '#f59e0b', 'Matched': '#06b6d4', 'InProgress': '#2563eb', 'Completed': '#10b981', 'Cancelled': '#6b7280', 'Rejected': '#ef4444' };
+var statusLabels = [@Html.Raw(string.Join(",", Model.StatusDistribution.Keys.Select(k => $"'{k}'")))];
+new Chart(document.getElementById('chartBar'), {
+    type: 'bar',
+    data: {
+        labels: statusLabels,
+        datasets: [{
+            data: [@Html.Raw(string.Join(",", Model.StatusDistribution.Values))],
+            backgroundColor: statusLabels.map(l => statusColors[l] || '#6b7280'),
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+// ── Horizontal Bar: By City ──
+new Chart(document.getElementById('chartCity'), {
+    type: 'bar',
+    data: {
+        labels: [@Html.Raw(string.Join(",", Model.DefectsByCity.Keys.Select(k => $"'{k}'")))],
+        datasets: [{
+            data: [@Html.Raw(string.Join(",", Model.DefectsByCity.Values))],
+            backgroundColor: '#ef4444',
+            borderRadius: 4
+        }]
+    },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+</script>
+}

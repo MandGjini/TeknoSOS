@@ -1,0 +1,198 @@
+@page
+@model TeknoSOS.WebApp.Pages.TechniciansModel
+@inject TeknoSOS.WebApp.Services.ILocalizationService Localizer
+@{
+    ViewData["Title"] = Localizer.T("technicians_title");
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Hero Section — Compact 2026 -->
+<section class="hero-2026" style="padding: 3rem 0 2.5rem;">
+    <div class="container text-center">
+        <div class="hero-badge mb-3"><i class="bi bi-people-fill"></i> Profesionistë</div>
+        <h1 style="font-size: 2.2rem;">Teknikët Tanë</h1>
+        <p class="hero-subtitle mx-auto" style="max-width: 480px;">Gjeni teknikun e duhur për defektin tuaj — profesionistë të verifikuar me përvojë</p>
+    </div>
+</section>
+
+<div class="container" style="margin-top: -1.5rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    <!-- Filters Card -->
+    <div class="card mb-4" style="border-radius: var(--ts-radius-lg);">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Kërko</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Emri ose përshkrimi..." />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Kategoria</label>
+                    <select name="Category" class="form-select">
+                        <option value="">Të gjitha</option>
+                        <option value="Plumbing" selected="@(Model.Category == "Plumbing")">Hidraulikë</option>
+                        <option value="Electrical" selected="@(Model.Category == "Electrical")">Elektrikë</option>
+                        <option value="HVAC" selected="@(Model.Category == "HVAC")">Ngrohje/Ftohje</option>
+                        <option value="General" selected="@(Model.Category == "General")">Generale</option>
+                        <option value="Carpentry" selected="@(Model.Category == "Carpentry")">Zdrukthtëtar</option>
+                        <option value="Appliance" selected="@(Model.Category == "Appliance")">Pajisje</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Qyteti</label>
+                    <select name="City" class="form-select">
+                        <option value="">Të gjitha</option>
+                        @foreach (var c in Model.AvailableCities)
+                        {
+                            <option value="@c" selected="@(Model.City == c)">@c</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Rendit sipas</label>
+                    <select name="SortBy" class="form-select">
+                        <option value="rating" selected="@(Model.SortBy == "rating")">Vlerësimit</option>
+                        <option value="jobs" selected="@(Model.SortBy == "jobs")">Punëve</option>
+                        <option value="experience" selected="@(Model.SortBy == "experience")">Përvojës</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 btn-pill"><i class="bi bi-funnel me-1"></i> Filtro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results count -->
+    <div class="mb-3 d-flex align-items-center gap-2">
+        <span class="chip chip-primary">@Model.TechnicianList.Count teknikë</span>
+    </div>
+
+    <!-- Technician Cards -->
+    <div class="row g-4">
+        @foreach (var tech in Model.TechnicianList)
+        {
+            <div class="col-md-6 col-lg-4 fade-up">
+                <div class="tech-card">
+                    <div class="tech-header">
+                        <div class="tech-avatar">
+                            @if (!string.IsNullOrEmpty(tech.ProfileImage))
+                            {
+                                <img src="@tech.ProfileImage" alt="@tech.FullName" loading="lazy" />
+                            }
+                            else
+                            {
+                                @tech.FullName.Split(' ').Select(n => n[0]).Take(2).Aggregate("", (a, b) => a + b)
+                            }
+                        </div>
+                        <div class="tech-info flex-grow-1">
+                            <h5>
+                                @tech.FullName
+                                @if (tech.IsVerified)
+                                {
+                                    <i class="bi bi-patch-check-fill verified-badge"></i>
+                                }
+                            </h5>
+                            @if (!string.IsNullOrEmpty(tech.CompanyName))
+                            {
+                                <div style="font-size: 0.8rem; color: var(--ts-text-muted);"><i class="bi bi-building me-1"></i>@tech.CompanyName</div>
+                            }
+                            @if (!string.IsNullOrEmpty(tech.City))
+                            {
+                                <div style="font-size: 0.8rem; color: var(--ts-text-muted);"><i class="bi bi-geo-alt me-1"></i>@tech.City</div>
+                            }
+                        </div>
+                        @if (tech.IsAvailable)
+                        {
+                            <span class="chip chip-success" style="font-size:0.65rem;"><i class="bi bi-circle-fill" style="font-size:0.4rem;"></i> Aktiv</span>
+                        }
+                        else
+                        {
+                            <span class="chip" style="font-size:0.65rem;">I zënë</span>
+                        }
+                    </div>
+
+                    <div class="tech-body">
+                        @if (!string.IsNullOrEmpty(tech.Bio))
+                        {
+                            <p style="font-size: 0.85rem; color: var(--ts-text-secondary); margin-bottom: 0.75rem;">@(tech.Bio.Length > 100 ? tech.Bio.Substring(0, 100) + "..." : tech.Bio)</p>
+                        }
+
+                        <!-- Specialties as chips -->
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            @foreach (var spec in tech.Specialties.Take(4))
+                            {
+                                <span class="chip">@spec</span>
+                            }
+                        </div>
+
+                        <!-- Stats row -->
+                        <div class="d-flex gap-3 pt-2" style="border-top: 1px solid var(--ts-border-light); font-size: 0.8rem; color: var(--ts-text-muted);">
+                            <span>
+                                <i class="bi bi-star-fill" style="color: var(--ts-warning);"></i>
+                                <strong style="color: var(--ts-text);">@(tech.AverageRating?.ToString("F1") ?? "N/A")</strong>
+                                <span>(@tech.TotalReviews)</span>
+                            </span>
+                            <span><i class="bi bi-check-circle"></i> @tech.CompletedJobs</span>
+                            @if (tech.YearsOfExperience.HasValue)
+                            {
+                                <span><i class="bi bi-clock-history"></i> @tech.YearsOfExperience vjet</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="tech-footer">
+                        <a asp-page="/TechnicianProfile" asp-route-id="@(tech.DisplayUsername ?? tech.Id)" class="btn btn-primary btn-sm btn-pill">
+                            <i class="bi bi-person-lines-fill me-1"></i> Profili
+                        </a>
+                        <form method="post" asp-page="/StartChat" class="d-inline ms-1">
+                            <input type="hidden" name="targetId" value="@(tech.DisplayUsername ?? tech.Id)" />
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Mesazh</button>
+                        </form>
+                        @if (tech.PortfolioCount > 0)
+                        {
+                            <a asp-page="/TechnicianProfile" asp-route-id="@(tech.DisplayUsername ?? tech.Id)" asp-fragment="portfolio" class="btn btn-ghost btn-sm">
+                                <i class="bi bi-collection me-1"></i> @tech.PortfolioCount Portfolio
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.TechnicianList.Any())
+    {
+        <div class="text-center py-5">
+            <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px;border-radius:50%;background:var(--ts-bg-tertiary);">
+                <i class="bi bi-person-x" style="font-size: 2rem; color: var(--ts-text-muted);"></i>
+            </div>
+            <h4 style="color: var(--ts-text-secondary);">Nuk u gjet asnjë teknik</h4>
+            <p style="color: var(--ts-text-muted);">Provoni të ndryshoni filtrat e kërkimit</p>
+        </div>
+    }
+    
+    <!-- Related Links Section -->
+    <section class="mt-5 pt-4" style="border-top: 1px solid var(--ts-border);">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-3 mb-lg-0">
+                <h5 class="fw-semibold mb-1" style="color: var(--ts-text);">Eksploro më shumë</h5>
+                <p class="mb-0 small" style="color: var(--ts-text-secondary);">Shikoni hartat dhe bizneset e platformës</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                    <a asp-page="/TechniciansMap" class="btn btn-outline-primary btn-pill">
+                        <i class="bi bi-geo-alt me-1"></i> Harta e Teknikëve
+                    </a>
+                    <a asp-page="/Businesses" class="btn btn-outline-secondary btn-pill">
+                        <i class="bi bi-shop me-1"></i> Bizneset
+                    </a>
+                    <a asp-page="/BusinessMap" class="btn btn-outline-secondary btn-pill">
+                        <i class="bi bi-globe me-1"></i> Harta e Platformës
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

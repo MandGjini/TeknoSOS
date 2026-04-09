@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-TeknoSOS.WebApp-675e30b6-ac09-40d5-89f7-3ac9e397444d</UserSecretsId>
+  </PropertyGroup>
+
+  <!-- Exclude ALL nested folders completely -->
+  <ItemGroup>
+    <Compile Remove="TeknoSOS.WebApp\**" />
+    <Compile Remove="TeknoSOS.WebApp.Tests\**" />
+    <Compile Remove="apps\**" />
+    <Compile Remove="teknosos\**" />
+    <Content Remove="TeknoSOS.WebApp\**" />
+    <Content Remove="TeknoSOS.WebApp.Tests\**" />
+    <Content Remove="apps\**" />
+    <Content Remove="teknosos\**" />
+    <EmbeddedResource Remove="TeknoSOS.WebApp\**" />
+    <EmbeddedResource Remove="TeknoSOS.WebApp.Tests\**" />
+    <EmbeddedResource Remove="apps\**" />
+    <EmbeddedResource Remove="teknosos\**" />
+    <None Remove="TeknoSOS.WebApp\**" />
+    <None Remove="TeknoSOS.WebApp.Tests\**" />
+    <None Remove="apps\**" />
+    <None Remove="teknosos\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Removed Google.Apis.Auth and Google.Apis.Blogger.v3 as BloggerPostService is not used -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.22" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.22" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.22">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2024.12.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <!-- Future: Stripe.net, SendGrid, Azure.Storage.Blobs when payment/email/storage integrations are implemented -->
+  </ItemGroup>
+
+</Project>

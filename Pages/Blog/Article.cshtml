@@ -1,0 +1,345 @@
+@page "/Blog/{slug}"
+@model TeknoSOS.WebApp.Pages.Blog.ArticleModel
+@inject TeknoSOS.WebApp.Services.ISiteSettingsService SiteSettings
+@{
+    ViewData["Title"] = Model.Article!.Title;
+    ViewData["Description"] = Model.Article.MetaDescription;
+    var seoSettings = await SiteSettings.GetGroupAsync("seo");
+    var siteBaseUrl = seoSettings.TryGetValue("SiteBaseUrl", out var configuredBaseUrl) && !string.IsNullOrWhiteSpace(configuredBaseUrl)
+        ? configuredBaseUrl.TrimEnd('/')
+        : "https://teknosos.app";
+    var adsenseSettings = await SiteSettings.GetGroupAsync("adsense");
+    var adsenseEnabled = adsenseSettings.TryGetValue("Enabled", out var adsEnabledRaw) && adsEnabledRaw == "true";
+    var articleTopSlot = adsenseSettings.TryGetValue("BlogArticleTopSlot", out var articleTopSlotRaw) ? articleTopSlotRaw : "";
+    var articleInlineSlot = adsenseSettings.TryGetValue("BlogArticleInlineSlot", out var articleInlineSlotRaw) ? articleInlineSlotRaw : "";
+    var articleBottomSlot = adsenseSettings.TryGetValue("BlogArticleBottomSlot", out var articleBottomSlotRaw) ? articleBottomSlotRaw : "";
+    var maxInlineAds = adsenseSettings.TryGetValue("MaxInlineAdsPerArticle", out var maxInlineRaw) && int.TryParse(maxInlineRaw, out var maxInlineParsed)
+        ? maxInlineParsed
+        : 2;
+}
+
+@section Styles {
+<style>
+    .blog-article-content h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ts-text);
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--ts-primary-light);
+    }
+    .blog-article-content h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--ts-text);
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .blog-article-content p {
+        color: var(--ts-text-secondary);
+        line-height: 1.8;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    .blog-article-content ul {
+        color: var(--ts-text-secondary);
+        line-height: 1.8;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .blog-article-content li {
+        margin-bottom: 0.4rem;
+    }
+    .blog-article-content strong {
+        color: var(--ts-text);
+    }
+    .blog-article-content a {
+        color: var(--ts-primary);
+        text-decoration: underline;
+        font-weight: 500;
+    }
+    .blog-article-content a:hover {
+        opacity: 0.8;
+    }
+    .blog-article-content .blog-cta {
+        background: var(--ts-primary-light);
+        border-left: 4px solid var(--ts-primary);
+        padding: 1.25rem 1.5rem;
+        border-radius: 0 var(--ts-radius-lg) var(--ts-radius-lg) 0;
+        margin: 2rem 0;
+    }
+    .blog-article-content .blog-cta p {
+        color: var(--ts-text);
+        margin: 0;
+        font-size: 1rem;
+    }
+    .blog-article-content .blog-cta a {
+        color: var(--ts-primary);
+        font-weight: 700;
+    }
+</style>
+}
+
+<!-- Hero Section -->
+<section class="hero-2026" style="padding: 3rem 0;">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="container">
+        <div class="text-center">
+            <a href="/Blog" class="hero-badge mb-3 fade-up text-decoration-none" style="cursor: pointer;">
+                <i class="bi bi-arrow-left me-1"></i> Blog
+            </a>
+            <h1 class="fade-up mx-auto" style="font-size: 2.2rem; max-width: 800px;">@Model.Article.Title</h1>
+            <div class="d-flex align-items-center justify-content-center gap-3 mt-3 fade-up" style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">
+                <span>
+                    <i class="bi @Model.Article.CategoryIcon me-1"></i> @Model.Article.Category
+                </span>
+                <span>•</span>
+                <span>
+                    <i class="bi bi-clock me-1"></i> @Model.Article.ReadTime lexim
+                </span>
+                <span>•</span>
+                <span>
+                    <i class="bi bi-calendar-event me-1"></i> @Model.Article.PublishedDate.ToString("dd/MM/yyyy HH:mm")
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container mt-3 mb-2">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Kryefaqja</a></li>
+            <li class="breadcrumb-item"><a href="/Blog">Blog</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Article.Title</li>
+        </ol>
+    </nav>
+</div>
+
+@await Html.PartialAsync("_BannersPartial", new ViewDataDictionary(ViewData) { { "Position", "inline" }, { "PageKey", HttpContext.Request.Path.Value ?? "/" }, { "CssClass", "container" } })
+
+@if (adsenseEnabled && !string.IsNullOrWhiteSpace(articleTopSlot))
+{
+    <div class="container mt-3">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-format="auto"
+             data-full-width-responsive="true"
+             data-ad-slot="@articleTopSlot"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+}
+
+<div class="container" style="margin-top: -2rem; position: relative; z-index: 5; padding-bottom: 3rem;">
+    <div class="row justify-content-center">
+        <!-- Main Article Content -->
+        <div class="col-lg-8">
+            <div class="card fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Article Content -->
+                    <div class="d-flex flex-wrap gap-3 small text-muted mb-4 pb-3" style="border-bottom: 1px solid var(--ts-border);">
+                        <span><i class="bi bi-calendar-event me-1"></i> Publikuar: @Model.Article.PublishedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                        @if (Model.Article.ModifiedDate.HasValue)
+                        {
+                            <span><i class="bi bi-arrow-repeat me-1"></i> Përditësuar: @Model.Article.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                        }
+                        <span><i class="bi bi-person me-1"></i> @Model.Article.Author</span>
+                    </div>
+
+                    <div class="blog-article-content">
+                        @Html.Raw(Model.Article.Content)
+                    </div>
+
+                    @if (adsenseEnabled && !string.IsNullOrWhiteSpace(articleInlineSlot) && maxInlineAds > 0)
+                    {
+                        <div class="my-4">
+                            <ins class="adsbygoogle"
+                                 style="display:block"
+                                 data-ad-format="fluid"
+                                 data-layout-key="-gw-1+2a-9x+5c"
+                                 data-ad-slot="@articleInlineSlot"></ins>
+                            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                        </div>
+                    }
+
+                    <!-- Tags -->
+                    <div style="border-top: 1px solid var(--ts-border); padding-top: 1.5rem; margin-top: 2rem;">
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var tag in Model.Article.Tags)
+                            {
+                                <span class="badge" style="background: var(--ts-bg-secondary); color: var(--ts-text-secondary); border: 1px solid var(--ts-border); padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 500; border-radius: var(--ts-radius-full);">
+                                    #@tag
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Share Buttons -->
+                    <div style="border-top: 1px solid var(--ts-border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <p class="fw-bold mb-3" style="color: var(--ts-text); font-size: 0.95rem;">
+                            <i class="bi bi-share me-1"></i> Shpërndaje këtë artikull:
+                        </p>
+                        <div class="d-flex gap-2">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString($"https://teknosos.app/Blog/{Model.Article.Slug}")"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm" style="background: #1877F2; color: white; border-radius: var(--ts-radius-full); padding: 0.4rem 1rem;">
+                                <i class="bi bi-facebook me-1"></i> Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?text=@Uri.EscapeDataString(Model.Article.Title)&url=@Uri.EscapeDataString($"https://teknosos.app/Blog/{Model.Article.Slug}")"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm" style="background: #1DA1F2; color: white; border-radius: var(--ts-radius-full); padding: 0.4rem 1rem;">
+                                <i class="bi bi-twitter-x me-1"></i> Twitter
+                            </a>
+                            <a href="https://api.whatsapp.com/send?text=@Uri.EscapeDataString($"{Model.Article.Title} - https://teknosos.app/Blog/{Model.Article.Slug}")"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm" style="background: #25D366; color: white; border-radius: var(--ts-radius-full); padding: 0.4rem 1rem;">
+                                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Author Box -->
+            <div class="card mt-4 fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; min-width: 56px; background: var(--ts-primary-light);">
+                            <i class="bi bi-person-circle" style="font-size: 1.5rem; color: var(--ts-primary);"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--ts-text);">@Model.Article.Author</h6>
+                            <p style="color: var(--ts-text-secondary); font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                                Platforma lider në Shqipëri për gjetjen e teknikëve profesionistë. Informacione dhe këshilla nga ekspertët tanë.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (adsenseEnabled && !string.IsNullOrWhiteSpace(articleBottomSlot))
+            {
+                <div class="mt-4">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"
+                         data-ad-slot="@articleBottomSlot"></ins>
+                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <!-- Related Articles -->
+            <div class="card fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: var(--ts-text);">
+                        <i class="bi bi-journal-text me-2" style="color: var(--ts-primary);"></i>Artikuj të Tjerë
+                    </h5>
+                    @foreach (var related in Model.RelatedArticles)
+                    {
+                        <a href="/Blog/@related.Slug" class="text-decoration-none d-block mb-3" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--ts-border);">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; min-width: 48px; background: var(--ts-primary-light); border-radius: var(--ts-radius-lg);">
+                                    <i class="bi @related.ImageIcon" style="font-size: 1.2rem; color: var(--ts-primary);"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1" style="font-size: 0.9rem; color: var(--ts-text); line-height: 1.4;">@related.Title</h6>
+                                    <span style="font-size: 0.78rem; color: var(--ts-text-muted);">
+                                        <i class="bi bi-clock me-1"></i>@related.ReadTime
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                    <a href="/Blog" class="btn w-100 mt-2" style="background: var(--ts-primary-light); color: var(--ts-primary); border-radius: var(--ts-radius-full); font-weight: 600;">
+                        <i class="bi bi-grid me-1"></i> Të Gjithë Artikujt
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card mt-4 fade-up" style="border-radius: var(--ts-radius-lg); border: 1px solid var(--ts-border);">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: var(--ts-text);">
+                        <i class="bi bi-link-45deg me-2" style="color: var(--ts-primary);"></i>Lidhje të Shpejta
+                    </h5>
+                    <div class="d-grid gap-2">
+                        <a asp-page="/ReportDefect" class="btn btn-sm text-start" style="background: var(--ts-bg-secondary); color: var(--ts-text); border: 1px solid var(--ts-border); border-radius: var(--ts-radius-lg); padding: 0.75rem 1rem;">
+                            <i class="bi bi-exclamation-triangle me-2" style="color: var(--ts-primary);"></i> Raportoni Defekt
+                        </a>
+                        <a asp-page="/Technicians" class="btn btn-sm text-start" style="background: var(--ts-bg-secondary); color: var(--ts-text); border: 1px solid var(--ts-border); border-radius: var(--ts-radius-lg); padding: 0.75rem 1rem;">
+                            <i class="bi bi-people me-2" style="color: var(--ts-primary);"></i> Gjeni Teknikë
+                        </a>
+                        <a asp-page="/DefekteElektrike" class="btn btn-sm text-start" style="background: var(--ts-bg-secondary); color: var(--ts-text); border: 1px solid var(--ts-border); border-radius: var(--ts-radius-lg); padding: 0.75rem 1rem;">
+                            <i class="bi bi-lightning-charge me-2" style="color: var(--ts-primary);"></i> Defekte Elektrike
+                        </a>
+                        <a asp-page="/KarikuesEV" class="btn btn-sm text-start" style="background: var(--ts-bg-secondary); color: var(--ts-text); border: 1px solid var(--ts-border); border-radius: var(--ts-radius-lg); padding: 0.75rem 1rem;">
+                            <i class="bi bi-ev-station me-2" style="color: var(--ts-primary);"></i> Karikues EV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Schema.org BlogPosting structured data for SEO *@
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "BlogPosting",
+    "headline": "@Model.Article.Title.Replace("\"", "\\\"")",
+    "description": "@Model.Article.MetaDescription.Replace("\"", "\\\"")",
+    "author": {
+        "@@type": "Organization",
+        "name": "TeknoSOS",
+        "url": "@siteBaseUrl"
+    },
+    "publisher": {
+        "@@type": "Organization",
+        "name": "TeknoSOS",
+        "url": "@siteBaseUrl"
+    },
+    "datePublished": "@Model.Article.PublishedDate.ToString("yyyy-MM-ddTHH:mm:ss")",
+    "dateModified": "@((Model.Article.ModifiedDate ?? Model.Article.PublishedDate).ToString("yyyy-MM-ddTHH:mm:ss"))",
+    "mainEntityOfPage": {
+        "@@type": "WebPage",
+        "@@id": "@siteBaseUrl/Blog/@Model.Article.Slug"
+    },
+    "keywords": "@string.Join(", ", Model.Article.Tags)",
+    "articleSection": "@Model.Article.Category",
+    "inLanguage": "sq-AL"
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@@type": "ListItem",
+            "position": 1,
+            "name": "Kryefaqja",
+            "item": "@siteBaseUrl/"
+        },
+        {
+            "@@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "@siteBaseUrl/Blog/Index"
+        },
+        {
+            "@@type": "ListItem",
+            "position": 3,
+            "name": "@Model.Article.Title.Replace("\"", "\\\"")",
+            "item": "@siteBaseUrl/Blog/@Model.Article.Slug"
+        }
+    ]
+}
+</script>

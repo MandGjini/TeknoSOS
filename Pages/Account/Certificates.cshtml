@@ -1,0 +1,66 @@
+@page
+@model TeknoSOS.WebApp.Pages.Account.CertificatesModel
+@{
+    ViewData["Title"] = "Certifikatat dhe Dokumentet";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- Header with status -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="bi bi-file-earmark-text text-primary"></i> Certifikatat dhe Dokumentet
+                    </h2>
+                    <p class="text-muted mb-0">Ngarko certifikatat tuaja profesionale për t'u verifikuar</p>
+                </div>
+                <a href="/Account/Profile" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Kthehu te Profili
+                </a>
+            </div>
+
+            <!-- Status Banner -->
+            @if (!Model.IsProfileVerified)
+            {
+                <div class="alert alert-warning border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Profili juaj nuk është ende i verifikuar</h5>
+                            <p class="mb-0">Për të aktivizuar llogarinë tuaj si teknik, ju lutem:</p>
+                            <ul class="mb-0 mt-2">
+                                @if (!Model.HasUploadedCertificates)
+                                {
+                                    <li><strong>Ngarkoni të paktën një certifikatë profesionale</strong></li>
+                                }
+                                @if (!Model.HasUploadedProfilePhoto)
+                                {
+                                    <li>Ngarkoni një foto profili (e rekomanduar)</li>
+                                }
+                                <li>Pas ngarkimit, stafi ynë do të verifikojë dokumentet tuaja dhe do të aktivizojë llogarinë</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Profili juaj është i verifikuar!</h5>
+                            <p class="mb-0">Llogaria juaj është aktive dhe mund të pranoni kërkesa nga klientët.</p>
+                        </div>
+                    </div>
+                </div>
+            <div class="container py-5">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle"></i> Menaxhimi i certifikatave, fotove dhe dokumenteve bëhet tani nga <a href="/Account/Profile" class="fw-bold">Profili</a>.<br />
+                    <a href="/Account/Profile#certificates" class="btn btn-primary mt-3"><i class="bi bi-award"></i> Shko te Certifikatat</a>
+                </div>
+            </div>
+        }
+            </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>

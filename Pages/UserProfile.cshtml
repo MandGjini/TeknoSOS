@@ -1,0 +1,194 @@
+@page "{id}"
+@model TeknoSOS.WebApp.Pages.UserProfileModel
+@using TeknoSOS.WebApp.Domain.Enums
+@{
+    ViewData["Title"] = Model.ViewedUser.GetFullName() + " - Profili";
+    Layout = "/Views/Shared/_Layout.cshtml";
+
+    var profileImage = !string.IsNullOrWhiteSpace(Model.ViewedUser.ProfileImageUrl)
+        ? Model.ViewedUser.ProfileImageUrl
+        : "/images/default-avatar.png";
+    var profileUrl = Model.ViewedUser.Role == UserRole.Professional
+        ? $"/TechnicianProfile/{Model.ViewedUser.DisplayUsername ?? Model.ViewedUser.Id}"
+        : $"/UserProfile/{Model.ViewedUser.DisplayUsername ?? Model.ViewedUser.Id}";
+    var roleLabel = Model.ViewedUser.Role switch
+    {
+        UserRole.Admin => "Administrator",
+        UserRole.Professional => "Teknik",
+        _ => "Qytetar"
+    };
+}
+
+<div class="container py-4 py-lg-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4 p-lg-5">
+                    <img src="@profileImage" alt="@Model.ViewedUser.GetFullName()" class="rounded-circle shadow-sm mb-3" style="width: 128px; height: 128px; object-fit: cover;" onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
+                    <h1 class="h3 fw-bold mb-1">@Model.ViewedUser.GetFullName()</h1>
+                    @if (!string.IsNullOrWhiteSpace(Model.ViewedUser.DisplayUsername))
+                    {
+                        <div class="text-muted mb-2">@@@Model.ViewedUser.DisplayUsername</div>
+                    }
+                    <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+                        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">@roleLabel</span>
+                        @if (Model.ViewedUser.IsActive)
+                        {
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Aktiv</span>
+                        }
+                        @if (Model.ViewedUser.IsProfileVerified)
+                        {
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">I verifikuar</span>
+                        }
+                    </div>
+
+                    <div class="row g-2 text-center mb-4">
+                        <div class="col-4">
+                            <div class="rounded-3 p-3" style="background: var(--ts-primary-light);">
+                                <div class="fw-bold fs-4">@Model.CreatedRequestsCount</div>
+                                <div class="small text-muted">Kërkesa</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="rounded-3 p-3" style="background: var(--ts-success-light);">
+                                <div class="fw-bold fs-4">@Model.CompletedRequestsCount</div>
+                                <div class="small text-muted">Të mbyllura</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="rounded-3 p-3" style="background: var(--ts-warning-light);">
+                                <div class="fw-bold fs-4">@Model.WrittenReviewsCount</div>
+                                <div class="small text-muted">Review</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.IsOwnProfile)
+                    {
+                        <a href="/Account/Profile" class="btn btn-primary w-100">
+                            <i class="bi bi-pencil-square me-2"></i>Edito profilin
+                        </a>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.ViewedUser.PhoneNumber))
+                    {
+                        <a href="tel:@Model.ViewedUser.PhoneNumber" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-telephone me-2"></i>Kontakto
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0"><i class="bi bi-person-vcard me-2 text-primary"></i>Informacioni i Profilit</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Email</div>
+                                <div class="fw-semibold">@(Model.ViewedUser.Email ?? "Nuk është shtuar")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Telefoni</div>
+                                <div class="fw-semibold">@(Model.ViewedUser.PhoneNumber ?? "Nuk është shtuar")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Qyteti</div>
+                                <div class="fw-semibold">@(Model.ViewedUser.City ?? "Nuk është shtuar")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Kodi Postar</div>
+                                <div class="fw-semibold">@(Model.ViewedUser.PostalCode ?? "Nuk është shtuar")</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Adresa</div>
+                                <div class="fw-semibold">@(Model.ViewedUser.Address ?? "Nuk është shtuar")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Gjuha e Preferuar</div>
+                                <div class="fw-semibold">@Model.ViewedUser.PreferredLanguage</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="small text-muted mb-1">Anëtar që nga</div>
+                                <div class="fw-semibold">@Model.ViewedUser.RegistrationDate.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ViewedUser.Bio))
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h2 class="h5 mb-0"><i class="bi bi-card-text me-2 text-primary"></i>Rreth Përdoruesit</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="mb-0" style="white-space: pre-line;">@Model.ViewedUser.Bio</p>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0"><i class="bi bi-star me-2 text-primary"></i>Aktiviteti i Fundit</h2>
+                    <a href="@profileUrl" class="btn btn-sm btn-outline-secondary @(Model.ViewedUser.Role == UserRole.Professional ? string.Empty : "d-none")">Profili i plotë</a>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.RecentReviewsWritten.Any())
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var review in Model.RecentReviewsWritten)
+                            {
+                                var revieweeProfileUrl = review.Reviewee != null && review.Reviewee.Role == UserRole.Professional
+                                    ? $"/TechnicianProfile/{review.Reviewee.DisplayUsername ?? review.Reviewee.Id}"
+                                    : $"/UserProfile/{review.Reviewee?.DisplayUsername ?? review.Reviewee?.Id}";
+
+                                <div class="border rounded-3 p-3">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                Për <a href="@revieweeProfileUrl" class="text-decoration-none">@review.Reviewee?.GetFullName()</a>
+                                            </div>
+                                            <div class="small text-muted">@review.CreatedDate.ToString("dd/MM/yyyy")</div>
+                                        </div>
+                                        <div class="text-warning small">
+                                            @for (int i = 0; i < review.Rating; i++) { <i class="bi bi-star-fill"></i> }
+                                            @for (int i = review.Rating; i < 5; i++) { <i class="bi bi-star"></i> }
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                    {
+                                        <p class="mb-0 text-muted fst-italic">"@review.Comment"</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-info-circle fs-2 d-block mb-2"></i>
+                            Nuk ka aktivitet publik shtesë për t'u shfaqur ende.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

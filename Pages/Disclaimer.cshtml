@@ -1,0 +1,22 @@
+@page
+@model TeknoSOS.WebApp.Pages.DisclaimerModel
+@{
+    ViewData["Title"] = await CMS.GetContentAsync("disclaimer", "hero_title");
+}
+
+<section class="py-4 mb-4 text-center bg-light rounded-3">
+    <h1 class="fw-bold">@await CMS.GetContentAsync("disclaimer", "hero_title")</h1>
+    <p class="text-muted lead">@await CMS.GetContentAsync("disclaimer", "hero_subtitle")</p>
+</section>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        @foreach (var item in Model.Sections)
+        {
+            <div class="mb-4">
+                <h4 class="fw-bold">@item.Title</h4>
+                <p>@Html.Raw(item.Content)</p>
+            </div>
+        }
+    </div>
+</div>

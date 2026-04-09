@@ -1,0 +1,375 @@
+@page
+@model TeknoSOS.WebApp.Pages.BusinessesModel
+@{
+    ViewData["Title"] = "Biznese - TeknoSOS Marketplace";
+}
+
+<style>
+    .business-hero {
+        background: linear-gradient(135deg, var(--ts-primary) 0%, var(--ts-accent) 100%);
+        color: white;
+        padding: var(--ts-section-padding, 2.5rem) 0 1.5rem 0;
+        margin-bottom: 1.25rem;
+        border-radius: 0 0 var(--ts-radius) var(--ts-radius);
+    }
+    .business-card {
+        border: none;
+        border-radius: var(--ts-radius);
+        box-shadow: var(--ts-shadow);
+        transition: all var(--ts-transition);
+        height: 100%;
+        overflow: hidden;
+    }
+    .business-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--ts-shadow-lg);
+    }
+    .business-logo, .business-logo-placeholder {
+        width: 72px;
+        height: 72px;
+        border-radius: var(--ts-radius);
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+        font-weight: bold;
+    }
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--ts-surface);
+        border: 1px solid var(--ts-border);
+    }
+    .type-supplier { border-color: #3b82f6; color: #3b82f6; }
+    .type-service { border-color: #8b5cf6; color: #8b5cf6; }
+    .type-both { border-color: #06b6d4; color: #06b6d4; }
+    .filter-sidebar {
+        background: var(--ts-surface);
+        border-radius: var(--ts-radius);
+        padding: 1.1rem;
+        box-shadow: var(--ts-shadow-sm);
+        position: sticky;
+        top: 80px;
+    }
+    .filter-section {
+        border-bottom: 1px solid var(--ts-border);
+        padding-bottom: 0.7rem;
+        margin-bottom: 0.7rem;
+    }
+    .filter-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+    .rating-stars { color: #fbbf24; }
+    .verified-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #10b981;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .ecosystem-banner {
+        background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+        color: white;
+        padding: 1rem;
+        border-radius: var(--ts-radius);
+        margin-bottom: 1.25rem;
+    }
+    .ecosystem-banner h5 { margin-bottom: 0.5rem; }
+    .ecosystem-banner p { margin-bottom: 0; opacity: 0.9; }
+    /* mobile-specific styles moved to site.css */
+</style>
+
+<!-- Hero Section -->
+<div class="business-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="bi bi-shop"></i> TeknoSOS Marketplace
+                </h1>
+                <p class="lead mb-0">
+                    Gjeni furnizues materialesh, shërbime profesionale dhe kompani të verifikuara
+                    brenda ekosistemit të mbyllur TeknoSOS.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a asp-page="/BusinessMap" class="btn btn-light btn-lg">
+                    <i class="bi bi-geo-alt-fill"></i> Shiko në Hartë
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Ecosystem Info Banner -->
+    <div class="ecosystem-banner">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <i class="bi bi-shield-lock fs-1"></i>
+            </div>
+            <div class="col">
+                <h5><i class="bi bi-check-circle-fill"></i> Ekosistem i Mbyllur & i Sigurt</h5>
+                <p>
+                    Të gjitha ndërveprimet me bizneset bëhen brenda platformës. Kjo siguron mbrojtjen e të dhënave,
+                    pagesa të sigurta, dhe mundësi ankese në rast problemesh.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-sidebar">
+                <h5 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Filtro</h5>
+                
+                <form method="get">
+                    <!-- Search -->
+                    <div class="filter-section">
+                        <label class="form-label fw-semibold">Kërko</label>
+                        <input type="text" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Emri i biznesit...">
+                    </div>
+                    
+                    <!-- Business Type -->
+                    <div class="filter-section">
+                        <label class="form-label fw-semibold">Lloji i Biznesit</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="types" value="Supplier" id="typeSupplier"
+                                   @(Model.SelectedTypes.Contains("Supplier") ? "checked" : "")>
+                            <label class="form-check-label" for="typeSupplier">
+                                <i class="bi bi-box-seam text-primary"></i> Furnizues
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="types" value="ServiceProvider" id="typeService"
+                                   @(Model.SelectedTypes.Contains("ServiceProvider") ? "checked" : "")>
+                            <label class="form-check-label" for="typeService">
+                                <i class="bi bi-gear text-purple"></i> Shërbime
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="types" value="Both" id="typeBoth"
+                                   @(Model.SelectedTypes.Contains("Both") ? "checked" : "")>
+                            <label class="form-check-label" for="typeBoth">
+                                <i class="bi bi-layers text-info"></i> Të dyja
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="filter-section">
+                        <label class="form-label fw-semibold">Kategoria</label>
+                        <select name="category" class="form-select">
+                            <option value="">Të gjitha</option>
+                            <optgroup label="Materiale">
+                                @{ var cat = Model.SelectedCategory; }
+                                <option value="ElectricalSupplies" selected="@(cat == "ElectricalSupplies")">Elektrike</option>
+                                <option value="PlumbingSupplies" selected="@(cat == "PlumbingSupplies")">Hidraulike</option>
+                                <option value="ConstructionMaterials" selected="@(cat == "ConstructionMaterials")">Ndërtimi</option>
+                                <option value="HVACSupplies" selected="@(cat == "HVACSupplies")">Ngrohje/Ftohje</option>
+                                <option value="PaintAndFinishes" selected="@(cat == "PaintAndFinishes")">Bojë</option>
+                                <option value="ToolsAndEquipment" selected="@(cat == "ToolsAndEquipment")">Vegla</option>
+                            </optgroup>
+                            <optgroup label="Shërbime Profesionale">
+                                <option value="ArchitecturalServices" selected="@(cat == "ArchitecturalServices")">Arkitekturë</option>
+                                <option value="EngineeringServices" selected="@(cat == "EngineeringServices")">Inxhinieri</option>
+                                <option value="InteriorDesign" selected="@(cat == "InteriorDesign")">Dizajn</option>
+                                <option value="PermitServices" selected="@(cat == "PermitServices")">Leje</option>
+                            </optgroup>
+                            <optgroup label="Qiradhënie">
+                                <option value="EquipmentRental" selected="@(cat == "EquipmentRental")">Pajisje</option>
+                                <option value="ScaffoldingRental" selected="@(cat == "ScaffoldingRental")">Skela</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <!-- City -->
+                    <div class="filter-section">
+                        <label class="form-label fw-semibold">Qyteti</label>
+                        <select name="city" class="form-select">
+                            <option value="">Të gjitha</option>
+                            @foreach (var city in Model.AvailableCities)
+                            {
+                                <option value="@city" selected="@(Model.SelectedCity == city)">@city</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div class="filter-section">
+                        <label class="form-label fw-semibold">Vlerësimi minimal</label>
+                        <select name="minRating" class="form-select">
+                            <option value="">Të gjitha</option>
+                            <option value="4" selected="@(Model.MinRating == 4)">⭐ 4+ yje</option>
+                            <option value="3" selected="@(Model.MinRating == 3)">⭐ 3+ yje</option>
+                            <option value="2" selected="@(Model.MinRating == 2)">⭐ 2+ yje</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Apliko Filtrat
+                    </button>
+                    <a asp-page="/Businesses" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="bi bi-x-circle"></i> Pastro
+                    </a>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Business List -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    @Model.Businesses.Count() biznese të gjetura
+                </h5>
+                <div class="btn-group">
+                    <a asp-page="/Businesses" asp-route-sort="rating" class="btn btn-sm @(Model.SortBy == "rating" ? "btn-primary" : "btn-outline-secondary")">
+                        <i class="bi bi-star"></i> Vlerësim
+                    </a>
+                    <a asp-page="/Businesses" asp-route-sort="name" class="btn btn-sm @(Model.SortBy == "name" ? "btn-primary" : "btn-outline-secondary")">
+                        <i class="bi bi-sort-alpha-down"></i> Emri
+                    </a>
+                    <a asp-page="/Businesses" asp-route-sort="recent" class="btn btn-sm @(Model.SortBy == "recent" ? "btn-primary" : "btn-outline-secondary")">
+                        <i class="bi bi-clock"></i> Të fundit
+                    </a>
+                </div>
+            </div>
+            
+            @if (!Model.Businesses.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-shop display-1 text-muted"></i>
+                    <h4 class="mt-3">Nuk u gjet asnjë biznes</h4>
+                    <p class="text-muted">Provoni të ndryshoni filtrat ose kërkimin tuaj.</p>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var business in Model.Businesses)
+                    {
+                        <div class="col-md-6">
+                            <div class="card business-card">
+                                <div class="card-body">
+                                    <div class="d-flex gap-3 mb-3">
+                                        @if (!string.IsNullOrEmpty(business.LogoUrl))
+                                        {
+                                            <img src="@business.LogoUrl" alt="@business.Name" class="business-logo">
+                                        }
+                                        else
+                                        {
+                                            <div class="business-logo-placeholder">
+                                                @business.Name.Substring(0, 1).ToUpper()
+                                            </div>
+                                        }
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-start justify-content-between">
+                                                <h5 class="card-title mb-1">
+                                                    <a asp-page="/BusinessDetails" asp-route-id="@business.Id" class="text-decoration-none text-dark">
+                                                        @business.Name
+                                                    </a>
+                                                </h5>
+                                                @if (business.IsVerified)
+                                                {
+                                                    <span class="verified-badge" title="Biznes i Verifikuar">
+                                                        <i class="bi bi-patch-check-fill"></i>
+                                                    </span>
+                                                }
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <span class="category-badge @(business.Type == BusinessType.Supplier ? "type-supplier" : business.Type == BusinessType.ServiceProvider ? "type-service" : "type-both")">
+                                                    @business.TypeText
+                                                </span>
+                                                <span class="category-badge">@business.CategoryText</span>
+                                            </div>
+                                            @if (business.AverageRating > 0)
+                                            {
+                                                <div class="rating-stars small">
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        <i class="bi @((decimal)i <= business.AverageRating ? "bi-star-fill" : (decimal)i - 0.5m <= business.AverageRating ? "bi-star-half" : "bi-star")"></i>
+                                                    }
+                                                    <span class="text-muted ms-1">(@business.TotalReviews)</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(business.Description))
+                                    {
+                                        <p class="card-text text-muted small mb-3">
+                                            @(business.Description.Length > 120 ? business.Description.Substring(0, 120) + "..." : business.Description)
+                                        </p>
+                                    }
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted small">
+                                            @if (!string.IsNullOrEmpty(business.City))
+                                            {
+                                                <i class="bi bi-geo-alt"></i> @business.City
+                                            }
+                                            @if (business.CompletedOrders > 0)
+                                            {
+                                                <span class="ms-2"><i class="bi bi-check-circle"></i> @business.CompletedOrders porosi</span>
+                                            }
+                                        </div>
+                                        <a asp-page="/BusinessDetails" asp-route-id="@business.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> Shiko
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Related Links Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card" style="border-radius: var(--ts-radius-lg); background: var(--ts-bg-secondary);">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6 mb-3 mb-lg-0">
+                            <h5 class="fw-semibold mb-1"><i class="bi bi-compass me-2"></i>Eksploro Platformën</h5>
+                            <p class="mb-0 text-muted small">Shikoni hartat, teknikët dhe më shumë</p>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                                <a asp-page="/BusinessMap" class="btn btn-primary btn-pill">
+                                    <i class="bi bi-globe me-1"></i> Harta e Platformës
+                                </a>
+                                <a asp-page="/Technicians" class="btn btn-outline-primary btn-pill">
+                                    <i class="bi bi-people me-1"></i> Teknikët
+                                </a>
+                                <a asp-page="/TechniciansMap" class="btn btn-outline-secondary btn-pill">
+                                    <i class="bi bi-geo-alt me-1"></i> Harta Teknikëve
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .text-purple { color: #8b5cf6 !important; }
+    </style>
+}

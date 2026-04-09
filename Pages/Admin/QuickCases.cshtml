@@ -1,0 +1,44 @@
+@page
+@model TeknoSOS.WebApp.Pages.Admin.QuickCasesModel
+@{
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<h2>Rastet e Shpejta</h2>
+
+<div class="mb-3">
+    <a asp-page="/QuickCase/Submit" class="btn btn-outline-primary">Faqja e Dërgimit Publik</a>
+</div>
+
+<table class="table table-striped table-sm">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Titulli</th>
+            <th>Emri/Email</th>
+            <th>Data</th>
+            <th>Shqyrtuar</th>
+            <th>Veprime</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var q in Model.Cases) {
+        <tr>
+            <td>@q.Id</td>
+            <td>@q.Title</td>
+            <td>@(string.IsNullOrEmpty(q.Name) ? q.Email ?? q.Phone ?? "-" : q.Name)</td>
+            <td>@q.CreatedDate.ToLocalTime().ToString("g")</td>
+            <td>@(q.IsReviewed ? "Po" : "Jo")</td>
+            <td>
+                <a asp-page="QuickCaseDetails" asp-route-id="@q.Id" class="btn btn-sm btn-outline-secondary">Shiko</a>
+                <form method="post" asp-page-handler="MarkReviewed" asp-route-id="@q.Id" style="display:inline">
+                    <button class="btn btn-sm btn-outline-success">Marko si shqyrtuar</button>
+                </form>
+                <form method="post" asp-page-handler="Delete" asp-route-id="@q.Id" style="display:inline" onsubmit="return confirm('Fshi këtë rast?');">
+                    <button class="btn btn-sm btn-outline-danger">Fshi</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
